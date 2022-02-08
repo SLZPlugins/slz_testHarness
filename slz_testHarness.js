@@ -2,7 +2,7 @@ let TestRunner = {
     tests: []
 }
 
-TestRunner.bar = function(){
+TestRunner.bar = function () {
     console.log('===============================')
 }
 
@@ -15,6 +15,7 @@ TestRunner.resetHooks = function () {
 TestRunner.resetCaseHooks = function () {
     this.beforeEachCase = () => { }
     this.afterEachCase = () => { }
+    this.beforeAll = () => { }
 }
 
 TestRunner.resetScenarioHooks = function () {
@@ -108,7 +109,7 @@ slz_Test("Test A", () => {
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [
-        beforeAll(()=>{
+        beforeAll(() => {
             console.log(testLevelVar)
         }),
         beforeEachScenario(() => {
