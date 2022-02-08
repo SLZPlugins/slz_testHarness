@@ -1,5 +1,6 @@
 let TestRunner = {
-    tests: []
+    tests: [],
+    loaded: require('js/plugins/someOther.js')
 }
 
 TestRunner.bar = function () {
@@ -60,6 +61,33 @@ TestRunner.runAllTests = function () {
     }
 }
 
+TestRunner.loadTestFile = async function loadJS(url, onDone, onError) {
+    if (!onDone) onDone = function () { };
+    if (!onError) onError = function () { };
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200 || xhr.status == 0) {
+                try {
+                    eval(xhr.responseText);
+                } catch (e) {
+                    onError(e);
+                    return;
+                }
+                onDone();
+            } else {
+                onError(xhr.status);
+            }
+        }
+    }.bind(this);
+    try {
+        xhr.open("GET", url, true);
+        xhr.send();
+    } catch (e) {
+        onError(e);
+    }
+}
+
 function slz_Test(title, getTestData) {
     let obj = {
         title: title,
@@ -105,62 +133,3 @@ function afterEachScenario(f) {
 }
 
 
-slz_Test("Test A", () => {
-    //can scope varibles to entire test instace
-    let testLevelVar = 'Running Before All'
-    return [
-        beforeAll(() => {
-            console.log(testLevelVar)
-        }),
-        beforeEachScenario(() => {
-            console.log('Staring Scenario')
-        }),
-
-        afterEachScenario(() => {
-            console.log('Ending Scenario')
-        }),
-        scenario("Testing Add to Storage", () => {
-            //can scope varibles to individual scenario
-            let scenarioLevelVar = 'first before each case'
-            return [
-                beforeEachCase(() => {
-                    TestRunner.bar()
-                    console.log(scenarioLevelVar)
-                }),
-                afterEachCase(() => {
-                    console.log('scenario 1 after each case')
-                    TestRunner.bar()
-                }),
-                testCase("Should add successfully when space available", () => {
-                    console.log('test 1-1')
-                }),
-                testCase("Should update Individual Entry", () => {
-                    console.log('test 1-2')
-                }),
-                testCase("Should update Individual Entry", () => {
-                    console.log('test 1-3')
-                })
-            ]
-        }),
-
-
-        scenario("Testing Subtract from Storage", () => {
-            return [
-                beforeEachCase(() => {
-                    TestRunner.bar()
-                    console.log('scenario 2 before each case')
-                }),
-                afterEachCase(() => {
-                    console.log('scenario 2 after each case')
-                    TestRunner.bar()
-                }),
-                testCase("Should remove successfully when contents exist", () => {
-                    console.log('test 2-1')
-                }),
-                testCase("Should fail removal when player can't receive quantity", () => {
-                    console.log('test 2-2')
-                })
-            ]
-        }),
-    ]
-})
