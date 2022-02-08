@@ -61,7 +61,7 @@ TestRunner.runAllTests = function () {
     }
 }
 
-TestRunner.loadTestFile = async function loadJS(url, onDone, onError) {
+TestRunner.loadTestFile = function(url, onDone, onError) {
     if (!onDone) onDone = function () { };
     if (!onError) onError = function () { };
     var xhr = new XMLHttpRequest();
@@ -86,6 +86,10 @@ TestRunner.loadTestFile = async function loadJS(url, onDone, onError) {
     } catch (e) {
         onError(e);
     }
+}
+
+TestRunner.loadAssertionLibrary = function(){
+    this.loadTestFile('js/plugins/slz_Assertions.js')
 }
 
 function slz_Test(title, getTestData) {
