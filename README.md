@@ -16,19 +16,19 @@ Afterward, check the TestManager.testReports object, to dig in and see the creat
 scenario reports and case reports. Currently, only one case report will be generated, on the 
 first scenario of the first test. 
 
-###################################################
+
 Creating your own test
-###################################################
+
 
 Add a .js file to the test folder. It can be anywhere within the test folder specified in the plugin
 params, including inside of an internal folder. 
 
 Add the following lines:
-
+---
 slz_Test("Testing so-and-so", ()=>{
 
 })
-
+---
 
 All of your test code will go inside of this block. The test will be 
 titled in the Report with whatever you provide as the first argument
