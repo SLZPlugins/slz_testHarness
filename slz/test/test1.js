@@ -17,12 +17,12 @@ slz_Test("Test A", () => {
             let scenarioLevelVar = 'first before each case'
             return [
                 beforeEachCase(() => {
-                    TestRunner.bar()
+                    
                     console.log(scenarioLevelVar)
                 }),
                 afterEachCase(() => {
                     console.log('scenario 1 after each case')
-                    TestRunner.bar()
+                    
                 }),
                 testCase("Should add successfully when space available", () => {
                     rmAssert.assertTrue(10 > 1)
@@ -40,12 +40,12 @@ slz_Test("Test A", () => {
         scenario("Testing Subtract from Storage", () => {
             return [
                 beforeEachCase(() => {
-                    TestRunner.bar()
+                    
                     console.log('scenario 2 before each case')
                 }),
                 afterEachCase(() => {
                     console.log('scenario 2 after each case')
-                    TestRunner.bar()
+                    
                 }),
                 testCase("Should remove successfully when contents exist", () => {
                     console.log('test 2-1')
