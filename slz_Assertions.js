@@ -1,184 +1,183 @@
 class rmAssert {
     'use strict'
+    static reporter = slz_Reporter;
     constructor() {
         throw new Error('This is a static class')
     }
 
     static assertTrue(expression) {
         let result = false;
-        //Create Report (should stamp itself with current Test title)
+        let report = this.reporter.createCaseReport()
+
         if (expression === true) {
-            //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
-            //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, true, expression)
         return result
 
     }
 
     static assertFalse(expression) {
         let result = false;
-        //Create Report (should stamp itself with current Test title)
+        let report = this.reporter.createCaseReport()
+
         if (expression === false) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
             
             //Finalize Report
+            report.reportCase(result, false, expression)
             return result
         }
     }
 
     static assertEquals(obj1, obj2) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(obj1, obj2)) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, obj1, obj2)
         return result
     }
 
     static assertNull(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(obj1, null)) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, null, obj1)
         return result
     }
 
     static assertNotNull(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(obj1, null)) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, "Not Null", expression)
         return result
     }
 
     static assertString(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(typeof obj1, "string")) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, 'string', typeof obj1)
         return result
     }
 
     static assertNumber(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(typeof obj1, "number")) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, 'number', typeof obj1)
         return result
     }
 
     static assertObject(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(typeof obj1, "object")) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, 'object', typeof obj1)
         return result
     }
 
     static assertBoolean(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(typeof obj1, "boolean")) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, 'boolean', typeof obj1)
         return result
     }
 
     static assertFunction(obj1) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(typeof obj1, "function")) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, 'function', typeof obj1)
         return result
     }
 
     static assertInstance(obj1, obj2) {
         let result = false;
-        //Create Report
+        let report = this.reporter.createCaseReport()
+
         if (this.areEquivalent(obj1 instanceof obj2, true)) {
             //Report pass
             result = true
         } else {
-            //Finalize Report
-            return result
             //Report fail
             result = false
         }
         //Finalize Report
+        report.reportCase(result, obj2, obj1 instanceof obj2)
         return result
     }
 

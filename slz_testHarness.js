@@ -46,7 +46,7 @@ TestRunner.runTest = function (list) {
 
         for (let j = 0; j < length2; j++) {
             this.caseHeading = testCases[j].title
-            slz_Reporter.createCaseReport() //<-- CaseReports would normally be called by the Assertion library
+
             this.beforeEachCase()
 
             testCases[j].testCaseRunner();
@@ -193,7 +193,9 @@ class ScenarioReport extends Report {
     caseReports = [];
 
     addReport(heading) {
-        this.caseReports.push(new CaseReport(heading))
+        let report = new CaseReport(heading);
+        this.caseReports.push(report)
+        return report
     }
 
 }
@@ -202,7 +204,10 @@ class TestReport extends Report {
     scenarioReports = [];
 
     addReport(heading) {
-        this.scenarioReports.push(new ScenarioReport(heading))
+        let report = new ScenarioReport(heading)
+        
+        this.scenarioReports.push(report)
+        return report
     }
 }
 
@@ -214,15 +219,24 @@ class slz_Reporter {
 
 
     static createTestReport() {
-        this.testReports.push(new TestReport(TestRunner.testHeading))
+        let report = new TestReport(TestRunner.testHeading)
+        
+        this.testReports.push(report)
+        return report
     }
 
     static createScenarioReport() {
-        this.getCurrentTestReport().addReport(TestRunner.scenarioHeading)
+        let currentTestReport = this.getCurrentTestReport();
+        let scenarioReport = currentTestReport.addReport(TestRunner.scenarioHeading)
+
+        return scenarioReport;
     }
 
     static createCaseReport() {
-        this.getCurrentScenarioReport().addReport(TestRunner.caseHeading)
+        let currentScenarioReport = this.getCurrentScenarioReport()
+        let caseReport = currentScenarioReport.addReport(TestRunner.caseHeading)
+
+        return caseReport
     }
 
     static getCurrentTestReport() {
