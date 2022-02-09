@@ -1,6 +1,8 @@
 let TestRunner = {
     tests: [],
-    loaded: require('js/plugins/someOther.js')
+    testHeading: "",
+    scenarioHeading: "",
+    caseHeading: ""
 }
 
 TestRunner.bar = function () {
@@ -37,12 +39,18 @@ TestRunner.runTest = function (list) {
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
-        console.log(`Scenario: ${scenario.title}`)
+
+        this.scenarioHeading = scenario.title
+        slz_Reporter.createScenarioReport()
         this.beforeEachScenario()
+
         for (let j = 0; j < length2; j++) {
-            console.log(`Test Case: ${testCases[j].title}`)
+            this.caseHeading = testCases[j].title
+            slz_Reporter.createCaseReport() //<-- CaseReports would normally be called by the Assertion library
             this.beforeEachCase()
+
             testCases[j].testCaseRunner();
+
             this.afterEachCase()
         }
         this.resetCaseHooks()
@@ -56,12 +64,15 @@ TestRunner.runAllTests = function () {
 
     for (let i = 0; i < length; i++) {
         this.resetHooks()
-        console.log(`RUNNING TEST: ${list[i].title}`)
+        this.testHeading = list[i].title
+        slz_Reporter.createTestReport()
         this.runTest(list[i].loadTestData())
     }
 }
 
-TestRunner.loadTestFile = function(url, onDone, onError) {
+
+
+TestRunner.loadTestFile = function (url, onDone, onError) {
     if (!onDone) onDone = function () { };
     if (!onError) onError = function () { };
     var xhr = new XMLHttpRequest();
@@ -88,7 +99,7 @@ TestRunner.loadTestFile = function(url, onDone, onError) {
     }
 }
 
-TestRunner.loadAssertionLibrary = function(){
+TestRunner.loadAssertionLibrary = function () {
     this.loadTestFile('js/plugins/slz_Assertions.js')
 }
 
@@ -137,3 +148,96 @@ function afterEachScenario(f) {
 }
 
 
+class Reporter {
+    pass;
+    expected;
+    actual;
+    constructor(heading) {
+        this.heading = heading;
+    }
+
+    report(pass, expected, actual) {
+        this.pass = pass;
+        this.expected = expected;
+        this.actual = actual;
+    }
+
+    print() {
+        let status = this.pass ? "PASSED" : "FAILED"
+        return ``
+    }
+}
+
+
+class Report {
+    heading;
+    constructor(heading) {
+        this.heading = heading
+    }
+}
+
+class CaseReport extends Report {
+    pass;
+    expected;
+    actual;
+
+    reportCase(pass, expected, actual) {
+        this.pass = pass;
+        this.expected = expected;
+        this.actual = actual;
+    }
+
+}
+
+class ScenarioReport extends Report {
+    caseReports = [];
+
+    addReport(heading) {
+        this.caseReports.push(new CaseReport(heading))
+    }
+
+}
+
+class TestReport extends Report {
+    scenarioReports = [];
+
+    addReport(heading) {
+        this.scenarioReports.push(new ScenarioReport(heading))
+    }
+}
+
+class slz_Reporter {
+    static testReports = [];
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+
+    static createTestReport() {
+        this.testReports.push(new TestReport(TestRunner.testHeading))
+    }
+
+    static createScenarioReport() {
+        this.getCurrentTestReport().addReport(TestRunner.scenarioHeading)
+    }
+
+    static createCaseReport() {
+        this.getCurrentScenarioReport().addReport(TestRunner.caseHeading)
+    }
+
+    static getCurrentTestReport() {
+        return this.testReports[this.testReports.length - 1]
+    }
+
+    static getCurrentScenarioReport() {
+        let currentTestReport = this.getCurrentTestReport();
+
+        return currentTestReport.scenarioReports[currentTestReport.scenarioReports.length - 1]
+    }
+
+    static getCurrentCaseReport() {
+        let currentScenarioReport = this.getCurrentScenarioReport();
+
+        return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
+    }
+}
