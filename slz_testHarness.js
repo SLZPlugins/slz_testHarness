@@ -1,12 +1,57 @@
+/*:
+* @plugindesc SLZ standardplayer-Lanzy JS Test Harness for MV and MZ
+* @author slz
+* @target MZ
+*
+* @param testDirectory
+* @type text
+* @text Main Test Directory
+* @default js/slz/test
+* 
+* @param assertions
+* @type struct<Addon>[]
+* @text Assertion Engines
+* @desc Add any assertion engines you'll use in your tests
+* 
+* @param plugins
+* @type struct<Addon>[]
+* @text Harness Plugins
+* @desc Add any plugins you want to be available in the harness
+*
+*/
+
+/*~struct~Addon:
+ * 
+ * @param filePath
+ * @type text
+ * @text File Path
+ * @desc File location for this Assertion Engine. Must have .js extension.
+ * @default js/slz/
+ * 
+ * @param name
+ * @type text
+ * @text Name
+ * @desc Name of your choosing. This will be used at the beginning of your test files to enable non-default engines.
+ * 
+ * @param default
+ * @type boolean
+ * @text Always Load
+ * @desc If true, this engine will be available by default in all of your tests. See help for more details.
+ * @default true
+ * 
+ */
+
+var Imported = Imported || {};
+Imported.slz = 'slz_TestHarness';
+
+var slz = slz || { params: {} };
+slz.testHarness = slz.testHarness || {};
+
 let TestRunner = {
     tests: [],
     testHeading: "",
     scenarioHeading: "",
     caseHeading: ""
-}
-
-TestRunner.bar = function () {
-    console.log('===============================')
 }
 
 TestRunner.resetHooks = function () {
@@ -72,36 +117,9 @@ TestRunner.runAllTests = function () {
 
 
 
-TestRunner.loadTestFile = function (url, onDone, onError) {
-    if (!onDone) onDone = function () { };
-    if (!onError) onError = function () { };
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4) {
-            if (xhr.status == 200 || xhr.status == 0) {
-                try {
-                    eval(xhr.responseText);
-                } catch (e) {
-                    onError(e);
-                    return;
-                }
-                onDone();
-            } else {
-                onError(xhr.status);
-            }
-        }
-    }.bind(this);
-    try {
-        xhr.open("GET", url, true);
-        xhr.send();
-    } catch (e) {
-        onError(e);
-    }
-}
 
-TestRunner.loadAssertionLibrary = function () {
-    this.loadTestFile('js/plugins/slz_Assertions.js')
-}
+
+
 
 function slz_Test(title, getTestData) {
     let obj = {
@@ -205,7 +223,7 @@ class TestReport extends Report {
 
     addReport(heading) {
         let report = new ScenarioReport(heading)
-        
+
         this.scenarioReports.push(report)
         return report
     }
@@ -220,7 +238,7 @@ class slz_Reporter {
 
     static createTestReport() {
         let report = new TestReport(TestRunner.testHeading)
-        
+
         this.testReports.push(report)
         return report
     }
@@ -254,4 +272,172 @@ class slz_Reporter {
 
         return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
     }
+}
+
+
+
+class TestFileManager {
+    static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
+    static tests = [];
+    static _testsLoaded = [];
+    static plugins = [];
+    static _pluginsLoaded = [];
+    static assertions = [];
+    static _assertionsLoaded = [];
+
+
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static onLoadCb(index, pointerName) {
+        return () => {
+            let fm = TestFileManager
+            fm[`_${pointerName}Loaded`][index] = true;
+            fm[`${pointerName}Loaded`]()
+        }
+    }
+
+    static onErrorCb(error) {
+
+    }
+
+    static loadAssertionEngines() {
+        let assertionsLoaded = [];
+        let assertions = [];
+        let list = this.locations.assertions;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            assertionsLoaded.push(false)
+            assertions.push(list[i].name)
+            this.loadFile(list[i].filePath, this.onLoadCb(i, 'assertions'), this.onErrorCb)
+        }
+
+        this._assertionsLoaded = assertionsLoaded
+        this.assertions = assertions
+
+    }
+
+    static loadPlugins(){
+        let pluginsLoaded = [];
+        let plugins = [];
+        let list = this.locations.plugins;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            pluginsLoaded.push(false)
+            plugins.push(list[i].name)
+            this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
+        }
+
+        this._pluginsLoaded = pluginsLoaded
+        this.plugins = plugins
+    }
+
+    static loadTests(){
+        let testsLoaded = [];
+        let tests = [];
+        let list = this.findFilesInDir(true, this.locations.testDirectory)
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            testsLoaded.push(false)
+            tests.push(list[i].name)
+            this.loadFile(list[i], this.onLoadCb(i, 'tests'), this.onErrorCb)
+        }
+
+        this._testsLoaded = testsLoaded
+        this.tests = tests
+    }
+
+ 
+
+    static findFilesInDir(includeDir, currentPath) {
+        let fs = require('fs');
+        let currentFile;
+        let stats;
+        let files;
+        let result = [];
+        let i = 0;
+        
+        files = fs.readdirSync(currentPath);
+        for (i in files) {
+           currentFile = currentPath + '/' + files[i];
+           stats = fs.statSync(currentFile);
+           if (stats.isFile()) {
+            result.push(currentFile);
+           }
+          else if (stats.isDirectory() && includeDir) {
+                 result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
+               }
+               
+                
+         }
+         return result
+       }
+
+    static assertionsLoaded() {
+        let list = this._assertionsLoaded;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            if (!list[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    static pluginsLoaded() {
+        let list = this._pluginsLoaded;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            if (!list[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    static testsLoaded() {
+        let list = this._testsLoaded;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            if (!list[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    static loadFile(filePath, success) {
+        console.log(filePath)
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200 || xhr.status == 0) {
+                    try {
+                        eval(xhr.responseText);
+                    } catch (e) {
+                        TestFileManager.onErrorCb(e);
+                        return;
+                    }
+                    success();
+                } else {
+                    TestFileManager.onErrorCb(xhr.status);
+                }
+            }
+        }.bind(this);
+
+        try {
+            xhr.open("GET", filePath, true);
+            xhr.send();
+        } catch (e) {
+            TestFileManager.onErrorCb(e);
+        }
+    }
+
 }
