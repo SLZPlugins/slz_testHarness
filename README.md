@@ -28,7 +28,7 @@ Add the following lines:
 slz_Test("Testing so-and-so", ()=>{
 
 })
----
+----
 
 All of your test code will go inside of this block. The test will be 
 titled in the Report with whatever you provide as the first argument
