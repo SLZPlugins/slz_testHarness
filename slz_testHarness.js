@@ -1,6 +1,8 @@
 let TestRunner = {
     tests: [],
-    loaded: require('js/plugins/someOther.js')
+    testHeading: "",
+    scenarioHeading: "",
+    caseHeading: ""
 }
 
 TestRunner.bar = function () {
@@ -37,12 +39,18 @@ TestRunner.runTest = function (list) {
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
-        console.log(`Scenario: ${scenario.title}`)
+
+        this.scenarioHeading = scenario.title
+        slz_Reporter.createScenarioReport()
         this.beforeEachScenario()
+
         for (let j = 0; j < length2; j++) {
-            console.log(`Test Case: ${testCases[j].title}`)
+            this.caseHeading = testCases[j].title
+
             this.beforeEachCase()
+
             testCases[j].testCaseRunner();
+
             this.afterEachCase()
         }
         this.resetCaseHooks()
@@ -56,12 +64,15 @@ TestRunner.runAllTests = function () {
 
     for (let i = 0; i < length; i++) {
         this.resetHooks()
-        console.log(`RUNNING TEST: ${list[i].title}`)
+        this.testHeading = list[i].title
+        slz_Reporter.createTestReport()
         this.runTest(list[i].loadTestData())
     }
 }
 
-TestRunner.loadTestFile = function(url, onDone, onError) {
+
+
+TestRunner.loadTestFile = function (url, onDone, onError) {
     if (!onDone) onDone = function () { };
     if (!onError) onError = function () { };
     var xhr = new XMLHttpRequest();
@@ -88,7 +99,7 @@ TestRunner.loadTestFile = function(url, onDone, onError) {
     }
 }
 
-TestRunner.loadAssertionLibrary = function(){
+TestRunner.loadAssertionLibrary = function () {
     this.loadTestFile('js/plugins/slz_Assertions.js')
 }
 
@@ -137,3 +148,110 @@ function afterEachScenario(f) {
 }
 
 
+class Reporter {
+    pass;
+    expected;
+    actual;
+    constructor(heading) {
+        this.heading = heading;
+    }
+
+    report(pass, expected, actual) {
+        this.pass = pass;
+        this.expected = expected;
+        this.actual = actual;
+    }
+
+    print() {
+        let status = this.pass ? "PASSED" : "FAILED"
+        return ``
+    }
+}
+
+
+class Report {
+    heading;
+    constructor(heading) {
+        this.heading = heading
+    }
+}
+
+class CaseReport extends Report {
+    pass;
+    expected;
+    actual;
+
+    reportCase(pass, expected, actual) {
+        this.pass = pass;
+        this.expected = expected;
+        this.actual = actual;
+    }
+
+}
+
+class ScenarioReport extends Report {
+    caseReports = [];
+
+    addReport(heading) {
+        let report = new CaseReport(heading);
+        this.caseReports.push(report)
+        return report
+    }
+
+}
+
+class TestReport extends Report {
+    scenarioReports = [];
+
+    addReport(heading) {
+        let report = new ScenarioReport(heading)
+        
+        this.scenarioReports.push(report)
+        return report
+    }
+}
+
+class slz_Reporter {
+    static testReports = [];
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+
+    static createTestReport() {
+        let report = new TestReport(TestRunner.testHeading)
+        
+        this.testReports.push(report)
+        return report
+    }
+
+    static createScenarioReport() {
+        let currentTestReport = this.getCurrentTestReport();
+        let scenarioReport = currentTestReport.addReport(TestRunner.scenarioHeading)
+
+        return scenarioReport;
+    }
+
+    static createCaseReport() {
+        let currentScenarioReport = this.getCurrentScenarioReport()
+        let caseReport = currentScenarioReport.addReport(TestRunner.caseHeading)
+
+        return caseReport
+    }
+
+    static getCurrentTestReport() {
+        return this.testReports[this.testReports.length - 1]
+    }
+
+    static getCurrentScenarioReport() {
+        let currentTestReport = this.getCurrentTestReport();
+
+        return currentTestReport.scenarioReports[currentTestReport.scenarioReports.length - 1]
+    }
+
+    static getCurrentCaseReport() {
+        let currentScenarioReport = this.getCurrentScenarioReport();
+
+        return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
+    }
+}

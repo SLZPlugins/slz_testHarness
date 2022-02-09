@@ -25,7 +25,7 @@ slz_Test("Test A", () => {
                     TestRunner.bar()
                 }),
                 testCase("Should add successfully when space available", () => {
-                    console.log('test 1-1')
+                    rmAssert.assertTrue(10 > 1)
                 }),
                 testCase("Should update Individual Entry", () => {
                     console.log('test 1-2')
