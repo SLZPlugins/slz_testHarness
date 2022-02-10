@@ -2,36 +2,22 @@ slz_Test("Test A", () => {
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [
-        beforeAll(() => {
-            console.log(testLevelVar)
-        }),
-        beforeEachScenario(() => {
-            console.log('Staring Scenario')
-        }),
-
-        afterEachScenario(() => {
-            console.log('Ending Scenario')
-        }),
         scenario("Testing Add to Storage", () => {
             //can scope varibles to individual scenario
             let scenarioLevelVar = 'first before each case'
             return [
-                beforeEachCase(() => {
-                    
-                    console.log(scenarioLevelVar)
-                }),
-                afterEachCase(() => {
-                    console.log('scenario 1 after each case')
-                    
-                }),
-                testCase("Should add successfully when space available", () => {
+                testCase("Check Length is greater than one", () => {
                     rmAssert.assertTrue(10 > 1)
                 }),
-                testCase("Should update Individual Entry", () => {
-                    console.log('test 1-2')
+                testCase("Amount in inventory should be decremented", () => {
+                    let expected = 10;
+                    let actual = 9;
+                    rmAssert.assertEquals(expected, actual)
                 }),
-                testCase("Should update Individual Entry", () => {
-                    console.log('test 1-3')
+                testCase("Should be an instance of Scene_Battle", () => {
+                    let expected = SceneManager._scene;
+                    let actual = Scene_Battle
+                    rmAssert.assertInstance(expected, actual)
                 })
             ]
         }),
@@ -39,19 +25,11 @@ slz_Test("Test A", () => {
 
         scenario("Testing Subtract from Storage", () => {
             return [
-                beforeEachCase(() => {
-                    
-                    console.log('scenario 2 before each case')
-                }),
-                afterEachCase(() => {
-                    console.log('scenario 2 after each case')
-                    
-                }),
                 testCase("Should remove successfully when contents exist", () => {
-                    console.log('test 2-1')
+                    rmAssert.assertNotEquals(10, 10)
                 }),
-                testCase("Should fail removal when player can't receive quantity", () => {
-                    console.log('test 2-2')
+                testCase("Some prop should be null", () => {
+                    rmAssert.assertNull(null)
                 })
             ]
         }),
