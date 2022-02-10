@@ -53,6 +53,22 @@ class rmAssert {
         return result
     }
 
+    static assertNotEquals(obj1, obj2){
+        let result = false;
+        let report = this.reporter.createCaseReport()
+
+        if (!this.areEquivalent(obj1, obj2)) {
+            //Report pass
+            result = true
+        } else {
+            //Report fail
+            result = false
+        }
+        //Finalize Report
+        report.reportCase(result, true, result)
+        return result
+    }
+
     static assertNull(obj1) {
         let result = false;
         let report = this.reporter.createCaseReport()
@@ -177,7 +193,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, obj2, obj1 instanceof obj2)
+        report.reportCase(result, true, false)
         return result
     }
 
