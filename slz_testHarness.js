@@ -458,6 +458,23 @@ class TestFileManager {
 
     }
 
+    static loadPlugins() {
+        let pluginsLoaded = [];
+        let plugins = [];
+        let list = this.locations.plugins;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            pluginsLoaded.push(false)
+            plugins.push(list[i].name)
+            this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
+        }
+
+        this._pluginsLoaded = pluginsLoaded
+        this.plugins = plugins
+
+    }
+
     static loadPlugins(){
         let pluginsLoaded = [];
         let plugins = [];
