@@ -33,10 +33,10 @@
  * @text Name
  * @desc Name of your choosing. This will be used at the beginning of your test files to enable non-default engines.
  * 
- * @param default
+ * @param enabled
  * @type boolean
- * @text Always Load
- * @desc If true, this engine will be available by default in all of your tests. See help for more details.
+ * @text Enabled
+ * @desc Toggle on or off.
  * @default true
  * 
  */
@@ -465,6 +465,9 @@ class TestFileManager {
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
+            if(!list[i].enabled)
+                continue 
+                
             pluginsLoaded.push(false)
             plugins.push(list[i].name)
             this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
