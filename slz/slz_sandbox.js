@@ -9,8 +9,8 @@ class Sandbox {
         return spy
     }
 
-    stub(obj, args) {
-        let stub = new slz_Stub(obj, args)
+    stub(obj, func) {
+        let stub = new slz_Stub(obj, func)
 
         this.stubs.push(stub)
         return stub
@@ -18,6 +18,7 @@ class Sandbox {
 
     reset() {
         this.spies.forEach(a => a.reset())
+        this.stubs.forEach(a => a.reset())
     }
 }
 
@@ -214,7 +215,8 @@ class slz_Stub {
             console.log(name)
             name = `MOCK${name}`;
         }
-
+        if(!this.cbs.contains(name))
+            this.cbs.push(name)
         this.stub[name] = f
     }
     
@@ -235,6 +237,15 @@ class slz_Stub {
         if(this.stub[name]){
             this.stub[name]()
         }
+    }
+
+    reset(){
+        this.cbs.forEach(a => {
+            console.log(a)
+            this.stub[a] = undefined
+        })
+
+        this.cbs = [];
     }
 
 }
