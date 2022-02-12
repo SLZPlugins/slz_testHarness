@@ -79,6 +79,9 @@ TestRunner.currentTest = function () {
 TestRunner.runTest = function (list) {
     let length = list.length;
     //list is array of Scenarios for individual test file
+    if (TestFileManager._abortingLoad)
+        return
+
     this.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
@@ -88,6 +91,9 @@ TestRunner.runTest = function (list) {
         this.scenarioHeading = scenario.title
         slz_Reporter.createScenarioReport()
         this.beforeEachScenario()
+
+        if (TestFileManager._abortingLoad)
+            return
 
         for (let j = 0; j < length2; j++) {
             this.caseHeading = testCases[j].title
@@ -101,6 +107,21 @@ TestRunner.runTest = function (list) {
         this.resetCaseHooks()
         this.afterEachScenario()
     }
+}
+
+TestRunner.readAllTests = function () {
+    let list = this.tests;
+    let length = list.length;
+    let engines = [];
+    let plugins = [];
+
+    for (let i = 0; i < length; i++) {
+        engines = engines.concat(list[i].engines)
+        plugins = plugins.concat(list[i].plugins)
+    }
+
+    TestFileManager.requiredEn = TestFileManager.requiredPlugins.concat(plugins)
+    TestFileManager.requiredPlugins = TestFileManager.requiredPlugins.concat(plugins)
 }
 
 TestRunner.runAllTests = function () {
@@ -124,18 +145,34 @@ TestRunner.runAllTests = function () {
 
 
 
-function slz_Test(title, getTestData) {
+function slz_Test(title, engines, plugins, getTestData) {
     let obj = {
         title: title,
+        engines: engines,
+        plugins: plugins,
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
     }
 
     TestRunner.tests.push(obj)
 }
 
-function requiresPlugin(name) {
-    console.log(TestFileManager.hasRequiredPlugin(name))
+function requiresEngine(name) {
+    TestFileManager.hasRequiredEngine(name)
 }
+
+function requiresPlugin(name) {
+    TestFileManager.hasRequiredPlugin(name)
+}
+
+function addPreScript(f) {
+    TestFileManager.preLoadFunctions.push(f)
+}
+
+function addPostScript(f) {
+    TestFileManager.postLoadFunctions.push(f)
+}
+
+
 
 function scenario(title, getScenarioData) {
     return {
@@ -418,6 +455,13 @@ class slz_Reporter {
     }
 }
 
+class UserException {
+    constructor(message) {
+        this.message = message;
+        this.name = 'UserException';
+    }
+}
+
 
 
 class TestFileManager {
@@ -429,7 +473,11 @@ class TestFileManager {
     static assertions = [];
     static _assertionsLoaded = [];
     static singleComponentLoad = false;
+    static requiredAssertions = [];
     static requiredPlugins = [];
+    static preLoadFunctions = [];
+    static postLoadFunctions = [];
+    static _abortingLoad = false;
 
 
     constructor() {
@@ -440,16 +488,30 @@ class TestFileManager {
         let list = this.plugins;
         let length = list.length
 
+        try {
+            if (!length || !list.contains(name)) {
+                throw new UserException(`Missing Plugin: ${name}`)
 
-        if (!length || !list.contains(name)) {
-            console.log(`Missing Plugin: ${name}`)
-            throw new Error(`Missing Plugin: ${name}`)
-
+            }
+        } catch (e) {
+            console.log(e.message)
+            this.abort()
         }
+    }
+
+    static hasRequiredEngine(name) {
+        let list = this.assertions;
+        let length = list.length
 
 
-
-
+        try {
+            if (!length || !list.contains(name)) {
+                throw new UserException(`Missing Assertion: ${name}`)
+            }
+        } catch (e) {
+            console.log(e.message)
+            this.abort()
+        }
     }
 
     static onLoadCb(index, pointerName) {
@@ -470,9 +532,13 @@ class TestFileManager {
         console.log(error)
     }
 
+    static abort() {
+        this._abortingLoad = true;
+    }
+
     static load() {
         this.requiredPlugins = [];
-        this.loadAssertionEngines()
+        this.loadTests()
     }
 
     static loadAssertionEngines() {
@@ -497,15 +563,17 @@ class TestFileManager {
     }
 
     static loadPlugins() {
+        if (this._abortingLoad)
+            return this._abortingLoad = false;
+
         let pluginsLoaded = [];
         let plugins = [];
         let list = this.locations.plugins.filter(a => a.enabled);
         let length = list.length;
-        console.log(length)
+
         if (!length)
             this.on_pluginsLoaded()
 
-        console.log('found a plugin')
         for (let i = 0; i < length; i++) {
             if (!list[i].enabled)
                 continue
@@ -523,6 +591,9 @@ class TestFileManager {
 
 
     static loadTests() {
+        if (this._abortingLoad)
+            return this._abortingLoad = false;
+
         let testsLoaded = [];
         let tests = [];
         let list = this.findFilesInDir(true, this.locations.testDirectory)
@@ -603,7 +674,6 @@ class TestFileManager {
     }
 
     static on_assertionsLoaded() {
-        console.log('ready to load plugins')
         if (this.singleComponentLoad)
             return
 
@@ -612,33 +682,28 @@ class TestFileManager {
     }
 
     static on_pluginsLoaded() {
-        console.log('ready to load tests')
         if (this.singleComponentLoad)
             return
 
-        
-            this.loadTests()
+
+        TestRunner.runAllTests()
+        slz_Reporter.printAllReports()
+
+        this.unload()
+        this._abortingLoad = false;
     }
 
     static on_testsLoaded() {
         if (this.singleComponentLoad)
             return
 
-        if (this.requiredPlugins.length > this.plugins.length) {
-            console.log(`Missing Plugin: ${list[i]}`)
-            throw new Error(`Missing Plugin: ${list[i]}`)
 
-        }
-
-        console.log('all yo shit loaded')
-        TestRunner.runAllTests()
-        slz_Reporter.printAllReports()
-        this.unload()
+        this.loadAssertionEngines()
     }
 
 
     static loadFile(filePath, success) {
-        console.log(filePath)
+
         let xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
