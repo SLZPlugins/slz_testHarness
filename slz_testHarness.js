@@ -154,6 +154,11 @@ TestRunner.currentTest = function () {
     return this.tests[length - 1]
 }
 
+TestRunner.run = function(){
+    slz_TestLoader.runOnComplete = true;
+    slz_TestLoader.load();
+}
+
 TestRunner.runTest = function (list) {
     let length = list.length;
     //list is array of Scenarios for individual test file
@@ -206,6 +211,13 @@ TestRunner.runAllTests = function () {
     let list = this.tests;
     let length = list.length;
 
+    if (TestFileManager.missingDependency.length) {
+        return TestFileManager.missingDependencyError()
+    }
+
+    if (slz_TestLoader.loading)
+        return;
+
     slz_Reporter.resetResults()
 
     for (let i = 0; i < length; i++) {
@@ -214,6 +226,9 @@ TestRunner.runAllTests = function () {
         slz_Reporter.createTestReport()
         this.runTest(list[i].loadTestData())
     }
+  
+    slz_Reporter.printAllReports()
+    TestFileManager.unload()
 
 }
 
@@ -459,12 +474,21 @@ class slz_Reporter {
 
 class TestFileManager {
     static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
-
+    static missingDependency = [];
     constructor() {
         throw new Error('This is a static class')
     }
 
 
+    static missingDependencyError() {
+        let str = "";
+        console.log('Cannot run tests, missing the following dependencies: ')
+
+        this.missingDependency.forEach(a => str += `${a}\n`)
+
+        console.log(str)
+        console.log('Please include these files in the slz_testHarness plugin params in RPG Maker')
+    }
 
 
     static hasAllTestEngines() {
@@ -563,12 +587,17 @@ class TestFileManager {
 
 
     static unload() {
-        let list = this.plugins.concat(this.assertions)
+        let locations = this.locations;
+        let list = locations.plugins.concat(locations.assertions)
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            window[list[i]] = undefined
-            delete window[list[i]]
+            if(!list[i].enabled)
+                continue
+
+            console.log(list[i])
+            window[list[i].name] = undefined
+            delete window[list[i].name]
         }
     }
 
@@ -583,6 +612,8 @@ class slz_TestLoader {
     static index = 0;
     static preLoaded = false;
     static manifest = [];
+    static loading = false;
+    static runOnComplete = false;
 
     constructor() {
         throw new Error("This is a static class");
@@ -612,7 +643,11 @@ class slz_TestLoader {
         let length = list.length;
         let manifest = [];
 
+
         for (let i = 0; i < length; i++) {
+            if(!list[i].enabled)
+                continue 
+
             manifest.push(
                 () => {
                     this.loadFile(list[i].filePath, this.continue)
@@ -654,6 +689,7 @@ class slz_TestLoader {
         if (!this.manifest.length)
             return
 
+        this.loading = true;
         this.manifest.shift()()
     }
 
@@ -662,6 +698,7 @@ class slz_TestLoader {
             return this.preLoad()
         }
 
+        this.loading = true;
         this.manifest = this.createFullManifest()
 
         if (this.manifest.length)
@@ -677,11 +714,19 @@ class slz_TestLoader {
             this.preLoaded = true;
             this.load()
         } else { //if you are finished loading altogether
-
+            this.loading = false;
             this.preLoaded = false;
+            this.onComplete()
         }
     }
 
+    static onComplete(){
+        if(!this.runOnComplete)
+            return
+
+        this.runOnComplete = false;
+        TestRunner.runAllTests();
+    }
 
     static fm() {
         return TestFileManager
