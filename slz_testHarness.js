@@ -79,6 +79,9 @@ TestRunner.currentTest = function () {
 TestRunner.runTest = function (list) {
     let length = list.length;
     //list is array of Scenarios for individual test file
+    if (TestFileManager._abortingLoad)
+        return
+
     this.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
@@ -88,6 +91,9 @@ TestRunner.runTest = function (list) {
         this.scenarioHeading = scenario.title
         slz_Reporter.createScenarioReport()
         this.beforeEachScenario()
+
+        if (TestFileManager._abortingLoad)
+            return
 
         for (let j = 0; j < length2; j++) {
             this.caseHeading = testCases[j].title
@@ -101,6 +107,21 @@ TestRunner.runTest = function (list) {
         this.resetCaseHooks()
         this.afterEachScenario()
     }
+}
+
+TestRunner.readAllTests = function () {
+    let list = this.tests;
+    let length = list.length;
+    let engines = [];
+    let plugins = [];
+
+    for (let i = 0; i < length; i++) {
+        engines = engines.concat(list[i].engines)
+        plugins = plugins.concat(list[i].plugins)
+    }
+
+    TestFileManager.requiredEn = TestFileManager.requiredPlugins.concat(plugins)
+    TestFileManager.requiredPlugins = TestFileManager.requiredPlugins.concat(plugins)
 }
 
 TestRunner.runAllTests = function () {
@@ -124,18 +145,34 @@ TestRunner.runAllTests = function () {
 
 
 
-function slz_Test(title, getTestData) {
+function slz_Test(title, engines, plugins, getTestData) {
     let obj = {
         title: title,
+        engines: engines,
+        plugins: plugins,
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
     }
 
     TestRunner.tests.push(obj)
 }
 
-function requiresPlugin(name) {
-    console.log(TestFileManager.hasRequiredPlugin(name))
+function requiresEngine(name) {
+    TestFileManager.hasRequiredEngine(name)
 }
+
+function requiresPlugin(name) {
+    TestFileManager.hasRequiredPlugin(name)
+}
+
+function addPreScript(f) {
+    TestFileManager.preLoadFunctions.push(f)
+}
+
+function addPostScript(f) {
+    TestFileManager.postLoadFunctions.push(f)
+}
+
+
 
 function scenario(title, getScenarioData) {
     return {
@@ -418,6 +455,13 @@ class slz_Reporter {
     }
 }
 
+class UserException {
+    constructor(message) {
+        this.message = message;
+        this.name = 'UserException';
+    }
+}
+
 
 
 class TestFileManager {
@@ -428,27 +472,80 @@ class TestFileManager {
     static _pluginsLoaded = [];
     static assertions = [];
     static _assertionsLoaded = [];
-    static singleComponentLoad = false;
-    static requiredPlugins = [];
+    static missingDependency = [];
+
+
+
 
 
     constructor() {
         throw new Error('This is a static class')
     }
 
+
+
+
+    static hasAllTestEngines() {
+        let list = TestRunner.tests;
+        let length = list.length;
+        let test,
+            engines
+
+        for (let i = 0; i < length; i++) {
+            test = list[i]
+            engines = test.engines;
+            for (let j = 0; j < engines.length; j++) {
+                this.hasRequiredDependency(engines[i])
+            }
+        }
+    }
+
+    static hasAllTestPlugins() {
+        let list = TestRunner.tests;
+        let length = list.length;
+        let test,
+            plugins
+
+        for (let i = 0; i < length; i++) {
+            test = list[i]
+            plugins = test.plugins;
+            for (let j = 0; j < plugins.length; j++) {
+                this.hasRequiredDependency(plugins[i])
+            }
+        }
+    }
+
+    static hasAllTestDependencies(){
+        this.missingDependency = [];
+        this.hasAllTestEngines()
+        this.hasAllTestPlugins()
+
+        return this.missingDependency.length == 0;
+    }
+
+    static hasRequiredEngine(name){
+        return this.hasRequiredDependency(name, this.locations.plugins)
+    }
+
     static hasRequiredPlugin(name) {
-        let list = this.plugins;
+        return this.hasRequiredDependency(name, this.locations.plugins)
+    }
+
+    static hasRequiredDependency(name, location) {
+        let list = location;
         let length = list.length
 
+        name = name.toLocaleLowerCase()
 
-        if (!length || !list.contains(name)) {
-            console.log(`Missing Plugin: ${name}`)
-            throw new Error(`Missing Plugin: ${name}`)
-
+        for (let i = 0; i < length; i++) {
+            if (list[i].name.toLocaleLowerCase() === name && list[i].enabled)
+                return true
         }
 
-
-
+        if(!this.missingDependency.contains(name)){
+            this.missingDependency.push(name)
+        }
+        return false
 
     }
 
@@ -470,12 +567,14 @@ class TestFileManager {
         console.log(error)
     }
 
+
+
     static load() {
         this.requiredPlugins = [];
-        this.loadAssertionEngines()
+        this.loadTests()
     }
 
-    static loadAssertionEngines() {
+    static readAssertionEngines() {
         let assertionsLoaded = [];
         let assertions = [];
         let list = this.locations.assertions.filter(a => a.enabled);
@@ -496,16 +595,18 @@ class TestFileManager {
 
     }
 
-    static loadPlugins() {
+    static readPlugins() {
+        if (this._abortingLoad)
+            return this._abortingLoad = false;
+
         let pluginsLoaded = [];
         let plugins = [];
         let list = this.locations.plugins.filter(a => a.enabled);
         let length = list.length;
-        console.log(length)
+
         if (!length)
             this.on_pluginsLoaded()
 
-        console.log('found a plugin')
         for (let i = 0; i < length; i++) {
             if (!list[i].enabled)
                 continue
@@ -522,7 +623,7 @@ class TestFileManager {
 
 
 
-    static loadTests() {
+    static readTests() {
         let testsLoaded = [];
         let tests = [];
         let list = this.findFilesInDir(true, this.locations.testDirectory)
@@ -566,79 +667,137 @@ class TestFileManager {
         return result
     }
 
-    static assertionsLoaded() {
-        let list = this._assertionsLoaded;
+
+
+
+
+
+
+
+    static unload() {
+        let list = this.plugins.concat(this.assertions)
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
+            window[list[i]] = undefined
+            delete window[list[i]]
         }
-
-        return true;
     }
 
-    static pluginsLoaded() {
-        let list = this._pluginsLoaded;
-        let length = list.length;
+}
 
-        for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
+
+class slz_TestLoader {
+    static index = 0;
+    static preLoaded = false;
+    static manifest = [];
+
+    constructor() {
+        throw new Error("This is a static class");
+    }
+
+
+    static createManifest(location) {
+        //Here, I need to examine TestFileManager, and the loaded tests, 
+        //to determine if the plugins and engines mentioned in the tests
+        //are currently in the project, enabled or disabled
+        //If everything passes, move on to loading plugins and asertions
+        let fm = this.fm();
+        let proceed = fm.hasAllTestDependencies()
+
+        if(proceed){
+
         }
-
-        return true;
-    }
-
-    static testsLoaded() {
-        let list = this._testsLoaded;
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
-        }
-
-        return true;
-    }
-
-    static on_assertionsLoaded() {
-        console.log('ready to load plugins')
-        if (this.singleComponentLoad)
-            return
-
-
-        this.loadPlugins()
-    }
-
-    static on_pluginsLoaded() {
-        console.log('ready to load tests')
-        if (this.singleComponentLoad)
-            return
-
         
-            this.loadTests()
+
     }
 
-    static on_testsLoaded() {
-        if (this.singleComponentLoad)
-            return
+    static createFullManifest() {
+        let fm = this.fm();
+        let engines = fm.locations.assertions;
+        let plugins = fm.locations.plugins;
+        let list = engines.concat(plugins)
+        let length = list.length;
+        let manifest = [];
 
-        if (this.requiredPlugins.length > this.plugins.length) {
-            console.log(`Missing Plugin: ${list[i]}`)
-            throw new Error(`Missing Plugin: ${list[i]}`)
-
+        for(let i = 0; i < length; i++){
+            manifest.push(
+                ()=>{
+                    this.loadFile(list[i].filePath, this.continue)
+                }
+            )
         }
 
-        console.log('all yo shit loaded')
-        TestRunner.runAllTests()
-        slz_Reporter.printAllReports()
-        this.unload()
+        return manifest
+    }
+
+    static createTestManifest() {
+        let fm = this.fm()
+        let list = fm.findFilesInDir(true, fm.locations.testDirectory)
+        let loadFunctions = []
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            loadFunctions.push(
+                () => {
+                    this.loadFile(list[i], this.continue)
+                }
+            )
+        }
+
+        return loadFunctions
+    }
+
+    static createEngineManifest() {
+        return this.createManifest(this.fm().locations.assertions)
+    }
+
+    static createPluginManifest() {
+        return this.createManifest(this.fm().locations.plugins)
+    }
+
+    static preLoad() {
+        this.manifest = this.createTestManifest()
+
+        if (!this.manifest.length)
+            return
+
+        this.manifest.shift()()
+    }
+
+    static load() {
+        if (!this.preLoaded) {
+            return this.preLoad()
+        }
+
+        this.manifest = this.createFullManifest()
+
+        if (this.manifest.length)
+            this.manifest.shift()()
+
+    }
+
+    static continue() {
+
+        if (this.manifest.length) { //if there is more to run
+            this.manifest.shift()()
+        } else if (!this.preLoaded) { //if you are finished preloading
+            this.preLoaded = true;
+            this.load()
+        } else { //if you are finished loading altogether
+
+            this.preLoaded = false;
+        }
+    }
+
+
+    static fm() {
+        return TestFileManager
     }
 
 
     static loadFile(filePath, success) {
-        console.log(filePath)
+
         let xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
@@ -649,7 +808,7 @@ class TestFileManager {
                         TestFileManager.onErrorCb(e);
                         return;
                     }
-                    success();
+                    success.call(this);
                 } else {
                     TestFileManager.onErrorCb(xhr.status);
                 }
@@ -663,15 +822,4 @@ class TestFileManager {
             TestFileManager.onErrorCb(e);
         }
     }
-
-    static unload() {
-        let list = this.plugins.concat(this.assertions)
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            window[list[i]] = undefined
-            delete window[list[i]]
-        }
-    }
-
 }

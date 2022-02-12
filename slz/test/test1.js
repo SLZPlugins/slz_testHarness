@@ -1,5 +1,11 @@
-slz_Test("Test A", () => {
-    requiresPlugin('slz_sandbox')
+slz_Test("Test A", 
+//Assertion Engines
+['rmAssert'], 
+//Plugins
+['slz_sandbox'],
+//Tests
+() => {
+    
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [
