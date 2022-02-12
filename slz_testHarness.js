@@ -197,7 +197,7 @@ class Report {
         this.heading = heading
     }
 
-    printHeading(){
+    printHeading() {
         this.readout += `${this.heading}\n`
     }
 }
@@ -225,8 +225,8 @@ class ScenarioReport extends Report {
         return report
     }
 
-    printCaseReport(report){
-        if(report.pass){
+    printCaseReport(report) {
+        if (report.pass) {
             this.readout += `PASS: ${report.heading}\n\n`
             this.passes++
         } else {
@@ -238,7 +238,7 @@ class ScenarioReport extends Report {
         }
     }
 
-    printAllCaseReports(){
+    printAllCaseReports() {
         this.pass = true;
         this.caseReports.forEach(a => {
             this.printCaseReport(a)
@@ -261,8 +261,8 @@ class TestReport extends Report {
         return report
     }
 
-    printScenarioReport(report){
-        if(report.pass){
+    printScenarioReport(report) {
+        if (report.pass) {
             this.scenarioPasses++
         } else {
             this.scenarioFails++
@@ -274,16 +274,16 @@ class TestReport extends Report {
         return report.readout
     }
 
-    printAllScenarioReports(report){
+    printAllScenarioReports(report) {
         let list = this.scenarioReports;
         let length = list.length;
         let title = ""
         let results = ""
         let readout = "";
-        
+
         this.pass = true;
 
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             results = this.printScenarioReport(list[i])
             title = `| SCENARIO: ${list[i].heading} --${list[i].pass ? 'PASS' : 'FAIL'}\n`
             readout += "------------------------------------------------\n"
@@ -296,7 +296,7 @@ class TestReport extends Report {
         }
         this.readout += `Scenarios Passed: ${this.scenarioPasses}    Scenarios Failed: ${this.scenarioFails}\n\n`
         this.readout += readout;
-        
+
         return this.readout
     }
 }
@@ -349,13 +349,13 @@ class slz_Reporter {
         return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
     }
 
-    static printAllReports(){
+    static printAllReports() {
         let list = this.testReports;
         let length = list.length;
         let summary;
         let header = "\n\n==================Test Results ==================\n"
         let readout = ""
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             readout += list[i].heading + "\n\n";
             readout += list[i].printAllScenarioReports()
             this.scenarioPasses += list[i].scenarioPasses
@@ -369,13 +369,13 @@ class slz_Reporter {
         console.log(readout)
     }
 
-    static getTestPasses(){
+    static getTestPasses() {
         let list = this.testReports;
         let length = list.length;
         let pass = 0;
         let fail = 0;
-        for(let i = 0; i < length; i++){
-            if(list[i].pass){
+        for (let i = 0; i < length; i++) {
+            if (list[i].pass) {
                 pass++
             } else {
                 fail++
@@ -385,7 +385,7 @@ class slz_Reporter {
         return [pass, fail]
     }
 
-    static summary(){
+    static summary() {
         let str = "--Summary--\n";
         let sPass = this.scenarioPasses;
         let sFails = this.scenarioFails;
@@ -402,11 +402,11 @@ class slz_Reporter {
         str += `Tests:     ${tPercentage.toFixed(2).substr(2)}% (${tPassFail[0]}/${tPassFail[1]})\n`
         str += `Scenarios: ${sPercentage.toFixed(2).substr(2)}% (${sPass}/${sFails})\n`
         str += `Cases:     ${cPercentage.toFixed(2).substr(2)}% (${cPass}/${cFails})\n\n\n`
-        
+
         return str
     }
 
-    static resetResults(){
+    static resetResults() {
         this.scenarioFails = 0;
         this.scenarioPasses = 0;
         this.caseFails = 0;
@@ -424,23 +424,33 @@ class TestFileManager {
     static _pluginsLoaded = [];
     static assertions = [];
     static _assertionsLoaded = [];
+    static singleComponentLoad = false;
 
 
     constructor() {
         throw new Error('This is a static class')
     }
 
+    static getAssert(name) {
+        if (name && this.assertions.contains(name)) {
+            return this.assertions[this.assertions.indexOf(name)]
+        } else if (this.assertions.length) {
+            return this.assertions[0]
+        }
+
+        return false
+    }
 
     static onLoadCb(index, pointerName) {
         return () => {
             let fm = TestFileManager
             fm[`_${pointerName}Loaded`][index] = true;
-            if(fm[`${pointerName}Loaded`]()){
+            if (fm[`${pointerName}Loaded`]()) {
                 //if all of this type of file are loaded
                 fm[`on_${pointerName}Loaded`]()
             }
 
-            
+
         }
     }
 
@@ -449,7 +459,7 @@ class TestFileManager {
         console.log(error)
     }
 
-    static load(){
+    static load() {
         this.loadAssertionEngines()
     }
 
@@ -460,7 +470,7 @@ class TestFileManager {
         let length = list.length;
 
 
-        if(!length)
+        if (!length)
             this.loadPlugins()
 
         for (let i = 0; i < length; i++) {
@@ -480,13 +490,13 @@ class TestFileManager {
         let list = this.locations.plugins;
         let length = list.length;
 
-        if(!length)
+        if (!length)
             this.loadTests()
 
         for (let i = 0; i < length; i++) {
-            if(!list[i].enabled)
-                continue 
-                
+            if (!list[i].enabled)
+                continue
+
             pluginsLoaded.push(false)
             plugins.push(list[i].name)
             this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
@@ -497,9 +507,9 @@ class TestFileManager {
 
     }
 
-    
 
-    static loadTests(){
+
+    static loadTests() {
         let testsLoaded = [];
         let tests = [];
         let list = this.findFilesInDir(true, this.locations.testDirectory)
@@ -515,9 +525,9 @@ class TestFileManager {
         this.tests = tests
     }
 
- 
 
- 
+
+
 
     static findFilesInDir(includeDir, currentPath) {
         let fs = require('fs');
@@ -526,22 +536,22 @@ class TestFileManager {
         let files;
         let result = [];
         let i = 0;
-        
+
         files = fs.readdirSync(currentPath);
         for (i in files) {
-           currentFile = currentPath + '/' + files[i];
-           stats = fs.statSync(currentFile);
-           if (stats.isFile()) {
-            result.push(currentFile);
-           }
-          else if (stats.isDirectory() && includeDir) {
-                 result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
-               }
-               
-                
-         }
-         return result
-       }
+            currentFile = currentPath + '/' + files[i];
+            stats = fs.statSync(currentFile);
+            if (stats.isFile()) {
+                result.push(currentFile);
+            }
+            else if (stats.isDirectory() && includeDir) {
+                result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
+            }
+
+
+        }
+        return result
+    }
 
     static assertionsLoaded() {
         let list = this._assertionsLoaded;
@@ -579,23 +589,31 @@ class TestFileManager {
         return true;
     }
 
-    static on_assertionsLoaded(){
+    static on_assertionsLoaded() {
         console.log('ready to load plugins')
+        if (this.singleComponentLoad)
+            return
+
         this.loadPlugins()
     }
 
-    static on_testsLoaded(){
+    static on_testsLoaded() {
+        if (this.singleComponentLoad)
+            return
         console.log('all yo shit loaded')
         TestRunner.runAllTests()
         slz_Reporter.printAllReports()
         this.unload()
     }
 
-    static on_pluginsLoaded(){
+    static on_pluginsLoaded() {
         console.log('ready to load tests')
+        if (this.singleComponentLoad)
+            return
+            
         this.loadTests()
     }
-    
+
 
     static loadFile(filePath, success) {
         console.log(filePath)
@@ -624,14 +642,14 @@ class TestFileManager {
         }
     }
 
-    static unload(){
+    static unload() {
         let list = this.plugins.concat(this.assertions)
         let length = list.length;
 
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             window[list[i]] = undefined
             delete window[list[i]]
         }
-    }   
+    }
 
 }

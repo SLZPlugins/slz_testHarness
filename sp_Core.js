@@ -518,3 +518,54 @@
         return (x === Object(x));
     };
 
+    /*
+        The below methods, unWrapStringOrNumber and areEquivalent are taken, unaltered, from
+        https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+        submitted by user 
+        https://stackoverflow.com/users/42921/eamon-nerbonne
+    */
+        standardPlayer.sp_Core.unwrapStringOrNumber = function(obj) {
+            return (obj instanceof Number || obj instanceof String
+                ? obj.valueOf()
+                : obj);
+        }
+        standardPlayer.sp_Core.areEquivalent = function(a, b) {
+            a = this.unwrapStringOrNumber(a);
+            b = this.unwrapStringOrNumber(b);
+            if (a === b) return true; //e.g. a and b both null
+            if (a === null || b === null || typeof (a) !== typeof (b)) return false;
+            if (a instanceof Date)
+                return b instanceof Date && a.valueOf() === b.valueOf();
+            if (typeof (a) !== "object")
+                return a == b; //for boolean, number, string, xml
+    
+            var newA = (a.areEquivalent_Eq_91_2_34 === undefined),
+                newB = (b.areEquivalent_Eq_91_2_34 === undefined);
+            try {
+                if (newA) a.areEquivalent_Eq_91_2_34 = [];
+                else if (a.areEquivalent_Eq_91_2_34.some(
+                    function (other) { return other === b; })) return true;
+                if (newB) b.areEquivalent_Eq_91_2_34 = [];
+                else if (b.areEquivalent_Eq_91_2_34.some(
+                    function (other) { return other === a; })) return true;
+                a.areEquivalent_Eq_91_2_34.push(b);
+                b.areEquivalent_Eq_91_2_34.push(a);
+    
+                var tmp = {};
+                for (var prop in a)
+                    if (prop != "areEquivalent_Eq_91_2_34")
+                        tmp[prop] = null;
+                for (var prop in b)
+                    if (prop != "areEquivalent_Eq_91_2_34")
+                        tmp[prop] = null;
+    
+                for (var prop in tmp)
+                    if (!this.areEquivalent(a[prop], b[prop]))
+                        return false;
+                return true;
+            } finally {
+                if (newA) delete a.areEquivalent_Eq_91_2_34;
+                if (newB) delete b.areEquivalent_Eq_91_2_34;
+            }
+        }
+
