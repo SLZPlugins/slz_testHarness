@@ -2,7 +2,7 @@ slz_Test("Test A",
 //Assertion Engines
 ['rmAssert'], 
 //Plugins
-['slz_sandbox'],
+[],
 //Tests
 () => {
     
