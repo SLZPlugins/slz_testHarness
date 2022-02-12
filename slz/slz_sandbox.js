@@ -250,8 +250,7 @@ class slz_Stub {
 
     reset() {
         this.mockedFunctions.forEach(a => {
-            console.log(a)
-            this.stub[a] = undefined
+            a = undefined
         })
 
         this.mockedFunctions = [];
