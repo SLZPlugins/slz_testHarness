@@ -1,4 +1,5 @@
 slz_Test("Test A", () => {
+    requiresPlugin('slz_sandbox')
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [

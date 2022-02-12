@@ -200,6 +200,6 @@ class rmAssert {
 
 console.log('****Loading slz_Assertions to rmAssert class****')
 
-// window.rmAssert = rmAssert
+window.rmAssert = rmAssert
 
 

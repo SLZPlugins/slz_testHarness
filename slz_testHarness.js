@@ -133,6 +133,10 @@ function slz_Test(title, getTestData) {
     TestRunner.tests.push(obj)
 }
 
+function requiresPlugin(name) {
+    console.log(TestFileManager.hasRequiredPlugin(name))
+}
+
 function scenario(title, getScenarioData) {
     return {
         title: title,
@@ -425,20 +429,27 @@ class TestFileManager {
     static assertions = [];
     static _assertionsLoaded = [];
     static singleComponentLoad = false;
+    static requiredPlugins = [];
 
 
     constructor() {
         throw new Error('This is a static class')
     }
 
-    static getAssert(name) {
-        if (name && this.assertions.contains(name)) {
-            return this.assertions[this.assertions.indexOf(name)]
-        } else if (this.assertions.length) {
-            return this.assertions[0]
+    static hasRequiredPlugin(name) {
+        let list = this.plugins;
+        let length = list.length
+
+
+        if (!length || !list.contains(name)) {
+            console.log(`Missing Plugin: ${name}`)
+            throw new Error(`Missing Plugin: ${name}`)
+
         }
 
-        return false
+
+
+
     }
 
     static onLoadCb(index, pointerName) {
@@ -460,18 +471,19 @@ class TestFileManager {
     }
 
     static load() {
+        this.requiredPlugins = [];
         this.loadAssertionEngines()
     }
 
     static loadAssertionEngines() {
         let assertionsLoaded = [];
         let assertions = [];
-        let list = this.locations.assertions;
+        let list = this.locations.assertions.filter(a => a.enabled);
         let length = list.length;
 
 
         if (!length)
-            this.loadPlugins()
+            this.on_assertionsLoaded()
 
         for (let i = 0; i < length; i++) {
             assertionsLoaded.push(false)
@@ -487,12 +499,13 @@ class TestFileManager {
     static loadPlugins() {
         let pluginsLoaded = [];
         let plugins = [];
-        let list = this.locations.plugins;
+        let list = this.locations.plugins.filter(a => a.enabled);
         let length = list.length;
-
+        console.log(length)
         if (!length)
-            this.loadTests()
+            this.on_pluginsLoaded()
 
+        console.log('found a plugin')
         for (let i = 0; i < length; i++) {
             if (!list[i].enabled)
                 continue
@@ -594,24 +607,33 @@ class TestFileManager {
         if (this.singleComponentLoad)
             return
 
-        this.loadPlugins()
-    }
 
-    static on_testsLoaded() {
-        if (this.singleComponentLoad)
-            return
-        console.log('all yo shit loaded')
-        TestRunner.runAllTests()
-        slz_Reporter.printAllReports()
-        this.unload()
+        this.loadPlugins()
     }
 
     static on_pluginsLoaded() {
         console.log('ready to load tests')
         if (this.singleComponentLoad)
             return
-            
-        this.loadTests()
+
+        
+            this.loadTests()
+    }
+
+    static on_testsLoaded() {
+        if (this.singleComponentLoad)
+            return
+
+        if (this.requiredPlugins.length > this.plugins.length) {
+            console.log(`Missing Plugin: ${list[i]}`)
+            throw new Error(`Missing Plugin: ${list[i]}`)
+
+        }
+
+        console.log('all yo shit loaded')
+        TestRunner.runAllTests()
+        slz_Reporter.printAllReports()
+        this.unload()
     }
 
 
