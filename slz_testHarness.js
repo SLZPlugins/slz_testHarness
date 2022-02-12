@@ -472,46 +472,81 @@ class TestFileManager {
     static _pluginsLoaded = [];
     static assertions = [];
     static _assertionsLoaded = [];
-    static singleComponentLoad = false;
-    static requiredAssertions = [];
-    static requiredPlugins = [];
-    static preLoadFunctions = [];
-    static postLoadFunctions = [];
-    static _abortingLoad = false;
+    static missingDependency = [];
+
+
+
 
 
     constructor() {
         throw new Error('This is a static class')
     }
 
-    static hasRequiredPlugin(name) {
-        let list = this.plugins;
-        let length = list.length
 
-        try {
-            if (!length || !list.contains(name)) {
-                throw new UserException(`Missing Plugin: ${name}`)
 
+
+    static hasAllTestEngines() {
+        let list = TestRunner.tests;
+        let length = list.length;
+        let test,
+            engines
+
+        for (let i = 0; i < length; i++) {
+            test = list[i]
+            engines = test.engines;
+            for (let j = 0; j < engines.length; j++) {
+                this.hasRequiredDependency(engines[i])
             }
-        } catch (e) {
-            console.log(e.message)
-            this.abort()
         }
     }
 
-    static hasRequiredEngine(name) {
-        let list = this.assertions;
+    static hasAllTestPlugins() {
+        let list = TestRunner.tests;
+        let length = list.length;
+        let test,
+            plugins
+
+        for (let i = 0; i < length; i++) {
+            test = list[i]
+            plugins = test.plugins;
+            for (let j = 0; j < plugins.length; j++) {
+                this.hasRequiredDependency(plugins[i])
+            }
+        }
+    }
+
+    static hasAllTestDependencies(){
+        this.missingDependency = [];
+        this.hasAllTestEngines()
+        this.hasAllTestPlugins()
+
+        return this.missingDependency.length == 0;
+    }
+
+    static hasRequiredEngine(name){
+        return this.hasRequiredDependency(name, this.locations.plugins)
+    }
+
+    static hasRequiredPlugin(name) {
+        return this.hasRequiredDependency(name, this.locations.plugins)
+    }
+
+    static hasRequiredDependency(name, location) {
+        let list = location;
         let length = list.length
 
+        name = name.toLocaleLowerCase()
 
-        try {
-            if (!length || !list.contains(name)) {
-                throw new UserException(`Missing Assertion: ${name}`)
-            }
-        } catch (e) {
-            console.log(e.message)
-            this.abort()
+        for (let i = 0; i < length; i++) {
+            if (list[i].name.toLocaleLowerCase() === name && list[i].enabled)
+                return true
         }
+
+        if(!this.missingDependency.contains(name)){
+            this.missingDependency.push(name)
+        }
+        return false
+
     }
 
     static onLoadCb(index, pointerName) {
@@ -532,16 +567,14 @@ class TestFileManager {
         console.log(error)
     }
 
-    static abort() {
-        this._abortingLoad = true;
-    }
+
 
     static load() {
         this.requiredPlugins = [];
         this.loadTests()
     }
 
-    static loadAssertionEngines() {
+    static readAssertionEngines() {
         let assertionsLoaded = [];
         let assertions = [];
         let list = this.locations.assertions.filter(a => a.enabled);
@@ -562,7 +595,7 @@ class TestFileManager {
 
     }
 
-    static loadPlugins() {
+    static readPlugins() {
         if (this._abortingLoad)
             return this._abortingLoad = false;
 
@@ -590,10 +623,7 @@ class TestFileManager {
 
 
 
-    static loadTests() {
-        if (this._abortingLoad)
-            return this._abortingLoad = false;
-
+    static readTests() {
         let testsLoaded = [];
         let tests = [];
         let list = this.findFilesInDir(true, this.locations.testDirectory)
@@ -637,68 +667,132 @@ class TestFileManager {
         return result
     }
 
-    static assertionsLoaded() {
-        let list = this._assertionsLoaded;
+
+
+
+
+
+
+
+    static unload() {
+        let list = this.plugins.concat(this.assertions)
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
+            window[list[i]] = undefined
+            delete window[list[i]]
         }
-
-        return true;
     }
 
-    static pluginsLoaded() {
-        let list = this._pluginsLoaded;
+}
+
+
+class slz_TestLoader {
+    static index = 0;
+    static preLoaded = false;
+    static manifest = [];
+
+    constructor() {
+        throw new Error("This is a static class");
+    }
+
+
+    static createManifest(location) {
+        //Here, I need to examine TestFileManager, and the loaded tests, 
+        //to determine if the plugins and engines mentioned in the tests
+        //are currently in the project, enabled or disabled
+        //If everything passes, move on to loading plugins and asertions
+        let fm = this.fm();
+        let proceed = fm.hasAllTestDependencies()
+
+        if(proceed){
+
+        }
+        
+
+    }
+
+    static createFullManifest() {
+        let fm = this.fm();
+        let engines = fm.locations.assertions;
+        let plugins = fm.locations.plugins;
+        let list = engines.concat(plugins)
+        let length = list.length;
+        let manifest = [];
+
+        for(let i = 0; i < length; i++){
+            manifest.push(
+                ()=>{
+                    this.loadFile(list[i].filePath, this.continue)
+                }
+            )
+        }
+
+        return manifest
+    }
+
+    static createTestManifest() {
+        let fm = this.fm()
+        let list = fm.findFilesInDir(true, fm.locations.testDirectory)
+        let loadFunctions = []
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
+            loadFunctions.push(
+                () => {
+                    this.loadFile(list[i], this.continue)
+                }
+            )
         }
 
-        return true;
+        return loadFunctions
     }
 
-    static testsLoaded() {
-        let list = this._testsLoaded;
-        let length = list.length;
+    static createEngineManifest() {
+        return this.createManifest(this.fm().locations.assertions)
+    }
 
-        for (let i = 0; i < length; i++) {
-            if (!list[i])
-                return false;
+    static createPluginManifest() {
+        return this.createManifest(this.fm().locations.plugins)
+    }
+
+    static preLoad() {
+        this.manifest = this.createTestManifest()
+
+        if (!this.manifest.length)
+            return
+
+        this.manifest.shift()()
+    }
+
+    static load() {
+        if (!this.preLoaded) {
+            return this.preLoad()
         }
 
-        return true;
+        this.manifest = this.createFullManifest()
+
+        if (this.manifest.length)
+            this.manifest.shift()()
+
     }
 
-    static on_assertionsLoaded() {
-        if (this.singleComponentLoad)
-            return
+    static continue() {
 
+        if (this.manifest.length) { //if there is more to run
+            this.manifest.shift()()
+        } else if (!this.preLoaded) { //if you are finished preloading
+            this.preLoaded = true;
+            this.load()
+        } else { //if you are finished loading altogether
 
-        this.loadPlugins()
+            this.preLoaded = false;
+        }
     }
 
-    static on_pluginsLoaded() {
-        if (this.singleComponentLoad)
-            return
 
-
-        TestRunner.runAllTests()
-        slz_Reporter.printAllReports()
-
-        this.unload()
-        this._abortingLoad = false;
-    }
-
-    static on_testsLoaded() {
-        if (this.singleComponentLoad)
-            return
-
-
-        this.loadAssertionEngines()
+    static fm() {
+        return TestFileManager
     }
 
 
@@ -714,7 +808,7 @@ class TestFileManager {
                         TestFileManager.onErrorCb(e);
                         return;
                     }
-                    success();
+                    success.call(this);
                 } else {
                     TestFileManager.onErrorCb(xhr.status);
                 }
@@ -728,15 +822,4 @@ class TestFileManager {
             TestFileManager.onErrorCb(e);
         }
     }
-
-    static unload() {
-        let list = this.plugins.concat(this.assertions)
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            window[list[i]] = undefined
-            delete window[list[i]]
-        }
-    }
-
 }
