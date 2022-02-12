@@ -429,16 +429,23 @@ class TestFileManager {
         throw new Error('This is a static class')
     }
 
+
     static onLoadCb(index, pointerName) {
         return () => {
             let fm = TestFileManager
             fm[`_${pointerName}Loaded`][index] = true;
-            fm[`${pointerName}Loaded`]()
+            if(fm[`${pointerName}Loaded`]()){
+                //if all of this type of file are loaded
+                fm[`on_${pointerName}Loaded`]()
+            }
+
+            
         }
     }
 
     static onErrorCb(error) {
-
+        console.log('error loading file')
+        console.log(error)
     }
 
     static loadAssertionEngines() {
@@ -446,6 +453,10 @@ class TestFileManager {
         let assertions = [];
         let list = this.locations.assertions;
         let length = list.length;
+
+
+        if(!length)
+            this.loadPlugins()
 
         for (let i = 0; i < length; i++) {
             assertionsLoaded.push(false)
@@ -464,6 +475,9 @@ class TestFileManager {
         let list = this.locations.plugins;
         let length = list.length;
 
+        if(!length)
+            this.loadTests()
+
         for (let i = 0; i < length; i++) {
             if(!list[i].enabled)
                 continue 
@@ -478,21 +492,7 @@ class TestFileManager {
 
     }
 
-    static loadPlugins(){
-        let pluginsLoaded = [];
-        let plugins = [];
-        let list = this.locations.plugins;
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            pluginsLoaded.push(false)
-            plugins.push(list[i].name)
-            this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
-        }
-
-        this._pluginsLoaded = pluginsLoaded
-        this.plugins = plugins
-    }
+    
 
     static loadTests(){
         let testsLoaded = [];
@@ -509,6 +509,8 @@ class TestFileManager {
         this._testsLoaded = testsLoaded
         this.tests = tests
     }
+
+ 
 
  
 
@@ -548,6 +550,22 @@ class TestFileManager {
         return true;
     }
 
+    static on_assertionsLoaded(){
+        console.log('ready to load plugins')
+        this.loadPlugins()
+    }
+
+    static on_testsLoaded(){
+        console.log('all yo shit loaded')
+        TestRunner.runAllTests()
+        slz_Reporter.printAllReports()
+    }
+
+    static on_pluginsLoaded(){
+        console.log('ready to load tests')
+        this.loadTests()
+    }
+
     static pluginsLoaded() {
         let list = this._pluginsLoaded;
         let length = list.length;
@@ -571,6 +589,8 @@ class TestFileManager {
 
         return true;
     }
+
+    
 
     static loadFile(filePath, success) {
         console.log(filePath)
