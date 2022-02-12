@@ -131,9 +131,10 @@ class slz_Spy {
 
 class slz_Stub {
     stub = {};
-    cbs = [];
+    mockedFunctions = [];
     onMethod;
     onArgs;
+    onMockedFunction;
 
     constructor(obj, func) {
         this.obj = obj;
@@ -149,7 +150,7 @@ class slz_Stub {
             this.stubObject()
     }
 
-    stubObject(){
+    stubObject() {
         this.stubAllProps()
         this.stubAllFunctions()
     }
@@ -174,10 +175,10 @@ class slz_Stub {
         let funcNames = this.getAllFunctionNames()
         let length = funcNames.length;
 
-        for(let i = 0; i < length; i++){
-            stub[funcNames[i]] = (...args)=>{this.mockFunction.call(this, funcNames[i], args)}
+        for (let i = 0; i < length; i++) {
+            stub[funcNames[i]] = (...args) => { this.mockFunction.call(this, funcNames[i], args) }
         }
-        
+
     }
 
     getAllFunctionNames() {
@@ -196,59 +197,123 @@ class slz_Stub {
         this.stub[this.func] = () => { }
     }
 
-    on(method){
+    getMockedFunction(name){
+        let list = this.mockedFunctions;
+        let length = list.length;
+        let newMockedFunction;
+
+        this.onArgs = []
+        for(let i = 0; i < length; i++){
+            if(list[i].methodName == name){
+                this.onMockedFunction = list[i]
+                return list[i]
+            }
+                
+        }
+
+        newMockedFunction = new Mock_Function(this, name)
+        this.mockedFunctions.push(newMockedFunction)
+        this.onMockedFunction = newMockedFunction
+        
+        return newMockedFunction;
+        
+    }
+
+    on(method) {
         this.onMethod = method
-        this.onArgs = [];
+        this.getMockedFunction(method)
         return this
     }
 
-    with(...args){
+    with(...args) {
         this.onArgs = args;
         return this
     }
 
-    then(f){
+    then(f) {
         let args = this.onArgs;
-        let name = args.length ? this.onMethod + JSON.stringify(args.reduce((a, b) => a.toString() + b.toString()).toString().replaceAll(" ","")) : this.onMethod
-        console.log(name)
-        if(name == this.onMethod){
-            console.log(name)
-            name = `MOCK${name}`;
-        }
-        if(!this.cbs.contains(name))
-            this.cbs.push(name)
-        this.stub[name] = f
-    }
-    
+        let mockedFunction = this.onMockedFunction;
 
-    mockFunction(thisFunctionName, args){
-        let name = thisFunctionName;
-        if(args && args.length){
-            name += JSON.stringify(args.reduce((a, b) => a.toString() + b.toString()).toString().replaceAll(" ",""))
-        } else {
-            if(!this.stub[`MOCK${name}`]){
-                console.log('runnning no args for first time')
-                this.stub[`MOCK${name}`] = ()=>{}
-            }
-
-            return this.stub[`MOCK${name}`]()
-        }
+        mockedFunction.addFunction(f, args)
         
-        if(this.stub[name]){
-            this.stub[name]()
-        }
     }
 
-    reset(){
-        this.cbs.forEach(a => {
+    mockFunction(thisFunctionName, args) {
+        let mock = this.getMockedFunction(thisFunctionName)
+        let f = mock.getRunnableFunction(args)[0]
+
+        
+        f.apply(this.stub, args)
+
+
+    }
+
+    reset() {
+        this.mockedFunctions.forEach(a => {
             console.log(a)
             this.stub[a] = undefined
         })
 
-        this.cbs = [];
+        this.mockedFunctions = [];
     }
 
 }
+
+class Mock_Function {
+    self;
+    methodName = "";
+    args = []
+    cb = []
+    noArgsFunction = () => { console.log(`No args function invoked on ${this.methodName}, but a no args mock function was never defined`) }
+
+    constructor(self, methodName) {
+        this.self = self;
+        this.methodName = methodName
+    }
+
+    addFunction(f, args) {
+        if (!args)
+            return this.noArgsFunction = f;
+
+        let storedFunction = this.hasTheseArgs(args);
+
+        if (storedFunction != false)
+            return this.cb[storedFunction[1]] = f
+
+        this.cb.push(f)
+        this.args.push(args)
+
+    }
+
+    hasTheseArgs(args) {
+        let list = this.args;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            console.log(list[i], args)
+            if (standardPlayer.sp_Core.areEquivalent(list[i], args)) {
+                return [this.cb[i], i]
+            }
+        }
+        return false;
+    }
+
+    getRunnableFunction(args) {
+        if (!args)
+            return this.noArgsFunction
+
+        let f = this.hasTheseArgs(args)
+
+        if (f !== false) {
+            return f
+        }
+
+        return [() => {}]
+
+    }
+}
+
+
 
 
 console.log('****Loading slz_Sandbox to slz_sandbox class****')

@@ -41,7 +41,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(obj1, obj2)) {
+        if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
             result = true
         } else {
@@ -57,7 +57,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (!this.areEquivalent(obj1, obj2)) {
+        if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
             result = true
         } else {
@@ -73,7 +73,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(obj1, null)) {
+        if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
             result = true
         } else {
@@ -89,7 +89,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(obj1, null)) {
+        if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
             result = true
         } else {
@@ -105,7 +105,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(typeof obj1, "string")) {
+        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
             //Report pass
             result = true
         } else {
@@ -121,7 +121,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(typeof obj1, "number")) {
+        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
             //Report pass
             result = true
         } else {
@@ -137,7 +137,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(typeof obj1, "object")) {
+        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
             //Report pass
             result = true
         } else {
@@ -153,7 +153,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(typeof obj1, "boolean")) {
+        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
             //Report pass
             result = true
         } else {
@@ -169,7 +169,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(typeof obj1, "function")) {
+        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
             //Report pass
             result = true
         } else {
@@ -185,7 +185,7 @@ class rmAssert {
         let result = false;
         let report = this.reporter.createCaseReport()
 
-        if (this.areEquivalent(obj1 instanceof obj2, true)) {
+        if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
             //Report pass
             result = true
         } else {
@@ -196,61 +196,6 @@ class rmAssert {
         report.reportCase(result, true, false)
         return result
     }
-
-
-
-    /*
-        The below methods, unWrapStringOrNumber and areEquivalent are taken, unaltered, from
-        https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
-        submitted by user 
-        https://stackoverflow.com/users/42921/eamon-nerbonne
-    */
-    static unwrapStringOrNumber(obj) {
-        return (obj instanceof Number || obj instanceof String
-            ? obj.valueOf()
-            : obj);
-    }
-    static areEquivalent(a, b) {
-        a = this.unwrapStringOrNumber(a);
-        b = this.unwrapStringOrNumber(b);
-        if (a === b) return true; //e.g. a and b both null
-        if (a === null || b === null || typeof (a) !== typeof (b)) return false;
-        if (a instanceof Date)
-            return b instanceof Date && a.valueOf() === b.valueOf();
-        if (typeof (a) !== "object")
-            return a == b; //for boolean, number, string, xml
-
-        var newA = (a.areEquivalent_Eq_91_2_34 === undefined),
-            newB = (b.areEquivalent_Eq_91_2_34 === undefined);
-        try {
-            if (newA) a.areEquivalent_Eq_91_2_34 = [];
-            else if (a.areEquivalent_Eq_91_2_34.some(
-                function (other) { return other === b; })) return true;
-            if (newB) b.areEquivalent_Eq_91_2_34 = [];
-            else if (b.areEquivalent_Eq_91_2_34.some(
-                function (other) { return other === a; })) return true;
-            a.areEquivalent_Eq_91_2_34.push(b);
-            b.areEquivalent_Eq_91_2_34.push(a);
-
-            var tmp = {};
-            for (var prop in a)
-                if (prop != "areEquivalent_Eq_91_2_34")
-                    tmp[prop] = null;
-            for (var prop in b)
-                if (prop != "areEquivalent_Eq_91_2_34")
-                    tmp[prop] = null;
-
-            for (var prop in tmp)
-                if (!this.areEquivalent(a[prop], b[prop]))
-                    return false;
-            return true;
-        } finally {
-            if (newA) delete a.areEquivalent_Eq_91_2_34;
-            if (newB) delete b.areEquivalent_Eq_91_2_34;
-        }
-    }
-
-
 }
 
 console.log('****Loading slz_Assertions to rmAssert class****')
