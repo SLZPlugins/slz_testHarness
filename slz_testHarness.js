@@ -47,6 +47,84 @@ Imported.slz = 'slz_TestHarness';
 var slz = slz || { params: {} };
 slz.testHarness = slz.testHarness || {};
 
+
+/* ///////////////////////////////////////////////////////////////////////////
+        Global Functions #global #scenario #describe
+   /////////////////////////////////////////////////////////////////////////// */
+
+
+
+function slz_Test(title, engines, plugins, getTestData) {
+    let obj = {
+        title: title,
+        engines: engines,
+        plugins: plugins,
+        loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
+    }
+
+    TestRunner.tests.push(obj)
+}
+
+function requiresEngine(name) {
+    TestFileManager.hasRequiredEngine(name)
+}
+
+function requiresPlugin(name) {
+    TestFileManager.hasRequiredPlugin(name)
+}
+
+function addPreScript(f) {
+    TestFileManager.preLoadFunctions.push(f)
+}
+
+function addPostScript(f) {
+    TestFileManager.postLoadFunctions.push(f)
+}
+
+
+
+function scenario(title, getScenarioData) {
+    return {
+        title: title,
+        getScenarioData: () => { return getScenarioData().filter(a => typeof a == 'object') }
+    }
+    // TestRunner.currentTest().scenarios.push(scn)
+}
+
+function testCase(title, testCaseRunner) {
+    return {
+        title: title,
+        testCaseRunner: testCaseRunner
+    }
+}
+
+function beforeAll(f) {
+    TestRunner.beforeAll = f;
+}
+
+function beforeEachCase(f) {
+    TestRunner.beforeEachCase = f
+}
+
+function afterEachCase(f) {
+    TestRunner.afterEachCase = f
+}
+
+function beforeEachScenario(f) {
+    TestRunner.beforeEachScenario = f
+}
+
+function afterEachScenario(f) {
+    TestRunner.afterEachScenario = f
+}
+
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        Test Runner  #Runner #tr
+   /////////////////////////////////////////////////////////////////////////// */
+
 let TestRunner = {
     tests: [],
     testHeading: "",
@@ -140,95 +218,9 @@ TestRunner.runAllTests = function () {
 }
 
 
-
-
-
-
-
-function slz_Test(title, engines, plugins, getTestData) {
-    let obj = {
-        title: title,
-        engines: engines,
-        plugins: plugins,
-        loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
-    }
-
-    TestRunner.tests.push(obj)
-}
-
-function requiresEngine(name) {
-    TestFileManager.hasRequiredEngine(name)
-}
-
-function requiresPlugin(name) {
-    TestFileManager.hasRequiredPlugin(name)
-}
-
-function addPreScript(f) {
-    TestFileManager.preLoadFunctions.push(f)
-}
-
-function addPostScript(f) {
-    TestFileManager.postLoadFunctions.push(f)
-}
-
-
-
-function scenario(title, getScenarioData) {
-    return {
-        title: title,
-        getScenarioData: () => { return getScenarioData().filter(a => typeof a == 'object') }
-    }
-    // TestRunner.currentTest().scenarios.push(scn)
-}
-
-function testCase(title, testCaseRunner) {
-    return {
-        title: title,
-        testCaseRunner: testCaseRunner
-    }
-}
-
-function beforeAll(f) {
-    TestRunner.beforeAll = f;
-}
-
-function beforeEachCase(f) {
-    TestRunner.beforeEachCase = f
-}
-
-function afterEachCase(f) {
-    TestRunner.afterEachCase = f
-}
-
-function beforeEachScenario(f) {
-    TestRunner.beforeEachScenario = f
-}
-
-function afterEachScenario(f) {
-    TestRunner.afterEachScenario = f
-}
-
-
-class Reporter {
-    pass;
-    expected;
-    actual;
-    constructor(heading) {
-        this.heading = heading;
-    }
-
-    report(pass, expected, actual) {
-        this.pass = pass;
-        this.expected = expected;
-        this.actual = actual;
-    }
-
-    print() {
-        let status = this.pass ? "PASSED" : "FAILED"
-        return ``
-    }
-}
+/* ///////////////////////////////////////////////////////////////////////////
+        Report Classes #report 
+   /////////////////////////////////////////////////////////////////////////// */
 
 
 class Report {
@@ -341,6 +333,10 @@ class TestReport extends Report {
         return this.readout
     }
 }
+
+/* ///////////////////////////////////////////////////////////////////////////
+        slz_Reporter Class #reporter #_report
+   /////////////////////////////////////////////////////////////////////////// */
 
 class slz_Reporter {
     static scenarioPasses = 0;
@@ -455,28 +451,14 @@ class slz_Reporter {
     }
 }
 
-class UserException {
-    constructor(message) {
-        this.message = message;
-        this.name = 'UserException';
-    }
-}
 
 
+/* ///////////////////////////////////////////////////////////////////////////
+        TestFileManager Class #FileManager #fm
+   /////////////////////////////////////////////////////////////////////////// */
 
 class TestFileManager {
     static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
-    static tests = [];
-    static _testsLoaded = [];
-    static plugins = [];
-    static _pluginsLoaded = [];
-    static assertions = [];
-    static _assertionsLoaded = [];
-    static missingDependency = [];
-
-
-
-
 
     constructor() {
         throw new Error('This is a static class')
@@ -515,7 +497,7 @@ class TestFileManager {
         }
     }
 
-    static hasAllTestDependencies(){
+    static hasAllTestDependencies() {
         this.missingDependency = [];
         this.hasAllTestEngines()
         this.hasAllTestPlugins()
@@ -523,7 +505,7 @@ class TestFileManager {
         return this.missingDependency.length == 0;
     }
 
-    static hasRequiredEngine(name){
+    static hasRequiredEngine(name) {
         return this.hasRequiredDependency(name, this.locations.plugins)
     }
 
@@ -542,105 +524,17 @@ class TestFileManager {
                 return true
         }
 
-        if(!this.missingDependency.contains(name)){
+        if (!this.missingDependency.contains(name)) {
             this.missingDependency.push(name)
         }
         return false
 
     }
 
-    static onLoadCb(index, pointerName) {
-        return () => {
-            let fm = TestFileManager
-            fm[`_${pointerName}Loaded`][index] = true;
-            if (fm[`${pointerName}Loaded`]()) {
-                //if all of this type of file are loaded
-                fm[`on_${pointerName}Loaded`]()
-            }
-
-
-        }
-    }
-
     static onErrorCb(error) {
         console.log('error loading file')
         console.log(error)
     }
-
-
-
-    static load() {
-        this.requiredPlugins = [];
-        this.loadTests()
-    }
-
-    static readAssertionEngines() {
-        let assertionsLoaded = [];
-        let assertions = [];
-        let list = this.locations.assertions.filter(a => a.enabled);
-        let length = list.length;
-
-
-        if (!length)
-            this.on_assertionsLoaded()
-
-        for (let i = 0; i < length; i++) {
-            assertionsLoaded.push(false)
-            assertions.push(list[i].name)
-            this.loadFile(list[i].filePath, this.onLoadCb(i, 'assertions'), this.onErrorCb)
-        }
-
-        this._assertionsLoaded = assertionsLoaded
-        this.assertions = assertions
-
-    }
-
-    static readPlugins() {
-        if (this._abortingLoad)
-            return this._abortingLoad = false;
-
-        let pluginsLoaded = [];
-        let plugins = [];
-        let list = this.locations.plugins.filter(a => a.enabled);
-        let length = list.length;
-
-        if (!length)
-            this.on_pluginsLoaded()
-
-        for (let i = 0; i < length; i++) {
-            if (!list[i].enabled)
-                continue
-
-            pluginsLoaded.push(false)
-            plugins.push(list[i].name)
-            this.loadFile(list[i].filePath, this.onLoadCb(i, 'plugins'), this.onErrorCb)
-        }
-
-        this._pluginsLoaded = pluginsLoaded
-        this.plugins = plugins
-
-    }
-
-
-
-    static readTests() {
-        let testsLoaded = [];
-        let tests = [];
-        let list = this.findFilesInDir(true, this.locations.testDirectory)
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            testsLoaded.push(false)
-            tests.push(list[i].name)
-            this.loadFile(list[i], this.onLoadCb(i, 'tests'), this.onErrorCb)
-        }
-
-        this._testsLoaded = testsLoaded
-        this.tests = tests
-    }
-
-
-
 
 
     static findFilesInDir(includeDir, currentPath) {
@@ -668,12 +562,6 @@ class TestFileManager {
     }
 
 
-
-
-
-
-
-
     static unload() {
         let list = this.plugins.concat(this.assertions)
         let length = list.length;
@@ -685,6 +573,10 @@ class TestFileManager {
     }
 
 }
+
+/* ///////////////////////////////////////////////////////////////////////////
+        slz_TestLoader Class #loader 
+   /////////////////////////////////////////////////////////////////////////// */
 
 
 class slz_TestLoader {
@@ -705,10 +597,10 @@ class slz_TestLoader {
         let fm = this.fm();
         let proceed = fm.hasAllTestDependencies()
 
-        if(proceed){
+        if (proceed) {
 
         }
-        
+
 
     }
 
@@ -720,9 +612,9 @@ class slz_TestLoader {
         let length = list.length;
         let manifest = [];
 
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             manifest.push(
-                ()=>{
+                () => {
                     this.loadFile(list[i].filePath, this.continue)
                 }
             )
