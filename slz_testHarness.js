@@ -226,7 +226,7 @@ TestRunner.runAllTests = function () {
         slz_Reporter.createTestReport()
         this.runTest(list[i].loadTestData())
     }
-
+  
     slz_Reporter.printAllReports()
     TestFileManager.unload()
 
