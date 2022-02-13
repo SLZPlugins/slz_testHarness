@@ -143,12 +143,12 @@ clear as your tests are organized.
 Inside of this arrow function, you can add as many scenarios as you'd like. 
 Multiple test scenarios must be separated by a comma.
 
-scenario("Test adding to storage", ()=>{
+    scenario("Test adding to storage", ()=>{
         return [
 
         ]
     }),
-scenario("Test removing from storage", ()=>{
+    scenario("Test removing from storage", ()=>{
         return [
 
         ]
