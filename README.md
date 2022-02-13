@@ -45,6 +45,7 @@ in the Engine section. The point is, you would normally find this name from the 
 future, this will likely not be necessary, and the name setting will be used for something else. For
 now, it is required.
 
+
 ### Plugins
 Plugins (when talking about this test harness) are considered add ons that aren't exclusively about
 asserting or validating tests. Truthfully, it should be ok to load an Engine or a Plugin as either
@@ -61,8 +62,9 @@ now, it is required.
 
 
 
-## Creating your own test
 
+
+## Creating your own test
 
 Add a .js file to the test folder. It can be anywhere within the test folder specified in the plugin
 params, including inside of an internal folder. 
@@ -143,12 +145,13 @@ clear as your tests are organized.
 Inside of this arrow function, you can add as many scenarios as you'd like. 
 Multiple test scenarios must be separated by a comma.
 
-scenario("Test adding to storage", ()=>{
+    scenario("Test adding to storage", ()=>{
         return [
 
         ]
     }),
-scenario("Test removing from storage", ()=>{
+    scenario("Test removing from storage", ()=>{
+
         return [
 
         ]
@@ -302,3 +305,4 @@ If you'd like to make one of your own engines or plugins available here on the r
 please comment and let us know, we'll get in touch. There are certain protocols, 
 and we'd prefer people not to push to this repo. However we'd be happy to do a 
 code review and set up a build-in to allow your add on to become available here!
+
