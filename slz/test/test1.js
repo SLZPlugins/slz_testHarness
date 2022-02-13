@@ -1,4 +1,6 @@
 slz_Test("Test A", 
+//RPG Maker Plugins,
+["sp_Core"],
 //Assertion Engines
 ['rmAssert'], 
 //Plugins

@@ -54,9 +54,10 @@ slz.testHarness = slz.testHarness || {};
 
 
 
-function slz_Test(title, engines, plugins, getTestData) {
+function slz_Test(title, rmPlugins, engines, plugins, getTestData) {
     let obj = {
         title: title,
+        rmPlugins: rmPlugins,
         engines: engines,
         plugins: plugins,
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
@@ -73,15 +74,10 @@ function requiresPlugin(name) {
     TestFileManager.hasRequiredPlugin(name)
 }
 
-function addPreScript(f) {
-    TestFileManager.preLoadFunctions.push(f)
+function requireRMPlugin(name) {
+    console.log('requiring rm pluign')
+    TestFileManager.hasRequiredRMPlugin(name)
 }
-
-function addPostScript(f) {
-    TestFileManager.postLoadFunctions.push(f)
-}
-
-
 
 function scenario(title, getScenarioData) {
     return {
@@ -154,7 +150,7 @@ TestRunner.currentTest = function () {
     return this.tests[length - 1]
 }
 
-TestRunner.run = function(){
+TestRunner.run = function () {
     slz_TestLoader.runOnComplete = true;
     slz_TestLoader.load();
 }
@@ -229,6 +225,7 @@ TestRunner.runAllTests = function () {
 
     slz_Reporter.printAllReports()
     TestFileManager.unload()
+    this.tests = [];
 
 }
 
@@ -490,23 +487,36 @@ class TestFileManager {
         console.log('Please include these files in the slz_testHarness plugin params in RPG Maker')
     }
 
+    static checkAllDependencies() {
+        this.missingDependency = [];
+        this.hasAllEngines()
+        this.hasAllPlugins()
+        this.hasAllRMPlugins()
 
-    static hasAllTestEngines() {
+        return this.missingDependency.length == 0;
+    }
+
+
+    static hasAllEngines() {
         let list = TestRunner.tests;
         let length = list.length;
         let test,
             engines
 
+        //go through each test
         for (let i = 0; i < length; i++) {
             test = list[i]
             engines = test.engines;
+
             for (let j = 0; j < engines.length; j++) {
-                this.hasRequiredDependency(engines[i])
+                this.hasRequiredEngine(engines[i])
             }
         }
     }
 
-    static hasAllTestPlugins() {
+
+
+    static hasAllPlugins() {
         let list = TestRunner.tests;
         let length = list.length;
         let test,
@@ -515,36 +525,43 @@ class TestFileManager {
         for (let i = 0; i < length; i++) {
             test = list[i]
             plugins = test.plugins;
+
             for (let j = 0; j < plugins.length; j++) {
-                this.hasRequiredDependency(plugins[i])
+                this.hasRequiredPlugin(plugins[i])
+            }
+
+
+        }
+    }
+
+    static hasAllRMPlugins() {
+        let list = TestRunner.tests;
+        let length = list.length;
+        let test,
+            rmPlugins
+
+
+        for (let i = 0; i < length; i++) {
+            test = list[i]
+            rmPlugins = test.rmPlugins;
+
+            for (let j = 0; j < rmPlugins.length; j++) {
+                this.hasRequiredRMPlugin(rmPlugins[i])
             }
         }
     }
 
-    static hasAllTestDependencies() {
-        this.missingDependency = [];
-        this.hasAllTestEngines()
-        this.hasAllTestPlugins()
 
-        return this.missingDependency.length == 0;
-    }
 
-    static hasRequiredEngine(name) {
-        return this.hasRequiredDependency(name, this.locations.plugins)
-    }
-
-    static hasRequiredPlugin(name) {
-        return this.hasRequiredDependency(name, this.locations.plugins)
-    }
-
-    static hasRequiredDependency(name, location) {
+    static hasRequiredDependency(name, location, checkEnabled) {
         let list = location;
         let length = list.length
-
+        let enabled;
         name = name.toLocaleLowerCase()
 
         for (let i = 0; i < length; i++) {
-            if (list[i].name.toLocaleLowerCase() === name && list[i].enabled)
+            enabled = checkEnabled ? list[i].enabled : true
+            if (list[i].name.toLocaleLowerCase() === name && enabled)
                 return true
         }
 
@@ -554,6 +571,20 @@ class TestFileManager {
         return false
 
     }
+
+
+    static hasRequiredEngine(name) {
+        return this.hasRequiredDependency(name, this.locations.assertions, true)
+    }
+
+    static hasRequiredPlugin(name) {
+        return this.hasRequiredDependency(name, this.locations.plugins, true)
+    }
+
+    static hasRequiredRMPlugin(name) {
+        return this.hasRequiredDependency(name, $plugins, false)
+    }
+
 
     static onErrorCb(error) {
         console.log('error loading file')
@@ -592,7 +623,7 @@ class TestFileManager {
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if(!list[i].enabled)
+            if (!list[i].enabled)
                 continue
 
             console.log(list[i])
@@ -620,20 +651,6 @@ class slz_TestLoader {
     }
 
 
-    static createManifest(location) {
-        //Here, I need to examine TestFileManager, and the loaded tests, 
-        //to determine if the plugins and engines mentioned in the tests
-        //are currently in the project, enabled or disabled
-        //If everything passes, move on to loading plugins and asertions
-        let fm = this.fm();
-        let proceed = fm.hasAllTestDependencies()
-
-        if (proceed) {
-
-        }
-
-
-    }
 
     static createFullManifest() {
         let fm = this.fm();
@@ -645,8 +662,8 @@ class slz_TestLoader {
 
 
         for (let i = 0; i < length; i++) {
-            if(!list[i].enabled)
-                continue 
+            if (!list[i].enabled)
+                continue
 
             manifest.push(
                 () => {
@@ -675,13 +692,6 @@ class slz_TestLoader {
         return loadFunctions
     }
 
-    static createEngineManifest() {
-        return this.createManifest(this.fm().locations.assertions)
-    }
-
-    static createPluginManifest() {
-        return this.createManifest(this.fm().locations.plugins)
-    }
 
     static preLoad() {
         this.manifest = this.createTestManifest()
@@ -720,8 +730,10 @@ class slz_TestLoader {
         }
     }
 
-    static onComplete(){
-        if(!this.runOnComplete)
+    static onComplete() {
+        this.fm().checkAllDependencies()
+
+        if (!this.runOnComplete)
             return
 
         this.runOnComplete = false;
