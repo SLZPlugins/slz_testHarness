@@ -592,3 +592,30 @@
             }
             return result
         }
+
+        standardPlayer.sp_Core.loadFile = function(filePath, success, onError) {
+
+            let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200 || xhr.status == 0) {
+                        try {
+                            eval(xhr.responseText);
+                        } catch (e) {
+                            onError(e);
+                            return;
+                        }
+                        success.call(this);
+                    } else {
+                        onError(xhr.status);
+                    }
+                }
+            }.bind(this);
+    
+            try {
+                xhr.open("GET", filePath, true);
+                xhr.send();
+            } catch (e) {
+                onError(e);
+            }
+        }
