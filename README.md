@@ -271,3 +271,35 @@ Here's an example of that completed test.
     })
 
 
+## Running Your Tests
+Running tests is simple.
+-Launch your game
+-Open the console (usually F12, might be different for you)
+-Enter the following
+
+    TestRunner.run()
+
+That's it. Your tests will run, and if your Engine provides reporting, a report
+of your results will print out to the console. 
+
+## Understanding the current state
+This harness allows you to set up tests to work with live situations. If you want t
+to test what happens when your character is standing at a certain place, 
+holding a certain item, on a certain map...you can do that. Just make it happen
+in the playtest, and anything you're referencing in your tests that will check
+the runtime environment. 
+
+For example, you can refer to $gamePlayer and $gameSystem in your tests, because
+the game must be running to launch the tests anyway. Of course, what you refer 
+to must be in scope. If you're testing a menu, you should be in that menu, etc. 
+
+## Reporting Bugs
+Please report any bugs in the comments here, and they will be addressed as soon 
+as possible!
+
+## Requesting an Engine or Test Plugin - Build-in
+If you'd like to make one of your own engines or plugins available here on the repo,
+please comment and let us know, we'll get in touch. There are certain protocols, 
+and we'd prefer people not to push to this repo. However we'd be happy to do a 
+code review and set up a build-in to allow your add on to become available here!
+
