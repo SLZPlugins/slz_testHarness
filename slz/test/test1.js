@@ -11,10 +11,25 @@ slz_Test("Test A",
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [
+        beforeAll(()=>{
+            console.log('This will run once, before the first scenario runs')
+        }),
+        beforeEachScenario(()=>{
+            console.log('This will run before each test scenario runs')
+        }),
+        afterEachScenario(()=>{
+            console.log('This will run before each test scenario runs')
+        }),
         scenario("Testing Add to Storage", () => {
             //can scope varibles to individual scenario
             let scenarioLevelVar = 'first before each case'
             return [
+                beforeEachCase(()=>{
+                    console.log('this will run before each case, just for this scenario')
+                }),
+                afterEachCase(()=>{
+                    console.log('this will run after each case, just for this scenario')
+                }),
                 testCase("Check Length is greater than one", () => {
                     rmAssert.assertTrue(10 > 1)
                 }),
