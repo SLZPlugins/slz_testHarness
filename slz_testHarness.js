@@ -158,3 +158,52 @@ class TestRunner {
     }
 
 }
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessFileManager  #fm #file #manager
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessFileManager {
+    static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
+    static missingDependency = [];
+    static defaultTestFiles = []
+    static languageFiles = []
+    static engineFiles = []
+    static componentFiles = []
+    static reporterFiles = []
+
+    constructor(){
+        throw new Error('This is a static class. Stop trying to instantiate everything')
+    }
+
+
+    static #getTestFileNames(){
+        this.defaultTestFiles =  this.#getFileNames(this.locations.testDirectory)
+    }
+
+    static #getLanguageFileNames(){
+        this.languageFiles = this.#getFileNames(this.locations.languages)
+    }
+
+    static #getEngineFileNames(){
+        this.engineFiles = this.#getFileNames(this.locations.engines)
+    } 
+
+    static #getComponentFileNames(){
+        this.componentFiles = this.#getFileNames(this.locations.components)
+    }
+
+    static #getFileNames(directory){
+        if(!directory)
+            return []
+
+        return standardPlayer.sp_Core.findFilesInDir(true, directory)
+    }
+
+    static readAllFileNames(){
+        this.#getTestFileNames()
+        this.#getLanguageFileNames()
+        this.#getEngineFileNames()
+        this.#getComponentFileNames()
+    }
+}
