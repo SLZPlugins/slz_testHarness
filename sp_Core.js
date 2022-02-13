@@ -569,3 +569,26 @@
             }
         }
 
+        standardPlayer.sp_Core.findFilesInDir = function(includeDir, currentPath) {
+            let fs = require('fs');
+            let currentFile;
+            let stats;
+            let files;
+            let result = [];
+            let i = 0;
+    
+            files = fs.readdirSync(currentPath);
+            for (i in files) {
+                currentFile = currentPath + '/' + files[i];
+                stats = fs.statSync(currentFile);
+                if (stats.isFile()) {
+                    result.push(currentFile);
+                }
+                else if (stats.isDirectory() && includeDir) {
+                    result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
+                }
+    
+    
+            }
+            return result
+        }
