@@ -1,4 +1,7 @@
-slz_Test("Test A", 
+console.log('//////////////////////////////////////0000')
+
+sinot_Test("Test A", 
+
 //RPG Maker Plugins,
 ["sp_Core"],
 //Assertion Engines

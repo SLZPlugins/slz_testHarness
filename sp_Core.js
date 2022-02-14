@@ -602,12 +602,12 @@
                         try {
                             eval(xhr.responseText);
                         } catch (e) {
-                            onError(e);
+                            onError(e, filePath);
                             return;
                         }
-                        success.call(this);
+                        success();
                     } else {
-                        onError(xhr.status);
+                        onError(xhr.status, filePath);
                     }
                 }
             }.bind(this);
@@ -616,6 +616,6 @@
                 xhr.open("GET", filePath, true);
                 xhr.send();
             } catch (e) {
-                onError(e);
+                onError(e, filePath);
             }
         }

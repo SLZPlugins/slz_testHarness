@@ -1,6 +1,6 @@
 class rmAssert {
     'use strict'
-    static reporter = slz_Reporter;
+    static reporter = HarnessReporter;
     constructor() {
         throw new Error('This is a static class')
     }
