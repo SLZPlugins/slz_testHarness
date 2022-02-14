@@ -1,4 +1,11 @@
-let model = {name:"sinot"}
+let model = {
+    name:"sinot",
+    beforeAll:()=>{},
+    beforeEachCase:()=>{},
+    beforeEachScenario:()=>{},
+    afterEachCase:()=>{},
+    afterEachScenario:()=>{},
+}
 
 function sinot_Test(title, rmPlugins, engines, plugins, getTestData) {
     console.log('calling sinot_Test')
@@ -11,6 +18,23 @@ function sinot_Test(title, rmPlugins, engines, plugins, getTestData) {
     }
 
     TestRunner.tests.push(obj)
+}
+
+function resetHooks() {
+    resetCaseHooks()
+    resetScenarioHooks()
+    sinot.model.beforeAll = () => { }
+}
+
+function resetCaseHooks() {
+    sinot.model.beforeEachCase = () => { }
+    sinot.model.afterEachCase = () => { }
+    sinot.model.beforeAll = () => { }
+}
+
+function resetScenarioHooks() {
+    sinot.model.beforeEachScenario = () => { }
+    sinot.model.afterEachScenario = () => { }
 }
 
 
@@ -50,14 +74,16 @@ function afterEachScenario(f) {
 
 function runTest(list) { //list is test file using Sinot.js
     let length = list.length;
+    let reporter = HarnessReporter;
     //list is array of Scenarios for individual test file
-
+    reporter.createReport(list[i].name)
     sinot.model.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
 
+        reporter.createReport(scenario.title)
         sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
         sinot.model.beforeEachScenario()
 
@@ -70,7 +96,7 @@ function runTest(list) { //list is test file using Sinot.js
 
             sinot.model.afterEachCase()
         }
-        sinot.model.resetCaseHooks()
+        resetCaseHooks()
         sinot.model.afterEachScenario()
     }
 }
@@ -92,6 +118,9 @@ let manifest = {
     beforeEachScenario: beforeEachScenario,
     afterEachCase: afterEachCase,
     afterEachScenario: afterEachScenario,
+    resetHooks: resetHooks,
+    resetCaseHooks: resetCaseHooks,
+    resetScenarioHooks: resetScenarioHooks,
     runTest: runTest,
 }
 
