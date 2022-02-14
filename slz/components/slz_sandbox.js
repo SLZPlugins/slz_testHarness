@@ -182,14 +182,7 @@ class slz_Stub {
     }
 
     getAllFunctionNames() {
-        let props = new Set()
-        let obj = this.obj
-        let currentObj = obj
-
-        do {
-            Object.getOwnPropertyNames(currentObj).map(item => props.add(item))
-        } while ((currentObj = Object.getPrototypeOf(currentObj)))
-        return [...props.keys()].filter(item => typeof obj[item] === 'function')
+        return standardPlayer.sp_Core.getAllFunctionNames(this.obj)
 
     }
 

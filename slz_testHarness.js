@@ -41,6 +41,8 @@
  * @text Default Module Files
  * @desc List of Files to load by default. 
  * @default []
+ * 
+ * 
  */
 
 var Imported = Imported || {};
@@ -83,45 +85,45 @@ function requireComponent(...names) {
 }
 
 
-function registerDependency(model, data) {
-    let list = Object.keys(data);
+function registerDependency(model, manifest) {
+    let list = Object.keys(manifest);
     let length = list.length;
 
     console.log('calling register dependency on ' + model.name)
     if (HarnessFileManager.globalElementNames.contains(model.name))
         return
 
-    window[model.name] = {model:model}
-    
+    window[model.name] = { model: model }
+
     for (let i = 0; i < length; i++) {
-        window[list[i]] = data[list[i]]
+        window[list[i]] = manifest[list[i]]
     }
 
-    HarnessFileManager.addGlobalElement(model.name, data)
+    HarnessFileManager.addGlobalElement(model.name, manifest)
 }
 
-function registerLanguage(name, data) {
+function registerLanguage(model, manifest) {
     //Language specific operations/assignment
 
-    this.registerDependency(name, data)
+    this.registerDependency(model, manifest)
 }
 
-function registerEngine(name, data) {
+function registerEngine(model, manifest) {
     //Engine specific operations/assignment
 
-    this.registerDependency(name, data)
+    this.registerDependency(model, manifest)
 }
 
-function registerComponent(name, data) {
+function registerComponent(model, manifest) {
     //Component specific operations/assignment
 
-    this.registerDependency(name, data)
+    this.registerDependency(model, manifest)
 }
 
-function registerReporter(name, data) {
-    //Reporter specific operations/assignment
+function registerReporter(model, manifest, reporter) {
+    this.registerDependency(model, manifest)
 
-    this.registerDependency(name, data)
+    HarnessReporter.install(reporter)
 }
 
 function slzRegistrationError(data) {
@@ -130,60 +132,47 @@ function slzRegistrationError(data) {
 }
 
 class slz_DependencyError {
-    data = {message:""}
-    constructor(){
-        this.data.message =`${className} ${method} ${type}s extending ${className} must define their own`
+    data = { message: "" }
+    constructor(name, method, type) {
+        this.data.message = `${this.className} ${this.method} ${this.type}s extending ${className} must define their own`
     }
 
-    print(){
+    print() {
         console.log(this.data.message)
     }
 }
 
-class slz_TestModuleDefinitionError extends slz_DependencyError{
+class slz_TestModuleDefinitionError extends slz_DependencyError {
     type = "Test"
-    constructor(message){
-        
-    }
 
-    printError(){
-        
+    printError() {
+
         this.print()
     }
 }
 
-class slz_LanguageModuleDefinitionError extends slz_DependencyError{
+class slz_LanguageModuleDefinitionError extends slz_DependencyError {
     type = "Language"
-    constructor(message){
-        
-    }
 
-    printError(){
-        
+    printError() {
+
         this.print()
     }
 }
 
-class slz_EngineModuleDefinitionError extends slz_DependencyError{
+class slz_EngineModuleDefinitionError extends slz_DependencyError {
     type = "Engine"
-    constructor(message){
-        
-    }
 
-    printError(){
+    printError() {
         console.log(`Missing defintion: ${data.definition}`)
         this.print()
     }
 }
 
-class slz_ComponentModuleDefinitionError extends slz_DependencyError{
+class slz_ComponentModuleDefinitionError extends slz_DependencyError {
     type = "Component"
-    constructor(message, type){
-        if(type)
-            this.type = type
-    }
 
-    printError(){
+    printError() {
         console.log(`Missing defintion: ${data.definition}`)
         this.print()
     }
@@ -235,42 +224,75 @@ class TestRunner {
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
-        HarnessReporter #rp #report
+        HarnessReporter #rp #hp #harness reporter
    /////////////////////////////////////////////////////////////////////////// */
 
-    class HarnessReporter {
+class HarnessReporter {
+    static reporterList = []
+    static reporter = {}
 
-        constructor(){
-            throw new slz_ComponentModuleDefinitionError(
-                'Static HarnessReporter constructor called.','Reporter Classe'
-                )
-        }
+    constructor() {
+        console.log('HarnessReporter constructor on harness is a static class')
+        throw new slz_ComponentModuleDefinitionError(
+            'HarnessReporter', 'constructor', 'Reporter Classe'
+        )
+    }
 
-        static aggregateReporters(){
-            return "Still need to create aggregateReporters"
-        }
-
-        print(){
-            throw new slz_ComponentModuleDefinitionError(
-                '', 'Reporter Classe'
-            )
-        }
-
-        report(){
-            throw new slz_ComponentModuleDefinitionError(
-                '', 'Reporter Classe'
-            )
-        }
-
+    static aggregateReporters() {
+        
         
     }
 
-    Object.defineProperty(HarnessReporter, "reporter", {
-        get() {
-            return HarnessReporter.aggregateReporters()
-        }
-    })
+    static install(reporter){
+        this.reporterList.push(reporter)
+    }
 
+    print() {
+        throw new slz_ComponentModuleDefinitionError(
+            'HarnessReporter', 'print', 'Reporter Classe'
+        )
+    }
+
+    createReport(...args) {
+        let list = this.reporterList
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){
+            if(typeof list[i]['createReport'] === 'function'){
+                list[i].createReport.apply(list[i], args)
+            }
+        }
+
+        console.log('No reporter installed')
+        return new HarnessReporter()
+    }
+
+
+}
+
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessReport #rep #hr #report
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessReport {
+    constructor() {
+        console.log('No report classes installed')
+    }
+
+    print(){
+        throw new slz_ComponentModuleDefinitionError(
+            'HarnessReport', 'print', 'Report Classe'
+        )
+    }
+
+    report(){
+        console.log('No report method on reporter')
+    }
+
+}
 
 /* ///////////////////////////////////////////////////////////////////////////
         HarnessFileManager  #fm #file #manager
@@ -292,6 +314,20 @@ class HarnessFileManager {
     }
 
 
+    static searchFiles(location, name){
+        let thisLocation = this.locations[location];
+        let list = thisLocation.defaults;
+        let length = list.length;
+        console.log(list)
+        for(let i = 0; i < length; i++){
+            if(list[i].contains(name))
+                return HarnessLoader.loadFile(`${thisLocation.directory}/${list[i]}`, ()=>{console.log('loading search result for ' + name)})
+        }
+        console.log('no match found')
+    }
+
+    
+
     static getTestFileNames() {
         this.defaultTestFiles = this.getFileNames(this.locations.tests)
     }
@@ -312,21 +348,21 @@ class HarnessFileManager {
         let results = [];
         let length = list.length;
 
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             results = results.concat(standardPlayer.sp_Core.findFilesInDir(true, list[i].directory))
         }
 
-            
+
         return results
     }
 
-    static defaultFiles(name){
+    static defaultFiles(name) {
         console.log(this.locations[name])
         let list = this.locations[name].defaults;
         let length = list.length;
         let result = [];
         let prefix = this.locations[name].directory + "/"
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             result.push(prefix + list[i])
         }
 
@@ -347,7 +383,7 @@ class HarnessFileManager {
         this.getComponentFileNames()
     }
 
-    static unloadGlobalElements(){
+    static unloadGlobalElements() {
         let names = this.globalElementNames;
         let manifests = this.globalElementManifests;
 
@@ -355,7 +391,7 @@ class HarnessFileManager {
         let manifest,
             manifestLength
 
-        for(let i = 0; i < namesLength; i++){
+        for (let i = 0; i < namesLength; i++) {
             console.log(manifests)
             manifest = Object.keys(manifests[i])
             console.log(manifest)
@@ -364,7 +400,7 @@ class HarnessFileManager {
             window[names[i]] = undefined
             delete window[names[i]]
 
-            for(let j = 0; j < manifestLength; j++){
+            for (let j = 0; j < manifestLength; j++) {
                 window[manifest[j]] = undefined
                 delete window[manifest[j]]
             }
@@ -410,7 +446,7 @@ class HarnessLoader {
     }
 
 
-    static load() {        
+    static load() {
         this.loading = true;
         this.manifest = this.createFullManifest()
 
@@ -451,6 +487,6 @@ class HarnessLoader {
 
     static loadFile(filePath) {
         console.log(filePath)
-        standardPlayer.sp_Core.loadFile(filePath, ()=>{this.continue()}, (error, name)=>{this.onError(error, name)})
+        standardPlayer.sp_Core.loadFile(filePath, () => { this.continue() }, (error, name) => { this.onError(error, name) })
     }
 }
