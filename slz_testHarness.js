@@ -3,26 +3,29 @@
 * @author slz
 * @target MZ
 *
-* @param testDirectory
-* @type text
-* @text Main Test Directory
-* @default js/slz/test
+* @param tests
+* @type struct<Module>
+* @text Tests
+* @desc Configure paths for Tests
+* @default {"directory":"js/plugins/slz/tests","defaults":"[\"test1.js\"]"}
 * 
 * @param languages
-* @type struct<Module>[]
+* @type struct<Module>
 * @text Languages
 * @desc Configure paths for Language Modules
+* @default {"directory":"js/plugins/slz/languages","defaults":"[\"slz_Sinot.js\"]"}
 * 
 * @param engines
-* @type struct<Module>[]
+* @type struct<Module>
 * @text Engines
 * @desc Configure paths for Engine Modules
+* @default {"directory":"js/plugins/slz/engines","defaults":"[\"slz_rmAssert.js\"]"}
 *
 * @param components
-* @type struct<Module>[]
+* @type struct<Module>
 * @text Components
 * @desc Configure paths for Component Modules
-*
+* @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\"]"}
 */
 
 /*~struct~Module:
@@ -37,7 +40,7 @@
  * @type text[]
  * @text Default Module Files
  * @desc List of Files to load by default. 
- * 
+ * @default []
  */
 
 var Imported = Imported || {};
@@ -205,7 +208,7 @@ class TestRunner {
 class HarnessFileManager {
     static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
     static missingDependency = [];
-    static defaultTestFiles = []
+    static testFiles = []
     static languageFiles = []
     static engineFiles = []
     static componentFiles = []
@@ -219,7 +222,7 @@ class HarnessFileManager {
 
 
     static getTestFileNames() {
-        this.defaultTestFiles = standardPlayer.sp_Core.findFilesInDir(true, this.locations.testDirectory)
+        this.defaultTestFiles = this.getFileNames(this.locations.tests)
     }
 
     static getLanguageFileNames() {
@@ -245,6 +248,20 @@ class HarnessFileManager {
             
         return results
     }
+
+    static defaultFiles(name){
+        console.log(this.locations[name])
+        let list = this.locations[name].defaults;
+        let length = list.length;
+        let result = [];
+        let prefix = this.locations[name].directory + "/"
+        for(let i = 0; i < length; i++){
+            result.push(prefix + list[i])
+        }
+
+        return result
+    }
+
 
     static addGlobalElement(name, data) {
         this.globalElementNames.push(name)
@@ -300,10 +317,10 @@ class HarnessLoader {
 
     static createFullManifest() {
         let fm = this.fm();
-        let tests = fm.defaultTestFiles
-        let engines = fm.engineFiles;
-        let components = fm.componentFiles;
-        let languages = fm.languageFiles;
+        let tests = fm.defaultFiles('tests')
+        let engines = fm.defaultFiles('engines')
+        let components = fm.defaultFiles('components')
+        let languages = fm.defaultFiles('languages')
         let list = languages.concat(engines.concat(components.concat(tests)))
         let length = list.length;
         let manifest = [];
