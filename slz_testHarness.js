@@ -47,7 +47,7 @@ var slz = slz || { params: {} };
 slz.testHarness = slz.testHarness || {};
 
 /* ///////////////////////////////////////////////////////////////////////////
-        Global Functions #global #scenario #describe
+        Global Functions global scenario describe
    /////////////////////////////////////////////////////////////////////////// */
 
 
@@ -80,27 +80,44 @@ function requireComponent(...names) {
 }
 
 
-function registerDependency(name, data) {
+function registerDependency(model, data) {
+    let list = Object.keys(data);
+    let length = list.length;
 
+    console.log('calling register dependency on ' + model.name)
+    if (HarnessFileManager.globalElementNames.contains(model.name))
+        return
+
+    window[model.name] = {model:model}
+    
+    for (let i = 0; i < length; i++) {
+        window[list[i]] = data[list[i]]
+    }
+
+    HarnessFileManager.addGlobalElement(model.name, data)
 }
 
 function registerLanguage(name, data) {
     //Language specific operations/assignment
+
     this.registerDependency(name, data)
 }
 
 function registerEngine(name, data) {
     //Engine specific operations/assignment
+
     this.registerDependency(name, data)
 }
 
 function registerComponent(name, data) {
     //Component specific operations/assignment
+
     this.registerDependency(name, data)
 }
 
 function registerReporter(name, data) {
     //Reporter specific operations/assignment
+
     this.registerDependency(name, data)
 }
 
@@ -118,7 +135,7 @@ function slzDependencyError(data) {
 
 
 /* ///////////////////////////////////////////////////////////////////////////
-        Test Runner  #Runner #tr
+        Test Runner  Runner tr
    /////////////////////////////////////////////////////////////////////////// */
 
 class TestRunner {
@@ -133,12 +150,12 @@ class TestRunner {
 
     }
 
-    static #setTestLanguage() {
+    static setTestLanguage() {
 
     }
 
     static initialize() {
-        this.#setTestLanguage()
+        this.setTestLanguage()
     }
 
     static run() {
@@ -160,6 +177,28 @@ class TestRunner {
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
+        HarnessReporter #rp #report
+   /////////////////////////////////////////////////////////////////////////// */
+
+    class HarnessReporter {
+
+        constructor(){
+            throw new Error('This is a static class')
+        }
+
+        static aggregateReporters(){
+            return "Still need to create aggregateReporters"
+        }
+    }
+
+    Object.defineProperty(HarnessReporter, "reporter", {
+        get() {
+            return HarnessReporter.aggregateReporters()
+        }
+    })
+
+
+/* ///////////////////////////////////////////////////////////////////////////
         HarnessFileManager  #fm #file #manager
    /////////////////////////////////////////////////////////////////////////// */
 
@@ -171,51 +210,87 @@ class HarnessFileManager {
     static engineFiles = []
     static componentFiles = []
     static reporterFiles = []
+    static globalElementNames = []
+    static globalElementManifests = []
 
     constructor() {
         throw new Error('This is a static class. Stop trying to instantiate everything')
     }
 
 
-    static #getTestFileNames() {
-        this.defaultTestFiles = this.#getFileNames(this.locations.testDirectory)
+    static getTestFileNames() {
+        this.defaultTestFiles = standardPlayer.sp_Core.findFilesInDir(true, this.locations.testDirectory)
     }
 
-    static #getLanguageFileNames() {
-        this.languageFiles = this.#getFileNames(this.locations.languages)
+    static getLanguageFileNames() {
+        this.languageFiles = this.getFileNames(this.locations.languages)
     }
 
-    static #getEngineFileNames() {
-        this.engineFiles = this.#getFileNames(this.locations.engines)
+    static getEngineFileNames() {
+        this.engineFiles = this.getFileNames(this.locations.engines)
     }
 
-    static #getComponentFileNames() {
-        this.componentFiles = this.#getFileNames(this.locations.components)
+    static getComponentFileNames() {
+        this.componentFiles = this.getFileNames(this.locations.components)
     }
 
-    static #getFileNames(directory) {
-        if (!directory)
-            return []
+    static getFileNames(list) {
+        let results = [];
+        let length = list.length;
 
-        return standardPlayer.sp_Core.findFilesInDir(true, directory)
+        for(let i = 0; i < length; i++){
+            results = results.concat(standardPlayer.sp_Core.findFilesInDir(true, list[i].directory))
+        }
+
+            
+        return results
     }
+
+    static addGlobalElement(name, data) {
+        this.globalElementNames.push(name)
+        this.globalElementManifests.push(data)
+    }
+
 
     static readAllFileNames() {
-        this.#getTestFileNames()
-        this.#getLanguageFileNames()
-        this.#getEngineFileNames()
-        this.#getComponentFileNames()
+        this.getTestFileNames()
+        this.getLanguageFileNames()
+        this.getEngineFileNames()
+        this.getComponentFileNames()
+    }
+
+    static unloadGlobalElements(){
+        let names = this.globalElementNames;
+        let manifests = this.globalElementManifests;
+
+        let namesLength = names.length;
+        let manifest,
+            manifestLength
+
+        for(let i = 0; i < namesLength; i++){
+            console.log(manifests)
+            manifest = Object.keys(manifests[i])
+            console.log(manifest)
+            manifestLength = manifest.length;
+
+            window[names[i]] = undefined
+            delete window[names[i]]
+
+            for(let j = 0; j < manifestLength; j++){
+                window[manifest[j]] = undefined
+                delete window[manifest[j]]
+            }
+        }
     }
 
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
-        HarnessLoader  #hl #loader
+        HarnessLoader  hl loader
    /////////////////////////////////////////////////////////////////////////// */
 
 class HarnessLoader {
-    static #preLoaded = false;
-    static #manifest = [];
+    static manifest = [];
     static loading = false;
     static runOnComplete = false;
 
@@ -223,23 +298,22 @@ class HarnessLoader {
         throw new Error('This is a static class')
     }
 
-    static #createFullManifest() {
-        let fm = this.#fm();
+    static createFullManifest() {
+        let fm = this.fm();
+        let tests = fm.defaultTestFiles
         let engines = fm.engineFiles;
         let components = fm.componentFiles;
         let languages = fm.languageFiles;
-        let list = languages.concat(engines.concat(components))
+        let list = languages.concat(engines.concat(components.concat(tests)))
         let length = list.length;
         let manifest = [];
 
 
         for (let i = 0; i < length; i++) {
-            if (!list[i].enabled)
-                continue
-
+            console.log(list[i])
             manifest.push(
                 () => {
-                    this.loadFile(list[i].filePath, this.continue)
+                    this.loadFile(list[i])
                 }
             )
         }
@@ -247,62 +321,27 @@ class HarnessLoader {
         return manifest
     }
 
-    static #createTestManifest() {
-        let fm = this.#fm()
-        let list = fm.defaultTestFiles
-        let loadFunctions = []
-        let length = list.length;
 
-        for (let i = 0; i < length; i++) {
-            loadFunctions.push(
-                () => {
-                    this.loadFile(list[i], this.continue)
-                }
-            )
-        }
-
-        return loadFunctions
-    }
-
-
-    static #preLoad() {
-        this.#manifest = this.#createTestManifest()
-
-        if (!this.#manifest.length)
-            return
-
+    static load() {        
         this.loading = true;
-        this.#manifest.shift()()
-    }
+        this.manifest = this.createFullManifest()
 
-    static load() {
-        if (!this.#preLoaded) {
-            return this.#preLoad()
-        }
-
-        this.loading = true;
-        this.#manifest = this.#createFullManifest()
-
-        if (this.#manifest.length)
-            this.#manifest.shift()()
+        console.log(this.manifest)
+        if (this.manifest.length)
+            this.manifest.shift()()
 
     }
 
-    static #continue() {
-
-        if (this.#manifest.length) { //if there is more to run
-            this.#manifest.shift()()
-        } else if (!this.#preLoaded) { //if you are finished preloading
-            this.#preLoaded = true;
-            this.load()
+    static continue() {
+        if (this.manifest.length) { //if there is more to run
+            this.manifest.shift()()
         } else { //if you are finished loading altogether
             this.loading = false;
-            this.#preLoaded = false;
-            this.#onComplete()
+            this.onComplete()
         }
     }
 
-    static #onComplete() {
+    static onComplete() {
         // this.fm().checkAllDependencies()
 
         if (!this.runOnComplete)
@@ -312,17 +351,18 @@ class HarnessLoader {
         TestRunner.runAllTests();
     }
 
-    static onError(error){
-        console.log('Error loading file')
+    static onError(error, name) {
+        console.log('Error loading file ' + name)
         console.log(error)
     }
 
-    static #fm() {
+    static fm() {
         return HarnessFileManager
     }
 
 
-    static loadFile(filePath, success) {
-        standardPlayer.sp_Core.loadFile(filePath, success, this.onError)
+    static loadFile(filePath) {
+        console.log(filePath)
+        standardPlayer.sp_Core.loadFile(filePath, ()=>{this.continue()}, (error, name)=>{this.onError(error, name)})
     }
 }
