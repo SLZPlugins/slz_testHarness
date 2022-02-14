@@ -130,20 +130,20 @@ function slzRegistrationError(data) {
 }
 
 class slz_DependencyError {
-
+    data = {message:""}
     constructor(){
-        throw new Error('This is an absract class, classes that extend this class must implement a constructor method')
+        this.data.message =`${className} ${method} ${type}s extending ${className} must define their own`
     }
 
     print(){
-        console.log(this.data)
+        console.log(this.data.message)
     }
 }
 
 class slz_TestModuleDefinitionError extends slz_DependencyError{
-
-    constructor(data){
-        this.data = data
+    type = "Test"
+    constructor(message){
+        
     }
 
     printError(){
@@ -153,21 +153,21 @@ class slz_TestModuleDefinitionError extends slz_DependencyError{
 }
 
 class slz_LanguageModuleDefinitionError extends slz_DependencyError{
-
-    constructor(data){
-        this.data = data
+    type = "Language"
+    constructor(message){
+        
     }
 
     printError(){
-        console.log(`Missing defintion: ${data.definition}`)
+        
         this.print()
     }
 }
 
 class slz_EngineModuleDefinitionError extends slz_DependencyError{
-
-    constructor(data){
-        this.data = data
+    type = "Engine"
+    constructor(message){
+        
     }
 
     printError(){
@@ -177,9 +177,10 @@ class slz_EngineModuleDefinitionError extends slz_DependencyError{
 }
 
 class slz_ComponentModuleDefinitionError extends slz_DependencyError{
-
-    constructor(data){
-        this.data = data
+    type = "Component"
+    constructor(message, type){
+        if(type)
+            this.type = type
     }
 
     printError(){
@@ -240,12 +241,28 @@ class TestRunner {
     class HarnessReporter {
 
         constructor(){
-            throw new Error('This is a static class')
+            throw new slz_ComponentModuleDefinitionError(
+                'Static HarnessReporter constructor called.','Reporter Classe'
+                )
         }
 
         static aggregateReporters(){
             return "Still need to create aggregateReporters"
         }
+
+        print(){
+            throw new slz_ComponentModuleDefinitionError(
+                '', 'Reporter Classe'
+            )
+        }
+
+        report(){
+            throw new slz_ComponentModuleDefinitionError(
+                '', 'Reporter Classe'
+            )
+        }
+
+        
     }
 
     Object.defineProperty(HarnessReporter, "reporter", {

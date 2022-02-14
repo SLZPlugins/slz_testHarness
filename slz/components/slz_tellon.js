@@ -1,0 +1,3 @@
+class tellonReporter extends HarnessReporter {
+    
+}
