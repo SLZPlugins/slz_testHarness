@@ -129,9 +129,63 @@ function slzRegistrationError(data) {
     console.log(data)
 }
 
-function slzDependencyError(data) {
-    console.log(`Missing Dependency Module: ${data.name}`)
-    console.log(data)
+class slz_DependencyError {
+
+    constructor(){
+        throw new Error('This is an absract class, classes that extend this class must implement a constructor method')
+    }
+
+    print(){
+        console.log(this.data)
+    }
+}
+
+class slz_TestModuleDefinitionError extends slz_DependencyError{
+
+    constructor(data){
+        this.data = data
+    }
+
+    printError(){
+        
+        this.print()
+    }
+}
+
+class slz_LanguageModuleDefinitionError extends slz_DependencyError{
+
+    constructor(data){
+        this.data = data
+    }
+
+    printError(){
+        console.log(`Missing defintion: ${data.definition}`)
+        this.print()
+    }
+}
+
+class slz_EngineModuleDefinitionError extends slz_DependencyError{
+
+    constructor(data){
+        this.data = data
+    }
+
+    printError(){
+        console.log(`Missing defintion: ${data.definition}`)
+        this.print()
+    }
+}
+
+class slz_ComponentModuleDefinitionError extends slz_DependencyError{
+
+    constructor(data){
+        this.data = data
+    }
+
+    printError(){
+        console.log(`Missing defintion: ${data.definition}`)
+        this.print()
+    }
 }
 
 
