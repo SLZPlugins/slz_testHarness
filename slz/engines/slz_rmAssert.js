@@ -1,5 +1,5 @@
 class rmAssert {
-    'use strict'
+    // 'use strict'
     static reporter = HarnessReporter;
     constructor() {
         throw new Error('This is a static class')
@@ -7,7 +7,6 @@ class rmAssert {
 
     static assertTrue(expression) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (expression === true) {
             result = true
@@ -15,14 +14,13 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, expression)
+        reporter.report(result, true, expression)
         return result
 
     }
 
     static assertFalse(expression) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (expression === false) {
             //Report pass
@@ -32,14 +30,13 @@ class rmAssert {
             result = false
             
             //Finalize Report
-            report.reportCase(result, false, expression)
+            reporter.report(result, false, expression)
             return result
         }
     }
 
     static assertEquals(obj1, obj2) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
@@ -49,13 +46,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, obj1, obj2)
+        reporter.report(result, obj1, obj2)
         return result
     }
 
     static assertNotEquals(obj1, obj2){
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
@@ -65,13 +61,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, result)
+        reporter.report(result, true, result)
         return result
     }
 
     static assertNull(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
@@ -81,13 +76,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, null, obj1)
+        reporter.report(result, null, obj1)
         return result
     }
 
     static assertNotNull(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
@@ -97,13 +91,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, "Not Null", expression)
+        reporter.report(result, "Not Null", expression)
         return result
     }
 
     static assertString(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
             //Report pass
@@ -113,13 +106,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'string', typeof obj1)
+        reporter.report(result, 'string', typeof obj1)
         return result
     }
 
     static assertNumber(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
             //Report pass
@@ -129,13 +121,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'number', typeof obj1)
+        reporter.report(result, 'number', typeof obj1)
         return result
     }
 
     static assertObject(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
             //Report pass
@@ -145,13 +136,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'object', typeof obj1)
+        reporter.report(result, 'object', typeof obj1)
         return result
     }
 
     static assertBoolean(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
             //Report pass
@@ -161,13 +151,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'boolean', typeof obj1)
+        reporter.report(result, 'boolean', typeof obj1)
         return result
     }
 
     static assertFunction(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
             //Report pass
@@ -177,13 +166,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'function', typeof obj1)
+        reporter.report(result, 'function', typeof obj1)
         return result
     }
 
     static assertInstance(obj1, obj2) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
             //Report pass
@@ -193,7 +181,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, false)
+        reporter.report(result, true, false)
         return result
     }
 }
