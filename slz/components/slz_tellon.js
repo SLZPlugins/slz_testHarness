@@ -1,4 +1,10 @@
-let model = { name: 'slz_tellon', loadBanner: loadBanner }
+let model = {
+    name: 'slz_tellon', 
+    install: () => {
+        loadBanner()
+
+    }
+}
 
 /* ///////////////////////////////////////////////////////////////////////////
         Report Classes #report 
@@ -107,12 +113,13 @@ class TestReport extends TellonReport {
         }
 
         report.printAllCaseReports()
+        
         this.casePasses += report.passes
         this.caseFails += report.fails
         return report.readout
     }
 
-    printAllScenarioReports(report) {
+    printAllScenarioReports() {
         let list = this.reports;
         let length = list.length;
         let title = ""
@@ -123,7 +130,7 @@ class TestReport extends TellonReport {
 
         for (let i = 0; i < length; i++) {
             results = this.printScenarioReport(list[i])
-            title = `| SCENARIO: ${list[i].heading} --${list[i].pass ? 'PASS' : 'FAIL'}\n`
+            title = `| SCENARIO: ${list[i].heading} (${list[i].passes}|${list[i].fails}) --${list[i].pass ? 'PASS' : 'FAIL'}\n`
             readout += "------------------------------------------------\n"
             readout += `${title}`;
             readout += "------------------------------------------------\n"
@@ -132,6 +139,7 @@ class TestReport extends TellonReport {
 
             this.pass = list[i].pass ? this.pass : false;
         }
+
         this.readout += `Scenarios Passed: ${this.scenarioPasses}    Scenarios Failed: ${this.scenarioFails}\n\n`
         this.readout += readout;
 
@@ -159,12 +167,11 @@ class TellonReporter extends HarnessReporter {
         if (typeof heading == 'undefined') {
             this.createTestReport()
         }
-        else if (args.length){
+        else if (args.length) {
             args.unshift(heading)
             this.createCaseReport(args)
         }
         else {
-            console.log('creating scenario report with heading : ' + heading)
             this.createScenarioReport(heading, args)
         }
 
@@ -173,15 +180,12 @@ class TellonReporter extends HarnessReporter {
     static createTestReport() {
         let report = new TestReport()
 
-        console.log('-----creating Tellon Test report')
         this.reports.push(report)
-
         this.reportLevel = "Test"
         return report
     }
 
     static createScenarioReport(heading, args) {
-        console.log('-----creating Tellon Scenario report')
         let currentTestReport = this.getCurrentTestReport();
         let scenarioReport = currentTestReport.addReport(heading, args)
 
@@ -190,7 +194,6 @@ class TellonReporter extends HarnessReporter {
     }
 
     static createCaseReport(heading, args) {
-        console.log('-----creating Tellon Case report')
         let currentScenarioReport = this.getCurrentScenarioReport()
 
         this.reportLevel = "Case"
@@ -231,6 +234,7 @@ class TellonReporter extends HarnessReporter {
         let summary;
         let header = "\n\n==================Test Results ==================\n"
         let readout = ""
+        //Print all tests in the Tellon Reporter's reports array
         for (let i = 0; i < length; i++) {
             readout += list[i].heading + "\n\n";
             readout += list[i].printAllScenarioReports()
@@ -275,9 +279,9 @@ class TellonReporter extends HarnessReporter {
         let tTotal = tPassFail[0] + tPassFail[1]
         let tPercentage = tPassFail[0] / tTotal;
 
-        str += `Tests:     ${tPercentage.toFixed(2).substr(2)}% (${tPassFail[0]}/${tPassFail[1]})\n`
-        str += `Scenarios: ${sPercentage.toFixed(2).substr(2)}% (${sPass}/${sFails})\n`
-        str += `Cases:     ${cPercentage.toFixed(2).substr(2)}% (${cPass}/${cFails})\n\n\n`
+        str += `Tests:     ${tPercentage.toFixed(2).substr(2)}% (${tPassFail[0]}|${tPassFail[1]})\n`
+        str += `Scenarios: ${sPercentage.toFixed(2).substr(2)}% (${sPass}|${sFails})\n`
+        str += `Cases:     ${cPercentage.toFixed(2).substr(2)}% (${cPass}|${cFails})\n\n\n`
 
         return str
     }
@@ -295,8 +299,8 @@ function loadBanner() {
     console.log(`
 ___________       __    __                    
 \\__    ___/____  |  |  |  |    ____    ____   
-  |    | _/ __ \\ |  |  |  |   /  _ \\  /    \\  
-  |    | \\  ___/ |  |__|  |__(  <o> )|   |  \\ 
+  |    | _/ __ \\ |  |  |  |   /    \\  /    \\  
+  |    | \\  ___/ |  |__|  |__(<0--0>)|   |  \\ 
   |____|  \\___  >|____/|____/ \\____/ |___|  / 
               \\/                          \\/  
     `)

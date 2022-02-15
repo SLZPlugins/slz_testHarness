@@ -67,7 +67,7 @@ function requireDependency(dependency) {
 function requireLanguage(dependency) {
     //Language specific operations/assignment
         let requiredLanguage = this.requireDependency(dependency)
-        console.log(requiredLanguage)
+
         TestRunner.setTestLanguage(requiredLanguage)
     
 
@@ -94,11 +94,11 @@ function registerDependency(model, manifest) {
     let list = Object.keys(manifest);
     let length = list.length;
 
-    console.log('calling register dependency on ' + model.name)
     if (HarnessFileManager.globalElementNames.contains(model.name))
         return
 
     window[model.name] = { model: model }
+    model.install()
 
     for (let i = 0; i < length; i++) {
         window[list[i]] = manifest[list[i]]
@@ -128,7 +128,7 @@ function registerComponent(model, manifest) {
 function registerReporter(model, manifest, reporter) {
     this.registerDependency(model, manifest)
 
-    HarnessReporter.install(reporter, model)
+    HarnessReporter.install(reporter)
 }
 
 function slzRegistrationError(data) {
@@ -138,8 +138,9 @@ function slzRegistrationError(data) {
 
 class slz_DependencyError {
     data = { message: "" }
-    constructor(name, method, type) {
-        this.data.message = `${this.className} ${this.method} ${this.type}s extending ${className} must define their own`
+    constructor(message) {
+        this.data.message = message;
+        this.print()
     }
 
     print() {
@@ -203,11 +204,13 @@ class TestRunner {
     }
 
     static setTestLanguage(model) {
-        console.log(model)
-        this.languages.push(model.runTest)
-        
-        if(!model)
+        if(!model){
             this.stopTests = true;
+            throw new slz_DependencyError('Error: Unable to load Test langauge')
+        }
+
+        this.languages.push(model.runTest)
+            
     }
 
 
@@ -228,6 +231,9 @@ class TestRunner {
         let length = list.length;
 
         for(let i = 0; i < length; i++){
+            if(this.stopTests)
+                return 
+
             this.runTest(i, list[i])
         }
     }
@@ -259,9 +265,8 @@ class HarnessReporter {
 
     
 
-    static install(reporter, model){
+    static install(reporter){
         this.reporterList.push(reporter)
-        model.loadBanner()
     }
 
     
@@ -479,8 +484,7 @@ class HarnessFileManager {
     static hasDependency(name){
         let list = this.globalElementNames
         let length = list.length;
-        console.log('looking for ' + name)
-        console.log(this.globalElementNames.toString())
+        
         for(let i = 0; i < length; i++){
             if(list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
                 return true;
@@ -568,7 +572,6 @@ class HarnessLoader {
 
 
     static loadFile(filePath) {
-        console.log(filePath)
         standardPlayer.sp_Core.loadFile(filePath, () => { this.continue() }, (error, name) => { this.onError(error, name) })
     }
 }

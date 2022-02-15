@@ -1,3 +1,29 @@
+let model = {
+    name: "rmAssert",
+    install: ()=>{
+        loadBanner()
+    }
+}
+
+function loadBanner(){
+    console.log(`
+ /RRRRRRR /MM      /MM                                      
+| RR__  R| MMM    /MMM                                      
+| RR  \\ R| MMMM  /MMMM                                      
+| RRRRRRR| MM MM/MM MM                                      
+| RR__  R| MM  MMM| MM                                      
+| RR  \\ R| MM\\  M | MM                                      
+| RR  | R| MM \\/  | MM                                      
+|__/  |_/AAAAAA   |__/                               /TT    
+       /AA__  AA                                    | TT    
+      | AA \\ AA /SSSSSSS/SSSSSSS /EEEEEE  /RRRRRR /TTTTTT  
+      | AAAAAAAA/SS_____/SS_____//EE__  EE/RR__  R|_  TT_/  
+      | AA__  A|  SSSSS|  SSSSSS| EEEEEEE| RR \\__/ | TT    
+      | AA  | AA\\___  S\\___    S| EE_____| RR      | TT /TT
+      | AA  | AA/SSSSSSS/SSSSSSS|  EEEEEE| RR      | TTTT/
+      |__/  |__|_______|_______/\\_______|__/        \\___/
+    `)    
+}
 class rmAssert {
      'use strict'
     static reporter = HarnessReporter;
@@ -188,8 +214,12 @@ class rmAssert {
     }
 }
 
-console.log('****Loading slz_Assertions to rmAssert class****')
 
-window.rmAssert = rmAssert
+let manifest = {
+    rmAssert:rmAssert    
+}
+
+registerEngine(model, manifest)
+
 
 
