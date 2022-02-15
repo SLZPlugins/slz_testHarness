@@ -126,8 +126,11 @@ function registerComponent(model, manifest) {
 }
 
 function registerReporter(model, manifest, reporter) {
-    this.registerDependency(model, manifest)
 
+    if (!ReporterValidator.validate(model, manifest, reporter))
+        return
+
+    this.registerDependency(model, manifest)
     HarnessReporter.install(reporter)
 }
 
@@ -136,19 +139,18 @@ function slzRegistrationError(data) {
     console.log(data)
 }
 
-class slz_DependencyError {
-    data = { message: "" }
-    constructor(message) {
-        this.data.message = message;
-        this.print()
-    }
+class slz_ValidationDefinitionError {
+    message
+    moduleName
+    definition
 
-    print() {
-        console.log(this.data.message)
+    constructor(moduleName, message) {
+        this.moduleName = moduleName;
+        this.message = message;
     }
 }
 
-class slz_TestModuleDefinitionError extends slz_DependencyError {
+class slz_TestModuleDefinitionError extends slz_ValidationDefinitionError {
     type = "Test"
 
     printError() {
@@ -157,7 +159,7 @@ class slz_TestModuleDefinitionError extends slz_DependencyError {
     }
 }
 
-class slz_LanguageModuleDefinitionError extends slz_DependencyError {
+class slz_LanguageModuleDefinitionError extends slz_ValidationDefinitionError {
     type = "Language"
 
     printError() {
@@ -166,7 +168,7 @@ class slz_LanguageModuleDefinitionError extends slz_DependencyError {
     }
 }
 
-class slz_EngineModuleDefinitionError extends slz_DependencyError {
+class slz_EngineModuleDefinitionError extends slz_ValidationDefinitionError {
     type = "Engine"
 
     printError() {
@@ -175,15 +177,21 @@ class slz_EngineModuleDefinitionError extends slz_DependencyError {
     }
 }
 
-class slz_ComponentModuleDefinitionError extends slz_DependencyError {
+class slz_ComponentModuleDefinitionError extends slz_ValidationDefinitionError {
     type = "Component"
 
-    printError() {
-        console.log(`Missing defintion: ${data.definition}`)
-        this.print()
+    constructor(moduleName, definition, type) {
+        super(moduleName)
+        this.definition = definition;
+        this.type = typeof type != undefined ? type : this.type // <-- Haha
+    }
+
+    print() {
+        console.log(`ERROR while validating ${this.type}: ${this.moduleName}
+        Missing defintion: ${this.definition}`)
+
     }
 }
-
 
 
 
@@ -231,19 +239,19 @@ class TestRunner {
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if (this.stopTests){
+            if (this.stopTests) {
                 console.log('TestRunner stopping execution')
                 return this.running = false
             }
-                
+
 
             this.runTest(i, list[i])
         }
 
-         this.onComplete()
+        this.onComplete()
     }
 
-    static initialize(){
+    static initialize() {
         this.tests = [];
         this.languages = [];
         this.stopTests = false;
@@ -254,6 +262,156 @@ class TestRunner {
         HarnessReporter.print()
         HarnessFileManager.unload()
     }
+
+}
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessValidator  #hv #validate
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessValidator {
+    static model
+    static manifest
+    static missingMethods = []
+    static validCore = true;
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        this.model = model;
+        this.manifest = manifest;
+        this.validCore = true;
+        try {
+            this.validateCoreObjects()
+            this.validateInstallMethod()
+        } catch (error) {
+            if (error.print)
+                error.print()
+            else
+                console.log(error)
+        }
+    }
+
+    static validateCoreObjects() {
+        if (typeof this.model !== 'object') {
+            this.validCore = false;
+            throw new slz_ComponentModuleDefinitionError('<No model/Module Name Provided>', 'model', 'Reporting Component')
+        }
+
+
+        if (typeof this.model.name !== 'string') {
+            this.validCore = false;
+            throw new slz_ComponentModuleDefinitionError('<No Module Name Provided>', 'model.name', 'Reporting Component')
+        }
+
+        if (typeof this.manifest !== 'object') {
+            this.validCore = false;
+            throw new slz_ComponentModuleDefinitionError(model.name, 'manifest', 'Reporting Component')
+        }
+    }
+
+    static validateInstallMethod() {
+        if (typeof this.model.install !== 'function') {
+            this.validCore = false;
+            throw new slz_ComponentModuleDefinitionError(model.name, 'model.install', 'Reporting Component')
+        }
+    }
+}
+
+class ReporterValidator extends HarnessValidator {
+    static valid = true;
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest, reporter) {
+        this.valid = true
+        try {
+            super.validate(model, manifest)
+            this.reporter = reporter
+            this.validateReporter()
+
+        } catch (error) {
+            if (error.print)
+                error.print()
+            else {
+                console.log(error)
+                this.valid = false
+            }
+        }
+
+        this.model = undefined;
+        this.manifest = undefined;
+
+        return this.valid && this.validCore
+    }
+
+    static validateReporter() {
+        try {
+            this.validateIsClass()
+            this.validateExtendsHarnessReporter()
+            this.validateIsStaticClass()
+            this.validateCreateReport()
+            this.validatePrint()
+        } catch (error) {
+            if (error.print)
+                error.print()
+            else {
+                console.log(error)
+            }
+            this.valid = false;
+        }
+    }
+
+    static validateIsClass() {
+        if (typeof this.reporter.prototype !== 'object') {
+            console.log('Reporter should be a class or constructor function')
+            this.valid = false;
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter.prototype', 'Reporting Component')
+        }
+    }
+
+    static validateExtendsHarnessReporter() {
+        if (this.reporter.prototype instanceof HarnessReporter !== true) {
+            console.log('Custom Reporter classes should extend HarnessReporter')
+            this.valid = false;
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter', 'Reporting Component')
+        }
+    }
+
+    static validateIsStaticClass() {
+        let isStatic = false
+        try {
+            new this.reporter.prototype.constructor()
+        } catch (error) {
+            isStatic = true
+        }
+
+        if (!isStatic) {
+            console.log('Custom Reporter classes should not be instantiable')
+            this.valid = false;
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter instantiable constructor', 'Reporting Component')
+        }
+    }
+
+    static validateCreateReport() {
+        if (typeof this.reporter.prototype.createReport !== 'function') {
+            console.log('Custom Reporter classes should have a static createReport method')
+            this.valid = false;
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.createReport', 'Reporting Component')
+        }
+    }
+
+    static validatePrint() {
+        if (typeof this.reporter.prototype.print !== 'function') {
+            console.log('Custom Reporter classes should have a static print method')
+            this.valid = false;
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.print', 'Reporting Component')
+        }
+    }
+
+
 
 }
 
@@ -270,10 +428,7 @@ class HarnessReporter {
     static heading = "";
 
     constructor() {
-        console.log('HarnessReporter constructor on harness is a static class')
-        throw new slz_ComponentModuleDefinitionError(
-            'HarnessReporter', 'constructor', 'Reporter Classe'
-        )
+        throw new Error('This is a static class')
     }
 
 
@@ -338,14 +493,6 @@ class HarnessReporter {
             list[i].print()
         }
     }
-
-    print() {
-
-        throw new slz_ComponentModuleDefinitionError(
-            'HarnessReporter', 'print', 'Reporter Classe'
-        )
-    }
-
 }
 
 
@@ -380,11 +527,6 @@ class HarnessReport {
         this.heading = heading
     }
 
-    print() {
-        throw new slz_ComponentModuleDefinitionError(
-            'HarnessReport', 'print', 'Report Classe'
-        )
-    }
 
     currentReport() {
         return this.reports.length ?
@@ -481,7 +623,7 @@ class HarnessFileManager {
         this.getComponentFileNames()
     }
 
-    static unload(){
+    static unload() {
         this.unloadGlobalElements()
     }
 
@@ -492,7 +634,7 @@ class HarnessFileManager {
         let manifest,
             manifestLength
 
-            console.log(names)
+        console.log(names)
         for (let i = 0; i < namesLength; i++) {
             manifest = Object.keys(manifests[i])
             manifestLength = manifest.length;
