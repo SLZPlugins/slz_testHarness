@@ -145,4 +145,5 @@ let manifest = {
     runTest: runTest,
 }
 
+requireComponent('tellon')
 registerLanguage(model, manifest)

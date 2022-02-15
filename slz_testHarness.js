@@ -57,23 +57,30 @@ slz.testHarness = slz.testHarness || {};
 
 
 function requireDependency(dependency) {
-    if (!HarnessFileManager.hasDependency(dependency)) {
-        console.log('MISSING DEPENDENCY: ' + dependency)
-        return false
-    }
-    return HarnessFileManager.getModel(dependency)
+    HarnessFileManager.addDependency(dependency)
 }
 
 function requireLanguage(dependency) {
     //Language specific operations/assignment
-    let requiredLanguage = this.requireDependency(dependency)
+try{
+    requiredLanguage = HarnessFileManager.hasDependency(dependency)
+    if(requiredLanguage){
+        TestRunner.setTestLanguage(HarnessFileManager.getModel(dependency))
+        requireDependency(dependency)
+    } else {
+        throw new slz_DependencyError(dependency)
+    }
+} catch(error){
+    console.log(error)
 
-    TestRunner.setTestLanguage(requiredLanguage)
+}
+
+    
 
 
 }
 
-function requireEngine(...names) {
+function requireEngine(module, ...names) {
     //Engine specific operations/assignment
     names.forEach(dependency =>
         this.requireDependency(dependency)
@@ -110,17 +117,25 @@ function registerDependency(model, manifest) {
 function registerLanguage(model, manifest) {
     //Language specific operations/assignment
 
+    if (!LanguageValidator.validate(model, manifest))
+        return
+
     this.registerDependency(model, manifest)
 }
 
 function registerEngine(model, manifest) {
     //Engine specific operations/assignment
+    if (!EngineValidator.validate(model, manifest))
+        return
 
     this.registerDependency(model, manifest)
+
 }
 
 function registerComponent(model, manifest) {
     //Component specific operations/assignment
+    if (!ComponentValidator.validate(model, manifest))
+        return
 
     this.registerDependency(model, manifest)
 }
@@ -139,7 +154,7 @@ function slzRegistrationError(data) {
     console.log(data)
 }
 
-class slz_ValidationDefinitionError extends Error{
+class slz_ValidationDefinitionError extends Error {
     message
     moduleName
     definition
@@ -150,7 +165,7 @@ class slz_ValidationDefinitionError extends Error{
         this.definition = definition
     }
 
-    valueOf(){
+    valueOf() {
         return `ERROR while validating ${this.type}: ${this.moduleName}
         Missing defintion: ${this.definition}`
     }
@@ -170,7 +185,7 @@ class slz_LanguageModuleDefinitionError extends slz_ValidationDefinitionError {
     constructor(moduleName, definition) {
         super(moduleName, definition)
     }
-    
+
 }
 
 class slz_EngineModuleDefinitionError extends slz_ValidationDefinitionError {
@@ -191,9 +206,23 @@ class slz_ComponentModuleDefinitionError extends slz_ValidationDefinitionError {
 }
 
 
+class slz_DependencyError extends Error {
+    dependency;
+
+    constructor(dependency) {
+        super(dependency)
+        this.dependency = dependency
+    }
+
+    valueOf() {
+        return `ERROR Missing Dependency: ${this.dependency}`
+    }
+}
+
+
 
 /* ///////////////////////////////////////////////////////////////////////////
-        Test Runner  Runner tr
+        Test Runner  #runner #tr
    /////////////////////////////////////////////////////////////////////////// */
 
 class TestRunner {
@@ -222,6 +251,9 @@ class TestRunner {
 
     static run() {
         this.initialize()
+        if(!HarnessFileManager.hasAllDependencies())
+            return
+
         HarnessLoader.runOnComplete = true;
         HarnessLoader.load()
     }
@@ -261,7 +293,7 @@ class TestRunner {
         HarnessFileManager.unload()
     }
 
-    static logger(...messages){
+    static logger(...messages) {
         //Implement actual logger on HarnessReporter. Calling createReport could cause issues
         //with external Reporters, as it will also call them.
     }
@@ -398,7 +430,7 @@ class ReporterValidator extends HarnessValidator {
 }
 
 
-class EngineValidator {
+class EngineValidator extends HarnessValidator{
     constructor() {
         throw new Error('This is a static class')
     }
@@ -406,17 +438,72 @@ class EngineValidator {
     static validate(model, manifest) {
         super.validate(model, manifest)
         try {
-
+            this.validateEngine()
         } catch (error) {
-
+            console.log(error)
+            this.valid = false;
         }
-        this.validateEngine()
+
+        return this.validCore && this.valid
     }
 
     static validateEngine() {
-        return this.validCore && this.valid
+
     }
 }
+
+class LanguageValidator extends HarnessValidator{
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        super.validate(model, manifest)
+        try {
+            this.validateLanguage()
+        } catch (error) {
+            console.log(error)
+            this.valid = false;
+        }
+
+        return this.validCore && this.valid
+    }
+
+    static validateLanguage() {
+        this.validateRunTesMethod()
+    }
+
+    static validateRunTesMethod() {
+        if (typeof this.manifest.runTest !== 'function') {
+            console.log('Languages must implement a runTest method, to define how their tests should be run')
+            throw new slz_LanguageModuleDefinitionError(this.model.name, 'manifest.runTest')
+        }
+    }
+}
+
+class ComponentValidator extends HarnessValidator{
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        super.validate(model, manifest)
+        try {
+            this.validateComponent()
+        } catch (error) {
+            console.log(error)
+            this.valid = false;
+        }
+
+        return this.validCore && this.valid
+    }
+
+    static validateComponent() {
+        
+    }
+
+}
+
 
 /* ///////////////////////////////////////////////////////////////////////////
         HarnessReporter #rp #hp #harness reporter
@@ -553,6 +640,7 @@ class HarnessFileManager {
     static reporterFiles = []
     static globalElementNames = []
     static globalElementManifests = []
+    static dependencies = [];
 
     constructor() {
         throw new Error('This is a static class. Stop trying to instantiate everything')
@@ -618,6 +706,15 @@ class HarnessFileManager {
         this.globalElementManifests.push(data)
     }
 
+    static addDependency(dependency){
+        let list = this.dependencies;
+
+        if(!list.contains(dependency))
+            list.push(dependency)
+
+        
+    }
+
 
     static readAllFileNames() {
         this.getTestFileNames()
@@ -666,6 +763,26 @@ class HarnessFileManager {
         console.log('pushing missing dependency')
         this.missingDependency.push(name)
         return false
+    }
+
+    static hasAllDependencies(){
+        let list = this.dependencies;
+        let length = list.length;
+        let loadedDependencies = this.globalElementNames;
+        let missingDependencies = [];
+
+        for(let i = 0; i < length; i++){
+            if(!loadedDependencies.contains(list[i]))
+                missingDependencies.push(list[i])        
+        }
+
+        this.missingDependency = missingDependencies;
+
+        if(missingDependencies.length){
+            throw new slz_DependencyError(missingDependencies.toString())    
+        }
+
+        return missingDependencies.length === 0;
     }
 
 }
@@ -722,7 +839,12 @@ class HarnessLoader {
             this.manifest.shift()()
         } else { //if you are finished loading altogether
             this.loading = false;
-            this.onComplete()
+            try{
+                this.onComplete()
+            }
+            catch(error){
+                console.log(error)
+            }
         }
     }
 
@@ -733,9 +855,8 @@ class HarnessLoader {
             return
 
         if (HarnessFileManager.missingDependency.length > 0) {
-            console.log(`Missing Dependencies. Please check logs above for missing dependency module name,
-                or enter HarnessFileManager.missingDependency to access the missing dependency names array`)
-            return;
+            throw new slz_DependencyError(`Missing Dependencies. Please check logs above for missing dependency module name,
+            or enter HarnessFileManager.missingDependency to access the missing dependency names array`)
         }
 
         this.runOnComplete = false;

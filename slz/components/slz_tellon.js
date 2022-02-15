@@ -315,4 +315,5 @@ let manifest = {
     ScenarioReport: ScenarioReport
 }
 
+requireLanguage('sinot')
 registerReporter(model, manifest, TellonReporter)
