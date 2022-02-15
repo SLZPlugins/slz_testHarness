@@ -36,7 +36,6 @@ class CaseReport extends TellonReport {
     actual;
 
     constructor(data) { //data = [pass, expected, actual]
-        console.log(data)
         super("", data)
         this.pass = data[0];
         this.expected = data[1];
@@ -98,7 +97,6 @@ class TestReport extends TellonReport {
     }
 
     addReport(heading, data) {
-        console.log('Whie creating Scenario report, giving it : ' + heading)
         let report = new ScenarioReport(heading, data)
 
         this.reports.push(report)
@@ -159,6 +157,10 @@ class TellonReporter extends HarnessReporter {
 
     constructor() {
         throw new Error('This is a static class')
+    }
+
+    static print(){
+        this.printAllReports()
     }
 
     static createReport(heading, args) {

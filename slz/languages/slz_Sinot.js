@@ -45,7 +45,7 @@ function sinot_Test(title, getTestData) {
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
     }
 
-    TestRunner.tests.push(obj)
+    TestRunner.addTest(obj)
 }
 
 function resetHooks() {
@@ -109,7 +109,7 @@ function runTest(list) { //list is test file using Sinot.js
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
-        console.log(scenario.title)
+
         reporter.createReport(scenario.title)
         sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
         sinot.model.beforeEachScenario()
