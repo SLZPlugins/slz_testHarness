@@ -593,6 +593,21 @@ standardPlayer.sp_Core.findFilesInDir = function (includeDir, currentPath) {
     return result
 }
 
+standardPlayer.sp_Core.readTextFile = function (path) {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", path, false);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200 || xhr.status == 0) {
+                var allText = xhr.responseText;
+                window.allText = allText
+            }
+        }
+    }
+    xhr.send(null);
+}
+
 standardPlayer.sp_Core.loadFile = function (filePath, success, onError) {
 
     let xhr = new XMLHttpRequest();
@@ -620,7 +635,7 @@ standardPlayer.sp_Core.loadFile = function (filePath, success, onError) {
     }
 }
 
-standardPlayer.sp_Core.getAllFunctionNames = function(obj) {
+standardPlayer.sp_Core.getAllFunctionNames = function (obj) {
     let props = new Set()
     let currentObj = obj
 
@@ -636,12 +651,12 @@ standardPlayer.sp_Core.combineFunctionsAlpha = function (left, right) {
         left.apply(null, args)
         right.apply(null, args)
     }
-    
+
     return f
 }
 
 
-standardPlayer.sp_Core.combineFunctionsBeta = function(scope, left, right){
+standardPlayer.sp_Core.combineFunctionsBeta = function (scope, left, right) {
     let f = (...args) => {
         left.apply(scope, args)
         right.apply(scope, args)
@@ -650,12 +665,12 @@ standardPlayer.sp_Core.combineFunctionsBeta = function(scope, left, right){
     return f
 }
 
-standardPlayer.sp_Core.combineObjectsAlpha = function(left, right, scope){
+standardPlayer.sp_Core.combineObjectsAlpha = function (left, right, scope) {
     let functionNames = this.getAllFunctionNames(right)
     let length = functionNames.length;
 
-    for(let i = 0; i < length; i++){
-        if(typeof left[functionNames[i]] == undefined){
+    for (let i = 0; i < length; i++) {
+        if (typeof left[functionNames[i]] == undefined) {
             left[functionNames[i]] = right[functionNames[i]].bind(left)
         } else {
             left[functionNames[i]] = scope ?

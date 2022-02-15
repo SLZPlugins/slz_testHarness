@@ -220,6 +220,3 @@ let manifest = {
 }
 
 registerEngine(model, manifest)
-
-
-
