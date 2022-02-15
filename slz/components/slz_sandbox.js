@@ -1,3 +1,28 @@
+let model = {
+    name:"slz_sandbox",
+    install:()=>{
+        loadBanner()
+    }
+}
+
+function loadBanner(){
+    console.log(`
+ _____________________________________________________
+|                 _____  __  _____                   |
+|                / ___/ / / /__  /                   |
+|                \\__ \\ / /    / /                    |
+|               ___/ // /___ / /__                   |
+|              /____//_____//____/                   |
+|                                                    |
+|    _____                    __ __                  |
+|   / ___/ ____ _ ____   ____/ // /_   ____   _  __  |
+|   \\__ \\ / __ \`// __ \\ / __  // __ \\ / __ \\ | |/_/  |
+|  ___/ // /_/ // / / // /_/ // /_/ // /_/ /_>  <    |
+| /____/ \\__,_//_/ /_/ \\__,_//_.___/ \\____//_/|_|    |
+|____________________________________________________|    
+ `)
+}
+
 class Sandbox {
     spies = []
     stubs = []
@@ -305,10 +330,10 @@ class Mock_Function {
     }
 }
 
+let manifest = {
+    Sandbox:Sandbox,
+    slz_Spy:slz_Spy,
+    slz_Stub:slz_Stub
+}
 
-
-
-console.log('****Loading slz_Sandbox to slz_sandbox class****')
-
-window.slz_sandbox = Sandbox
-
+registerComponent(model, manifest)

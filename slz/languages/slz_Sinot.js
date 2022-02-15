@@ -5,10 +5,41 @@ let model = {
     beforeEachScenario:()=>{},
     afterEachCase:()=>{},
     afterEachScenario:()=>{},
+    install:()=>{
+        loadBanner()
+    }
+}
+
+function loadBanner(){
+    console.log(`
+                  iiii                                          tttt                           jjjj                 
+                 i::::i                                      ttt:::t                          j::::j                
+                  iiii                                       t:::::t                           jjjj                 
+                                                             t:::::t                                                
+    ssssssssss  iiiiiinnnn  nnnnnnnn      ooooooooooo  ttttttt:::::ttttttt                   jjjjjjj   ssssssssss   
+  ss::::::::::s i:::::n:::nn::::::::nn  oo:::::::::::oot:::::::::::::::::t                   j:::::j ss::::::::::s  
+ss:::::::::::::s i::::n::::::::::::::nno:::::::::::::::t:::::::::::::::::t                    j::::ss:::::::::::::s 
+s::::::ssss:::::si::::nn:::::::::::::::o:::::ooooo:::::tttttt:::::::tttttt                    j::::s::::::ssss:::::s
+ s:::::s  ssssss i::::i n:::::nnnn:::::o::::o     o::::o     t:::::t                          j::::js:::::s  ssssss 
+   s::::::s      i::::i n::::n    n::::o::::o     o::::o     t:::::t                          j::::j  s::::::s      
+      s::::::s   i::::i n::::n    n::::o::::o     o::::o     t:::::t                          j::::j     s::::::s   
+ssssss   s:::::s i::::i n::::n    n::::o::::o     o::::o     t:::::t    tttttt                j::::ssssss   s:::::s 
+s:::::ssss::::::i::::::in::::n    n::::o:::::ooooo:::::o     t::::::tttt:::::t                j::::s:::::ssss::::::s
+s::::::::::::::si::::::in::::n    n::::o:::::::::::::::o     tt::::::::::::::t                j::::s::::::::::::::s 
+ s:::::::::::ss i::::::in::::n    n::::noo:::::::::::oo        tt:::::::::::tt                j::::js:::::::::::ss  
+  sssssssssss   iiiiiiiinnnnnn    nnnnnn  ooooooooooo            ttttttttttt                  j::::j sssssssssss    
+                                                                                              j::::j                
+                                                                                    jjjj      j::::j                
+                                                                                   j::::jj   j:::::j                
+                                                                                   j::::::jjj::::::j                
+                                                                                    jj::::::::::::j                 
+                                                                                      jjj::::::jjj                  
+                                                                                         jjjjjj
+    `)
 }
 
 function sinot_Test(title, getTestData) {
-    console.log('calling sinot_Test')
+    console.log(`Found sinot_Test: ${title}`)
     let obj = {
         title: title,
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
@@ -97,13 +128,6 @@ function runTest(list) { //list is test file using Sinot.js
         sinot.model.afterEachScenario()
     }
 }
-
-
-console.log(
-`===========================================================\n
-=                   WELCOME TO SINOT JS                   =\n
-===========================================================`
-)
 
 
 let manifest = {
