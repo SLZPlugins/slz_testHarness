@@ -57,7 +57,7 @@ slz.testHarness = slz.testHarness || {};
 
 
 function requireDependency(dependency) {
-    if(!HarnessFileManager.hasDependency(dependency)){
+    if (!HarnessFileManager.hasDependency(dependency)) {
         console.log('MISSING DEPENDENCY: ' + dependency)
         return false
     }
@@ -66,10 +66,10 @@ function requireDependency(dependency) {
 
 function requireLanguage(dependency) {
     //Language specific operations/assignment
-        let requiredLanguage = this.requireDependency(dependency)
+    let requiredLanguage = this.requireDependency(dependency)
 
-        TestRunner.setTestLanguage(requiredLanguage)
-    
+    TestRunner.setTestLanguage(requiredLanguage)
+
 
 }
 
@@ -200,24 +200,24 @@ class TestRunner {
     }
 
     static addTest(test) {
-
+        this.tests.push(test)
     }
 
     static setTestLanguage(model) {
-        if(!model){
+        if (!model) {
             this.stopTests = true;
             throw new slz_DependencyError('Error: Unable to load Test langauge')
         }
 
         this.languages.push(model.runTest)
-            
+
     }
 
 
     static run() {
-        this.languages = [];
-        this.stopTests = false;
-        this.runAllTests()
+        this.initialize()
+        HarnessLoader.runOnComplete = true;
+        HarnessLoader.load()
     }
 
     static runTest(index, test) {
@@ -230,16 +230,29 @@ class TestRunner {
         let list = this.tests;
         let length = list.length;
 
-        for(let i = 0; i < length; i++){
-            if(this.stopTests)
-                return 
+        for (let i = 0; i < length; i++) {
+            if (this.stopTests){
+                console.log('TestRunner stopping execution')
+                return this.running = false
+            }
+                
 
             this.runTest(i, list[i])
         }
+
+         this.onComplete()
+    }
+
+    static initialize(){
+        this.tests = [];
+        this.languages = [];
+        this.stopTests = false;
     }
 
     static onComplete() {
-
+        this.running = false;
+        HarnessReporter.print()
+        HarnessFileManager.unload()
     }
 
 }
@@ -263,13 +276,13 @@ class HarnessReporter {
         )
     }
 
-    
 
-    static install(reporter){
+
+    static install(reporter) {
         this.reporterList.push(reporter)
     }
 
-    
+
 
     static createReport(heading, ...args) {
         let list = this.reporterList
@@ -277,19 +290,19 @@ class HarnessReporter {
         let called = false;
         let reports = [];
 
-        for(let i = 0; i < length; i++){
-            if(typeof list[i]['createReport'] === 'function'){
+        for (let i = 0; i < length; i++) {
+            if (typeof list[i]['createReport'] === 'function') {
                 reports.push[list[i].createReport(heading, args)]
                 called = true;
             }
         }
 
-        if(!called){
+        if (!called) {
             reports = new HarnessReport(heading, args)
             this.harnessReports.push(reports)
             reports = [reports]
         }
-            return reports
+        return reports
     }
 
     static addReport(reports, heading, data) {
@@ -298,25 +311,36 @@ class HarnessReporter {
         })
     }
 
-    static currentReports(){
+    static currentReports() {
         let list = this.reporterList;
         let length = list.length;
         let reports = [];
 
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             reports.push(list[i].currentReport())
         }
 
         return reports
     }
 
-    static setHeading(heading){
+    static setHeading(heading) {
         let reports = this.currentReports()
 
         reports.forEach(a => a.setHeading(heading))
     }
 
+    static print() {
+        console.log('calling static print')
+        let list = this.reporterList;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            list[i].print()
+        }
+    }
+
     print() {
+
         throw new slz_ComponentModuleDefinitionError(
             'HarnessReporter', 'print', 'Reporter Classe'
         )
@@ -336,36 +360,36 @@ class HarnessReport {
     reports = [];
     heading = ""
 
-    constructor(heading, data){
+    constructor(heading, data) {
         this.heading = heading;
         this.data = data
     }
 
-    addReport(heading, data){
+    addReport(heading, data) {
         let report = new HarnessReport(heading, data)
         this.reports.push(report)
 
         return report
     }
 
-    report(data){
+    report(data) {
         this.data = data;
     }
 
-    setHeading(heading){
+    setHeading(heading) {
         this.heading = heading
     }
 
-    print(){
+    print() {
         throw new slz_ComponentModuleDefinitionError(
             'HarnessReport', 'print', 'Report Classe'
         )
     }
 
-    currentReport(){
-        return this.reports.length ? 
-                this.reports[this.reports.length - 1] :
-                false;
+    currentReport() {
+        return this.reports.length ?
+            this.reports[this.reports.length - 1] :
+            false;
     }
 
 }
@@ -390,12 +414,12 @@ class HarnessFileManager {
     }
 
 
-    static getModel(dependencyName){
+    static getModel(dependencyName) {
         let list = this.globalElementNames
         let length = list.length;
 
-        for(let i = 0; i < length; i++){
-            if(list[i].toLocaleLowerCase() === dependencyName.toLocaleLowerCase()){
+        for (let i = 0; i < length; i++) {
+            if (list[i].toLocaleLowerCase() === dependencyName.toLocaleLowerCase()) {
                 return this.globalElementManifests[i]
             }
         }
@@ -431,11 +455,11 @@ class HarnessFileManager {
     }
 
     static defaultFiles(name) {
-        console.log(this.locations[name])
         let list = this.locations[name].defaults;
         let length = list.length;
         let result = [];
         let prefix = this.locations[name].directory + "/"
+
         for (let i = 0; i < length; i++) {
             result.push(prefix + list[i])
         }
@@ -457,18 +481,20 @@ class HarnessFileManager {
         this.getComponentFileNames()
     }
 
+    static unload(){
+        this.unloadGlobalElements()
+    }
+
     static unloadGlobalElements() {
         let names = this.globalElementNames;
         let manifests = this.globalElementManifests;
-
         let namesLength = names.length;
         let manifest,
             manifestLength
 
+            console.log(names)
         for (let i = 0; i < namesLength; i++) {
-            console.log(manifests)
             manifest = Object.keys(manifests[i])
-            console.log(manifest)
             manifestLength = manifest.length;
 
             window[names[i]] = undefined
@@ -478,18 +504,22 @@ class HarnessFileManager {
                 window[manifest[j]] = undefined
                 delete window[manifest[j]]
             }
+
+            this.globalElementNames = [];
+            this.globalElementManifests = [];
         }
     }
 
-    static hasDependency(name){
+    static hasDependency(name) {
         let list = this.globalElementNames
         let length = list.length;
-        
-        for(let i = 0; i < length; i++){
-            if(list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
+
+        for (let i = 0; i < length; i++) {
+            if (list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
                 return true;
         }
-
+        console.log('pushing missing dependency')
+        this.missingDependency.push(name)
         return false
     }
 
@@ -520,7 +550,6 @@ class HarnessLoader {
 
 
         for (let i = 0; i < length; i++) {
-            console.log(list[i])
             manifest.push(
                 () => {
                     this.loadFile(list[i])
@@ -536,7 +565,8 @@ class HarnessLoader {
         this.loading = true;
         this.manifest = this.createFullManifest()
 
-        console.log(this.manifest)
+        HarnessFileManager.missingDependency = [];
+
         if (this.manifest.length)
             this.manifest.shift()()
 
@@ -556,6 +586,12 @@ class HarnessLoader {
 
         if (!this.runOnComplete)
             return
+
+        if (HarnessFileManager.missingDependency.length > 0) {
+            console.log(`Missing Dependencies. Please check logs above for missing dependency module name,
+                or enter HarnessFileManager.missingDependency to access the missing dependency names array`)
+            return;
+        }
 
         this.runOnComplete = false;
         TestRunner.runAllTests();

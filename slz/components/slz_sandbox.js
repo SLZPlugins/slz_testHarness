@@ -71,8 +71,7 @@ class slz_Spy {
 
             this.callCount++
             this.calledArgs.push(args)
-            console.log(this)
-            console.log(f)
+
             return f.apply(obj, args)
         }
 
@@ -98,7 +97,6 @@ class slz_Spy {
         let length = list.length;
         let count = 0;
 
-        console.log(args)
         args.sort((a, b) => a.toString().localeCompare(b.toString()))
         for (let i = 0; i < length; i++) {
             currentArgList = list[i].clone()
@@ -307,7 +305,6 @@ class Mock_Function {
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            console.log(list[i], args)
             if (standardPlayer.sp_Core.areEquivalent(list[i], args)) {
                 return [this.cb[i], i]
             }
