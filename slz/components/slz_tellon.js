@@ -35,7 +35,7 @@ class CaseReport extends TellonReport {
         this.pass = data[0];
         this.expected = data[1];
         this.actual = data[2];
-        this.heading = TestRunner.heading
+        this.heading = HarnessReporter.heading
     }
 
     addReport() {
