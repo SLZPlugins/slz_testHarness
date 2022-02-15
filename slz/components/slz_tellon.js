@@ -1,5 +1,5 @@
 let model = {
-    name: 'slz_tellon', 
+    name: 'tellon', 
     install: () => {
         loadBanner()
 
@@ -12,16 +12,11 @@ let model = {
 
 
 class TellonReport extends HarnessReport {
-    heading;
-    readout = ""
-
     constructor(heading, args) {
         super(heading, args)
     }
 
-    print() {
-        this.printHeading()
-    }
+    
 
     printHeading() {
         this.readout += `${this.heading}\n`
@@ -61,6 +56,7 @@ class ScenarioReport extends TellonReport {
     addReport(heading, args) {
         let report = new CaseReport(heading, args);
         this.reports.push(report)
+
         return report
     }
 
@@ -75,6 +71,8 @@ class ScenarioReport extends TellonReport {
             this.readout += `    Actual: ${report.actual}\n\n`
             this.pass = false;
         }
+
+        this.readout += report.print()
     }
 
     printAllCaseReports() {
@@ -165,18 +163,20 @@ class TellonReporter extends HarnessReporter {
 
     static createReport(heading, args) {
         //if the first arg is a boolean, this will be considered a case report
+        let report
 
         if (typeof heading == 'undefined') {
-            this.createTestReport()
+            report = this.createTestReport()
         }
         else if (args.length) {
             args.unshift(heading)
-            this.createCaseReport(args)
+            report = this.createCaseReport(args)
         }
         else {
-            this.createScenarioReport(heading, args)
+            report = this.createScenarioReport(heading, args)
         }
 
+        this.currentReport = report
     }
 
     static createTestReport() {
@@ -200,6 +200,8 @@ class TellonReporter extends HarnessReporter {
 
         this.reportLevel = "Case"
         currentScenarioReport.addReport(heading, args)
+        currentScenarioReport.currentReport().logs = [].concat(currentScenarioReport.logs)
+        currentScenarioReport.logs = []
     }
 
     static currentReport() {
@@ -316,4 +318,5 @@ let manifest = {
 }
 
 requireLanguage('sinot')
+requirePlugins('sp_Core')
 registerReporter(model, manifest, TellonReporter)

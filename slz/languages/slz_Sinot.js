@@ -1,5 +1,6 @@
 let model = {
     name:"sinot",
+    testLevel:'test',
     beforeAll:()=>{},
     beforeEachCase:()=>{},
     beforeEachScenario:()=>{},
@@ -104,6 +105,7 @@ function runTest(list) { //list is test file using Sinot.js
     let length = list.length;
     let reporter = HarnessReporter;
     //list is array of Scenarios for individual test file
+    sinot.model.reportLevel = "test"
     sinot.model.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
@@ -111,10 +113,12 @@ function runTest(list) { //list is test file using Sinot.js
         let length2 = testCases.length;
 
         reporter.createReport(scenario.title)
+        sinot.model.reportLevel = "scenario"
         sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
         sinot.model.beforeEachScenario()
 
         for (let j = 0; j < length2; j++) {
+            sinot.model.reportLevel = "case"
             HarnessReporter.heading = testCases[j].title
 
             sinot.model.beforeEachCase()
@@ -145,5 +149,5 @@ let manifest = {
     runTest: runTest,
 }
 
-requireComponent('tellon')
+requireComponents('tellon')
 registerLanguage(model, manifest)
