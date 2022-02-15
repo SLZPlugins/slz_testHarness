@@ -1,4 +1,4 @@
-let model = { name: 'tellon' }
+let model = { name: 'slz_tellon', loadBanner: loadBanner }
 
 /* ///////////////////////////////////////////////////////////////////////////
         Report Classes #report 
@@ -8,11 +8,12 @@ let model = { name: 'tellon' }
 class TellonReport extends HarnessReport {
     heading;
     readout = ""
-    constructor(heading) {
-        this.heading = heading
+
+    constructor(heading, args) {
+        super(heading, args)
     }
 
-    print(){
+    print() {
         this.printHeading()
     }
 
@@ -20,18 +21,7 @@ class TellonReport extends HarnessReport {
         this.readout += `${this.heading}\n`
     }
 
-    report(...args){
-        //if the first arg is a boolean, this will be considered a case report
-        if(typeof args[0] === 'boolean')
-            this.createCaseReport(args)
-            
-    }
 
-    createCaseReport(args){
-        let report = HarnessReporter.reporter.createCaseReport()
-
-        report.reportCase.apply(report, args)
-    }
 }
 
 class CaseReport extends TellonReport {
@@ -39,21 +29,33 @@ class CaseReport extends TellonReport {
     expected;
     actual;
 
-    reportCase(pass, expected, actual) {
-        this.pass = pass;
-        this.expected = expected;
-        this.actual = actual;
+    constructor(data) { //data = [pass, expected, actual]
+        console.log(data)
+        super("", data)
+        this.pass = data[0];
+        this.expected = data[1];
+        this.actual = data[2];
+        this.heading = TestRunner.heading
+    }
+
+    addReport() {
+        console.log('Case Report is the lowest level of Tellon Report. You may not add a report to a Tellon CaseReport')
     }
 
 }
 
 class ScenarioReport extends TellonReport {
-    caseReports = [];
     passes = 0;
     fails = 0;
-    addReport(heading) {
-        let report = new CaseReport(heading);
-        this.caseReports.push(report)
+
+    constructor(heading, data) {
+        super(heading, data)
+        this.heading = heading
+    }
+
+    addReport(heading, args) {
+        let report = new CaseReport(heading, args);
+        this.reports.push(report)
         return report
     }
 
@@ -72,7 +74,7 @@ class ScenarioReport extends TellonReport {
 
     printAllCaseReports() {
         this.pass = true;
-        this.caseReports.forEach(a => {
+        this.reports.forEach(a => {
             this.printCaseReport(a)
         })
     }
@@ -80,16 +82,20 @@ class ScenarioReport extends TellonReport {
 }
 
 class TestReport extends TellonReport {
-    scenarioReports = [];
     scenarioPasses = 0;
     scenarioFails = 0;
     casePasses = 0;
     caseFails = 0;
 
-    addReport(heading) {
-        let report = new ScenarioReport(heading)
+    constructor(heading, data) {
+        super(heading, data)
+    }
 
-        this.scenarioReports.push(report)
+    addReport(heading, data) {
+        console.log('Whie creating Scenario report, giving it : ' + heading)
+        let report = new ScenarioReport(heading, data)
+
+        this.reports.push(report)
         return report
     }
 
@@ -107,7 +113,7 @@ class TestReport extends TellonReport {
     }
 
     printAllScenarioReports(report) {
-        let list = this.scenarioReports;
+        let list = this.reports;
         let length = list.length;
         let title = ""
         let results = ""
@@ -132,56 +138,95 @@ class TestReport extends TellonReport {
         return this.readout
     }
 }
+
+/* ///////////////////////////////////////////////////////////////////////////
+        Reporter Class #reporter #rtr #rpr 
+   /////////////////////////////////////////////////////////////////////////// */
 class TellonReporter extends HarnessReporter {
     static scenarioPasses = 0;
     static scenarioFails = 0;
     static casePasses = 0;
     static caseFails = 0;
-    static testReports = [];
+    static reportLevel = "Test";
+
     constructor() {
         throw new Error('This is a static class')
     }
 
+    static createReport(heading, args) {
+        //if the first arg is a boolean, this will be considered a case report
+
+        if (typeof heading == 'undefined') {
+            this.createTestReport()
+        }
+        else if (args.length){
+            args.unshift(heading)
+            this.createCaseReport(args)
+        }
+        else {
+            console.log('creating scenario report with heading : ' + heading)
+            this.createScenarioReport(heading, args)
+        }
+
+    }
 
     static createTestReport() {
-        let report = new TestReport(TestRunner.testHeading)
+        let report = new TestReport()
 
-        this.testReports.push(report)
+        console.log('-----creating Tellon Test report')
+        this.reports.push(report)
+
+        this.reportLevel = "Test"
         return report
     }
 
-    static createScenarioReport() {
+    static createScenarioReport(heading, args) {
+        console.log('-----creating Tellon Scenario report')
         let currentTestReport = this.getCurrentTestReport();
-        let scenarioReport = currentTestReport.addReport(TestRunner.scenarioHeading)
+        let scenarioReport = currentTestReport.addReport(heading, args)
 
+        this.reportLevel = "Scenario"
         return scenarioReport;
     }
 
-    static createCaseReport() {
+    static createCaseReport(heading, args) {
+        console.log('-----creating Tellon Case report')
         let currentScenarioReport = this.getCurrentScenarioReport()
-        let caseReport = currentScenarioReport.addReport(TestRunner.caseHeading)
 
-        return caseReport
+        this.reportLevel = "Case"
+        currentScenarioReport.addReport(heading, args)
+    }
+
+    static currentReport() {
+        switch (this.reportLevel) {
+            case 'Scenario':
+                return this.getCurrentScenarioReport()
+            case 'Case':
+                return this.getCurrentCaseReport()
+            default:
+                return this.getCurrentTestReport()
+        }
+        return this.reports[this.reports.length - 1]
     }
 
     static getCurrentTestReport() {
-        return this.testReports[this.testReports.length - 1]
+        return this.reports[this.reports.length - 1]
     }
 
     static getCurrentScenarioReport() {
         let currentTestReport = this.getCurrentTestReport();
 
-        return currentTestReport.scenarioReports[currentTestReport.scenarioReports.length - 1]
+        return currentTestReport.currentReport()
     }
 
     static getCurrentCaseReport() {
         let currentScenarioReport = this.getCurrentScenarioReport();
 
-        return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
+        return currentScenarioReport.currentReport()
     }
 
     static printAllReports() {
-        let list = this.testReports;
+        let list = this.reports;
         let length = list.length;
         let summary;
         let header = "\n\n==================Test Results ==================\n"
@@ -201,7 +246,7 @@ class TellonReporter extends HarnessReporter {
     }
 
     static getTestPasses() {
-        let list = this.testReports;
+        let list = this.reports;
         let length = list.length;
         let pass = 0;
         let fail = 0;
@@ -246,11 +291,22 @@ class TellonReporter extends HarnessReporter {
 }
 
 
+function loadBanner() {
+    console.log(`
+___________       __    __                    
+\\__    ___/____  |  |  |  |    ____    ____   
+  |    | _/ __ \\ |  |  |  |   /  _ \\  /    \\  
+  |    | \\  ___/ |  |__|  |__(  <o> )|   |  \\ 
+  |____|  \\___  >|____/|____/ \\____/ |___|  / 
+              \\/                          \\/  
+    `)
+}
+
 let manifest = {
-    TellonReport:TellonReport,
-    CaseReport:CaseReport,
-    TestReport:TestReport,
-    ScenarioReport:ScenarioReport
+    TellonReport: TellonReport,
+    CaseReport: CaseReport,
+    TestReport: TestReport,
+    ScenarioReport: ScenarioReport
 }
 
 registerReporter(model, manifest, TellonReporter)

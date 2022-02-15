@@ -7,13 +7,10 @@ let model = {
     afterEachScenario:()=>{},
 }
 
-function sinot_Test(title, rmPlugins, engines, plugins, getTestData) {
+function sinot_Test(title, getTestData) {
     console.log('calling sinot_Test')
     let obj = {
         title: title,
-        rmPlugins: rmPlugins,
-        engines: engines,
-        plugins: plugins,
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
     }
 
@@ -76,25 +73,25 @@ function runTest(list) { //list is test file using Sinot.js
     let length = list.length;
     let reporter = HarnessReporter;
     //list is array of Scenarios for individual test file
-    reporter.createReport(list[i].name)
     sinot.model.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
-
+        console.log(scenario.title)
         reporter.createReport(scenario.title)
         sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
         sinot.model.beforeEachScenario()
 
         for (let j = 0; j < length2; j++) {
-            sinot.model.caseHeading = testCases[j].title
+            TestRunner.testHeading = testCases[j].title
 
             sinot.model.beforeEachCase()
 
             testCases[j].testCaseRunner();
-
+            
             sinot.model.afterEachCase()
+            
         }
         resetCaseHooks()
         sinot.model.afterEachScenario()
