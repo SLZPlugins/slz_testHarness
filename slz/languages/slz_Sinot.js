@@ -84,7 +84,7 @@ function runTest(list) { //list is test file using Sinot.js
         sinot.model.beforeEachScenario()
 
         for (let j = 0; j < length2; j++) {
-            TestRunner.testHeading = testCases[j].title
+            HarnessReporter.heading = testCases[j].title
 
             sinot.model.beforeEachCase()
 
