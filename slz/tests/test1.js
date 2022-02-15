@@ -1,5 +1,5 @@
 requireLanguage('sinot')
-
+requirePlugins('sp_Core')
 sinot_Test("Test A", () => {
     
     //can scope varibles to entire test instace
@@ -25,6 +25,7 @@ sinot_Test("Test A", () => {
                 //     console.log('this will run after each case, just for this scenario')
                 // }),
                 testCase("Check Length is greater than one", () => {
+                    TestLogger.log('poooooooo')
                     rmAssert.assertTrue(10 > 1)
                 }),
                 testCase("Amount in inventory should be decremented", () => {
@@ -40,8 +41,8 @@ sinot_Test("Test A", () => {
             ]
         }),
 
-
         scenario("Testing Subtract from Storage", () => {
+            TestLogger.log('Before second scenario')
             return [
                 testCase("Should remove successfully when contents exist", () => {
                     rmAssert.assertNotEquals(10, 10)
