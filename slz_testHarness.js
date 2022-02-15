@@ -56,15 +56,20 @@ slz.testHarness = slz.testHarness || {};
    /////////////////////////////////////////////////////////////////////////// */
 
 
-function requireDependency(names) {
-
+function requireDependency(dependency) {
+    if(!HarnessFileManager.hasDependency(dependency)){
+        console.log('MISSING DEPENDENCY: ' + dependency)
+        return false
+    }
+    return HarnessFileManager.getModel(dependency)
 }
 
-function requireLanaguage(...names) {
+function requireLanguage(dependency) {
     //Language specific operations/assignment
-    names.forEach(dependency =>
-        this.requireDependency(dependency)
-    )
+        let requiredLanguage = this.requireDependency(dependency)
+        console.log(requiredLanguage)
+        TestRunner.setTestLanguage(requiredLanguage)
+    
 
 }
 
@@ -123,7 +128,7 @@ function registerComponent(model, manifest) {
 function registerReporter(model, manifest, reporter) {
     this.registerDependency(model, manifest)
 
-    HarnessReporter.install(reporter)
+    HarnessReporter.install(reporter, model)
 }
 
 function slzRegistrationError(data) {
@@ -187,7 +192,7 @@ class slz_ComponentModuleDefinitionError extends slz_DependencyError {
 
 class TestRunner {
     static tests = []
-    static language
+    static languages = []
 
     constructor() {
         throw new Error('This is a static class')
@@ -197,24 +202,34 @@ class TestRunner {
 
     }
 
-    static setTestLanguage() {
-
+    static setTestLanguage(model) {
+        console.log(model)
+        this.languages.push(model.runTest)
+        
+        if(!model)
+            this.stopTests = true;
     }
 
-    static initialize() {
-        this.setTestLanguage()
-    }
 
     static run() {
-
+        this.languages = [];
+        this.stopTests = false;
+        this.runAllTests()
     }
 
-    static runTest(index) {
-
+    static runTest(index, test) {
+        HarnessReporter.createReport()
+        HarnessReporter.setHeading(test.title)
+        this.languages[index](test.loadTestData())
     }
 
     static runAllTests() {
+        let list = this.tests;
+        let length = list.length;
 
+        for(let i = 0; i < length; i++){
+            this.runTest(i, list[i])
+        }
     }
 
     static onComplete() {
@@ -229,7 +244,11 @@ class TestRunner {
 
 class HarnessReporter {
     static reporterList = []
-    static reporter = {}
+    static reporter;
+    static harnessReports = [];
+    static reports = [];
+    static currentReport
+    static heading = "";
 
     constructor() {
         console.log('HarnessReporter constructor on harness is a static class')
@@ -238,13 +257,58 @@ class HarnessReporter {
         )
     }
 
-    static aggregateReporters() {
-        
-        
+    
+
+    static install(reporter, model){
+        this.reporterList.push(reporter)
+        model.loadBanner()
     }
 
-    static install(reporter){
-        this.reporterList.push(reporter)
+    
+
+    static createReport(heading, ...args) {
+        let list = this.reporterList
+        let length = list.length;
+        let called = false;
+        let reports = [];
+
+        for(let i = 0; i < length; i++){
+            if(typeof list[i]['createReport'] === 'function'){
+                reports.push[list[i].createReport(heading, args)]
+                called = true;
+            }
+        }
+
+        if(!called){
+            reports = new HarnessReport(heading, args)
+            this.harnessReports.push(reports)
+            reports = [reports]
+        }
+            return reports
+    }
+
+    static addReport(reports, heading, data) {
+        reports.forEach(a => {
+            a.addReport(heading, data)
+        })
+    }
+
+    static currentReports(){
+        let list = this.reporterList;
+        let length = list.length;
+        let reports = [];
+
+        for(let i = 0; i < length; i++){
+            reports.push(list[i].currentReport())
+        }
+
+        return reports
+    }
+
+    static setHeading(heading){
+        let reports = this.currentReports()
+
+        reports.forEach(a => a.setHeading(heading))
     }
 
     print() {
@@ -252,21 +316,6 @@ class HarnessReporter {
             'HarnessReporter', 'print', 'Reporter Classe'
         )
     }
-
-    createReport(...args) {
-        let list = this.reporterList
-        let length = list.length;
-
-        for(let i = 0; i < length; i++){
-            if(typeof list[i]['createReport'] === 'function'){
-                list[i].createReport.apply(list[i], args)
-            }
-        }
-
-        console.log('No reporter installed')
-        return new HarnessReporter()
-    }
-
 
 }
 
@@ -278,8 +327,28 @@ class HarnessReporter {
    /////////////////////////////////////////////////////////////////////////// */
 
 class HarnessReport {
-    constructor() {
-        console.log('No report classes installed')
+    data;
+    reports = [];
+    heading = ""
+
+    constructor(heading, data){
+        this.heading = heading;
+        this.data = data
+    }
+
+    addReport(heading, data){
+        let report = new HarnessReport(heading, data)
+        this.reports.push(report)
+
+        return report
+    }
+
+    report(data){
+        this.data = data;
+    }
+
+    setHeading(heading){
+        this.heading = heading
     }
 
     print(){
@@ -288,8 +357,10 @@ class HarnessReport {
         )
     }
 
-    report(){
-        console.log('No report method on reporter')
+    currentReport(){
+        return this.reports.length ? 
+                this.reports[this.reports.length - 1] :
+                false;
     }
 
 }
@@ -314,19 +385,17 @@ class HarnessFileManager {
     }
 
 
-    static searchFiles(location, name){
-        let thisLocation = this.locations[location];
-        let list = thisLocation.defaults;
+    static getModel(dependencyName){
+        let list = this.globalElementNames
         let length = list.length;
-        console.log(list)
-        for(let i = 0; i < length; i++){
-            if(list[i].contains(name))
-                return HarnessLoader.loadFile(`${thisLocation.directory}/${list[i]}`, ()=>{console.log('loading search result for ' + name)})
-        }
-        console.log('no match found')
-    }
 
-    
+        for(let i = 0; i < length; i++){
+            if(list[i].toLocaleLowerCase() === dependencyName.toLocaleLowerCase()){
+                return this.globalElementManifests[i]
+            }
+        }
+        return false;
+    }
 
     static getTestFileNames() {
         this.defaultTestFiles = this.getFileNames(this.locations.tests)
@@ -405,6 +474,19 @@ class HarnessFileManager {
                 delete window[manifest[j]]
             }
         }
+    }
+
+    static hasDependency(name){
+        let list = this.globalElementNames
+        let length = list.length;
+        console.log('looking for ' + name)
+        console.log(this.globalElementNames.toString())
+        for(let i = 0; i < length; i++){
+            if(list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
+                return true;
+        }
+
+        return false
     }
 
 }

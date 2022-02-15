@@ -1,6 +1,7 @@
 class rmAssert {
-    // 'use strict'
+     'use strict'
     static reporter = HarnessReporter;
+
     constructor() {
         throw new Error('This is a static class')
     }
@@ -14,7 +15,8 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, true, expression)
+        
+        this.reporter.createReport(result, true, expression)
         return result
 
     }
@@ -30,7 +32,7 @@ class rmAssert {
             result = false
             
             //Finalize Report
-            reporter.report(result, false, expression)
+            this.reporter.createReport(result, false, expression)
             return result
         }
     }
@@ -46,7 +48,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, obj1, obj2)
+        this.reporter.createReport(result, obj1, obj2)
         return result
     }
 
@@ -61,7 +63,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, true, result)
+        this.reporter.createReport(result, true, result)
         return result
     }
 
@@ -76,7 +78,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, null, obj1)
+        this.reporter.createReport(result, null, obj1)
         return result
     }
 
@@ -91,7 +93,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, "Not Null", expression)
+        this.reporter.createReport(result, "Not Null", expression)
         return result
     }
 
@@ -106,7 +108,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, 'string', typeof obj1)
+        this.reporter.createReport(result, 'string', typeof obj1)
         return result
     }
 
@@ -121,7 +123,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, 'number', typeof obj1)
+        this.reporter.createReport(result, 'number', typeof obj1)
         return result
     }
 
@@ -136,7 +138,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, 'object', typeof obj1)
+        this.reporter.createReport(result, 'object', typeof obj1)
         return result
     }
 
@@ -151,7 +153,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, 'boolean', typeof obj1)
+        this.reporter.createReport(result, 'boolean', typeof obj1)
         return result
     }
 
@@ -166,7 +168,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, 'function', typeof obj1)
+        this.reporter.createReport(result, 'function', typeof obj1)
         return result
     }
 
@@ -181,7 +183,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        reporter.report(result, true, false)
+        this.reporter.createReport(result, true, false)
         return result
     }
 }
