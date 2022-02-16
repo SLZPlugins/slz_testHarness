@@ -112,14 +112,14 @@ function runTest(list) { //list is test file using Sinot.js
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
 
-        reporter.createReport(scenario.title)
+        TestLogger.log(scenario.title)
         sinot.model.reportLevel = "scenario"
         sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
         sinot.model.beforeEachScenario()
 
         for (let j = 0; j < length2; j++) {
             sinot.model.reportLevel = "case"
-            HarnessReporter.heading = testCases[j].title
+            TestLogger.log(testCases[j].title)
 
             sinot.model.beforeEachCase()
 
@@ -149,5 +149,5 @@ let manifest = {
     runTest: runTest,
 }
 
-requireComponents('tellon')
+
 registerLanguage(model, manifest)
