@@ -314,14 +314,8 @@ class TestLogger {
     }
 
     static log(...data) {
-        let list = HarnessReporter.reporters;
-        let length = list.length;
         let stamp = this.getTimeStamp()
 
-        for (let i = 0; i < length; i++) {
-            list[i].addLog(stamp + data.toString())
-            list[i].addData(data)
-        }
         this.addData(data)
         this.addLog(stamp + data)
     }

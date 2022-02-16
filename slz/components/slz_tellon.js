@@ -6,7 +6,9 @@ let model = {
     }
 }
 
-
+class TellonReport {
+    
+}
 
 
 function loadBanner() {
