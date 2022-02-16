@@ -159,11 +159,6 @@ function registerReporter(model, manifest, reporter) {
     HarnessReporter.install(reporter)
 }
 
-function slzRegistrationError(data) {
-    console.log(`Error registering Module: ${data.name}`)
-    console.log(data)
-}
-
 class slz_ValidationDefinitionError extends Error {
     message
     moduleName
@@ -238,7 +233,7 @@ class slz_DependencyError extends Error {
 class TestRunner {
     static tests = []
     static languages = []
-    static logs = []
+    
 
     constructor() {
         throw new Error('This is a static class')
@@ -246,6 +241,7 @@ class TestRunner {
 
     static addTest(test) {
         this.tests.push(test)
+        TestLogger.addNewLogIndex()
     }
 
     static setTestLanguage(model) {
@@ -268,8 +264,8 @@ class TestRunner {
     }
 
     static runTest(index, test) {
-        HarnessReporter.createReport()
-        HarnessReporter.setHeading(test.title)
+        this.heading = test.title;
+        TestLogger.log(test.title)
         this.languages[index](test.loadTestData())
     }
 
@@ -303,36 +299,68 @@ class TestRunner {
         HarnessReporter.print()
         HarnessFileManager.unload()
     }
-    
+
 
 }
 
 class TestLogger {
-    constructor(){
+    static rawData = []
+    static timeStamps = []
+    static logs = []
+    static logIndex = -1;
+    
+    constructor() {
         throw new Error('This is a static class')
     }
 
-    static getCurrentLogSpace(){
-        let currentReports = HarnessReporter.currentReport;
-        let length = currentReports.length;
-        let results = [];
+    static log(...data) {
+        let list = HarnessReporter.reporters;
+        let length = list.length;
+        let stamp = this.getTimeStamp()
 
-        console.log(currentReports)
-        for(let i = 0; i < length; i++){
-            results.push(currentReports[i])
+        for (let i = 0; i < length; i++) {
+            list[i].addLog(stamp + data.toString())
+            list[i].addData(data)
         }
-
-        return results;
+        this.addData(data)
+        this.addLog(stamp + data)
     }
 
-    static log(message){
-        let list = this.getCurrentLogSpace()
-        let length = list.length; 
-        console.log(list)
+    static addData(data){
+        this.rawData[this.logIndex].push(data)
+    }
+
+    static addLog(message){
+        this.logs[this.logIndex].push(message)
+    }
+
+    static addNewLogIndex(){
+        this.rawData.push([])
+        this.logs.push([])
+        this.logIndex++
+    }
+
+    static getTimeStamp(){
+        let dt = new Date()
+        return `<<<${dt.getHours()}:${dt.getUTCMinutes()}:${dt.getUTCSeconds()}:${dt.getMilliseconds()}>>> `
+    }
+
+    static removeTimeStamp(entry){
+        return entry.replace(entry.match(/(<<<)(.*?)(>>>)/)[0], '').trim()
+    }
+
+    
+
+    static printLogs(){
+        let readout = ""
+        let list = this.logs;
+        let length = list.length;
+
         for(let i = 0; i < length; i++){
-            console.log(list[i])
-            list[i].log(message)
+            readout += `\n${list[i].join(`\n`)}`
         }
+
+        console.log(readout)
     }
 }
 
@@ -546,87 +574,27 @@ class ComponentValidator extends HarnessValidator {
    /////////////////////////////////////////////////////////////////////////// */
 
 class HarnessReporter {
-    static reporterList = []
-    static reporter;
-    static harnessReports = [];
-    static reports = [];
-    static heading = "";
-    static useTimestamp = false;
-    static currentReports = []
+    static reporters = []
+    static includeLogs = false;
 
     constructor() {
         throw new Error('This is a static class')
     }
 
-
-
     static install(reporter) {
-        this.reporterList.push(reporter)
+        this.reporters.push(reporter)
     }
 
-
-
-    static createReport(heading, ...args) {
-        let list = this.reporterList
-        let length = list.length;
-        let called = false;
-        let reports = [];
-
-        for (let i = 0; i < length; i++) {
-            if (typeof list[i]['createReport'] === 'function') {
-                reports.push[list[i].createReport(heading, args)]
-                called = true;
-            }
-        }
-
-        if (!called) {
-            reports = new HarnessReport(heading, args)
-            this.harnessReports.push(reports)
-            reports = [reports]
-        }
-
-        this.currentReport = reports
-        return reports
-    }
-
-    static addReport(reports, heading, data) {
-        reports.forEach(a => {
-            a.addReport(heading, data)
-        })
-    }
-
-    static currentReports() {
-        let list = this.reporterList;
-        let length = list.length;
-        let reports = [];
-
-        for (let i = 0; i < length; i++) {
-            reports.push(list[i].currentReport)
-        }
-
-        return reports
-    }
-
-    static setHeading(heading) {
-        let reports = this.currentReports()
-
-        reports.forEach(a => a.setHeading(heading))
+    static hasReporters() {
+        return this.reporters.length > 0
     }
 
     static print() {
-        console.log('calling static print')
-        let list = this.reporterList;
+        let list = this.reporters;
         let length = list.length;
 
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++)
             list[i].print()
-        }
-    }
-
-    static timeStamp(){
-        if(this.useTimestamp){
-            return `${Date.getMinutes()}:${Date.getSeconds()}:${Date.getMilliseconds()}`
-        }
     }
 }
 
@@ -638,51 +606,27 @@ class HarnessReporter {
    /////////////////////////////////////////////////////////////////////////// */
 
 class HarnessReport {
-    data;
-    reports = [];
-    heading = "";
-    readout = "";
-    logs = [];
+    currentReport
+    reports = []
+    data = []
+    readout = ""
+    logs = []
+    includeLogs = false;
 
-    constructor(heading, data) {
+    constructor(heading) {
         this.heading = heading;
-        this.data = data
     }
 
-    addReport(heading, data) {
-        let report = new HarnessReport(heading, data)
-        this.reports.push(report)
-
-        return report
+    addLog(log) {
+        this.logs.push(log)
     }
 
-    report(data) {
-        this.data = data;
+    printLogs() {
+
     }
 
-    setHeading(heading) {
-        this.heading = heading
-    }
+    print() {
 
-
-    currentReport() {
-        
-        return this.reports.length ?
-            this.reports[this.reports.length - 1] :
-            this;
-    }
-
-
-    log(message){
-        this.logs.push(message)
-    }
-
-    printLogs(){
-        return this.logs.join(`\n`)
-    }
-
-    print(){
-        return `${this.printLogs()}\n${this.readout}`
     }
 
 }

@@ -26,7 +26,7 @@ function loadBanner(){
 }
 class rmAssert {
      'use strict'
-    static reporter = HarnessReporter;
+    static logger = TestLogger
 
     constructor() {
         throw new Error('This is a static class')
@@ -42,7 +42,7 @@ class rmAssert {
         }
         //Finalize Report
         
-        this.reporter.createReport(result, true, expression)
+        this.logger.log(result, true, expression)
         return result
 
     }
@@ -58,7 +58,7 @@ class rmAssert {
             result = false
             
             //Finalize Report
-            this.reporter.createReport(result, false, expression)
+            this.logger.log(result, false, expression)
             return result
         }
     }
@@ -74,7 +74,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, obj1, obj2)
+        this.logger.log(result, obj1, obj2)
         return result
     }
 
@@ -89,7 +89,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, true, result)
+        this.logger.log(result, true, result)
         return result
     }
 
@@ -104,7 +104,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, null, obj1)
+        this.logger.log(result, null, obj1)
         return result
     }
 
@@ -119,7 +119,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, "Not Null", expression)
+        this.logger.log(result, "Not Null", expression)
         return result
     }
 
@@ -134,7 +134,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, 'string', typeof obj1)
+        this.logger.log(result, 'string', typeof obj1)
         return result
     }
 
@@ -149,7 +149,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, 'number', typeof obj1)
+        this.logger.log(result, 'number', typeof obj1)
         return result
     }
 
@@ -164,7 +164,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, 'object', typeof obj1)
+        this.logger.log(result, 'object', typeof obj1)
         return result
     }
 
@@ -179,7 +179,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, 'boolean', typeof obj1)
+        this.logger.log(result, 'boolean', typeof obj1)
         return result
     }
 
@@ -194,7 +194,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, 'function', typeof obj1)
+        this.logger.log(result, 'function', typeof obj1)
         return result
     }
 
@@ -209,7 +209,7 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        this.reporter.createReport(result, true, false)
+        this.logger.log(result, true, false)
         return result
     }
 }

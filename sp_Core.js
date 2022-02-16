@@ -679,3 +679,8 @@ standardPlayer.sp_Core.combineObjectsAlpha = function (left, right, scope) {
         }
     }
 }
+
+
+standardPlayer.sp_Core.hasReturnValue = function(func){
+    return  typeof func() !== 'undefined'
+}
