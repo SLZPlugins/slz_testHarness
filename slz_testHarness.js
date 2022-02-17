@@ -313,23 +313,15 @@ class TestLogger {
         throw new Error('This is a static class')
     }
 
-    static log(...data) {
-        let stamp = this.getTimeStamp()
-
-        this.addData(data)
-        this.addLog(stamp + data)
+    static addData(...data){
+        this.logs[this.logIndex].push(new TestPacket('data', data))
     }
 
-    static addData(data){
-        this.rawData[this.logIndex].push(data)
-    }
-
-    static addLog(message){
-        this.logs[this.logIndex].push(message)
+    static log(message){
+        this.logs[this.logIndex].push(new TestPacket('log', message))
     }
 
     static addNewLogIndex(){
-        this.rawData.push([])
         this.logs.push([])
         this.logIndex++
     }
@@ -355,6 +347,17 @@ class TestLogger {
         }
 
         console.log(readout)
+    }
+}
+
+
+class TestPacket {
+    type
+    data
+
+    constructor(type, data){
+        this.type = type
+        this.data = data;
     }
 }
 

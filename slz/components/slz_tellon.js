@@ -6,8 +6,10 @@ let model = {
     }
 }
 
-class TellonReport {
-    
+class TellonReporter {
+    constructor(){
+        throw new Error('This is a static class')
+    }
 }
 
 
