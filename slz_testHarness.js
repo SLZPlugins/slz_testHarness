@@ -3,41 +3,45 @@
 * @author slz
 * @target MZ
 *
-* @param testDirectory
-* @type text
-* @text Main Test Directory
-* @default js/slz/test
+* @param tests
+* @type struct<Module>
+* @text Tests
+* @desc Configure paths for Tests
+* @default {"directory":"js/plugins/slz/tests","defaults":"[\"test1.js\"]"}
 * 
-* @param assertions
-* @type struct<Addon>[]
-* @text Assertion Engines
-* @desc Add any assertion engines you'll use in your tests
+* @param languages
+* @type struct<Module>
+* @text Languages
+* @desc Configure paths for Language Modules
+* @default {"directory":"js/plugins/slz/languages","defaults":"[\"slz_Sinot.js\"]"}
 * 
-* @param plugins
-* @type struct<Addon>[]
-* @text Harness Plugins
-* @desc Add any plugins you want to be available in the harness
+* @param engines
+* @type struct<Module>
+* @text Engines
+* @desc Configure paths for Engine Modules
+* @default {"directory":"js/plugins/slz/engines","defaults":"[\"slz_rmAssert.js\"]"}
 *
+* @param components
+* @type struct<Module>
+* @text Components
+* @desc Configure paths for Component Modules
+* @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\"]"}
 */
 
-/*~struct~Addon:
+/*~struct~Module:
  * 
- * @param filePath
+ * @param directory
  * @type text
- * @text File Path
- * @desc File location for this Assertion Engine. Must have .js extension.
+ * @text Main Directory
+ * @desc Folder location for this type of module. 
  * @default js/slz/
  * 
- * @param name
- * @type text
- * @text Name
- * @desc Name of your choosing. This will be used at the beginning of your test files to enable non-default engines.
+ * @param defaults
+ * @type text[]
+ * @text Default Module Files
+ * @desc List of Files to load by default. 
+ * @default []
  * 
- * @param enabled
- * @type boolean
- * @text Enabled
- * @desc Toggle on or off.
- * @default true
  * 
  */
 
@@ -47,630 +51,778 @@ Imported.slz = 'slz_TestHarness';
 var slz = slz || { params: {} };
 slz.testHarness = slz.testHarness || {};
 
-
 /* ///////////////////////////////////////////////////////////////////////////
-        Global Functions #global #scenario #describe
+        Global Functions global scenario describe
    /////////////////////////////////////////////////////////////////////////// */
 
 
-
-function slz_Test(title, rmPlugins, engines, plugins, getTestData) {
-    let obj = {
-        title: title,
-        rmPlugins: rmPlugins,
-        engines: engines,
-        plugins: plugins,
-        loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
-    }
-
-    TestRunner.tests.push(obj)
+function requireDependency(dependency) {
+    HarnessFileManager.addDependency(dependency)
 }
 
-function requiresEngine(name) {
-    TestFileManager.hasRequiredEngine(name)
-}
-
-function requiresPlugin(name) {
-    TestFileManager.hasRequiredPlugin(name)
-}
-
-function requireRMPlugin(name) {
-    console.log('requiring rm pluign')
-    TestFileManager.hasRequiredRMPlugin(name)
-}
-
-function scenario(title, getScenarioData) {
-    return {
-        title: title,
-        getScenarioData: () => { return getScenarioData().filter(a => typeof a == 'object') }
-    }
-    // TestRunner.currentTest().scenarios.push(scn)
-}
-
-function testCase(title, testCaseRunner) {
-    return {
-        title: title,
-        testCaseRunner: testCaseRunner
-    }
-}
-
-function beforeAll(f) {
-    TestRunner.beforeAll = f;
-}
-
-function beforeEachCase(f) {
-    TestRunner.beforeEachCase = f
-}
-
-function afterEachCase(f) {
-    TestRunner.afterEachCase = f
-}
-
-function beforeEachScenario(f) {
-    TestRunner.beforeEachScenario = f
-}
-
-function afterEachScenario(f) {
-    TestRunner.afterEachScenario = f
-}
-
-
-
-
-/* ///////////////////////////////////////////////////////////////////////////
-        Test Runner  #Runner #tr
-   /////////////////////////////////////////////////////////////////////////// */
-
-let TestRunner = {
-    tests: [],
-    testHeading: "",
-    scenarioHeading: "",
-    caseHeading: ""
-}
-
-TestRunner.resetHooks = function () {
-    this.resetCaseHooks()
-    this.resetScenarioHooks()
-    this.beforeAll = () => { }
-}
-
-TestRunner.resetCaseHooks = function () {
-    this.beforeEachCase = () => { }
-    this.afterEachCase = () => { }
-    this.beforeAll = () => { }
-}
-
-TestRunner.resetScenarioHooks = function () {
-    this.beforeEachScenario = () => { }
-    this.afterEachScenario = () => { }
-}
-
-TestRunner.currentTest = function () {
-    let length = this.tests.length;
-    return this.tests[length - 1]
-}
-
-TestRunner.run = function () {
-    slz_TestLoader.runOnComplete = true;
-    slz_TestLoader.load();
-}
-
-TestRunner.runTest = function (list) {
-    let length = list.length;
-    //list is array of Scenarios for individual test file
-    if (TestFileManager._abortingLoad)
-        return
-
-    this.beforeAll()
-    for (let i = 0; i < length; i++) {
-        let scenario = list[i]
-        let testCases = scenario.getScenarioData()
-        let length2 = testCases.length;
-
-        this.scenarioHeading = scenario.title
-        slz_Reporter.createScenarioReport()
-        this.beforeEachScenario()
-
-        if (TestFileManager._abortingLoad)
-            return
-
-        for (let j = 0; j < length2; j++) {
-            this.caseHeading = testCases[j].title
-
-            this.beforeEachCase()
-
-            testCases[j].testCaseRunner();
-
-            this.afterEachCase()
-        }
-        this.resetCaseHooks()
-        this.afterEachScenario()
-    }
-}
-
-TestRunner.readAllTests = function () {
-    let list = this.tests;
-    let length = list.length;
-    let engines = [];
-    let plugins = [];
-
-    for (let i = 0; i < length; i++) {
-        engines = engines.concat(list[i].engines)
-        plugins = plugins.concat(list[i].plugins)
-    }
-
-    TestFileManager.requiredEn = TestFileManager.requiredPlugins.concat(plugins)
-    TestFileManager.requiredPlugins = TestFileManager.requiredPlugins.concat(plugins)
-}
-
-TestRunner.runAllTests = function () {
-    let list = this.tests;
-    let length = list.length;
-
-    if (TestFileManager.missingDependency.length) {
-        return TestFileManager.missingDependencyError()
-    }
-
-    if (slz_TestLoader.loading)
-        return;
-
-    slz_Reporter.resetResults()
-
-    for (let i = 0; i < length; i++) {
-        this.resetHooks()
-        this.testHeading = list[i].title
-        slz_Reporter.createTestReport()
-        this.runTest(list[i].loadTestData())
-    }
-  
-    slz_Reporter.printAllReports()
-    TestFileManager.unload()
-
-    slz_Reporter.printAllReports()
-    TestFileManager.unload()
-    this.tests = [];
-
-}
-
-
-/* ///////////////////////////////////////////////////////////////////////////
-        Report Classes #report 
-   /////////////////////////////////////////////////////////////////////////// */
-
-
-class Report {
-    heading;
-    readout = ""
-    constructor(heading) {
-        this.heading = heading
-    }
-
-    printHeading() {
-        this.readout += `${this.heading}\n`
-    }
-}
-
-class CaseReport extends Report {
-    pass;
-    expected;
-    actual;
-
-    reportCase(pass, expected, actual) {
-        this.pass = pass;
-        this.expected = expected;
-        this.actual = actual;
-    }
-
-}
-
-class ScenarioReport extends Report {
-    caseReports = [];
-    passes = 0;
-    fails = 0;
-    addReport(heading) {
-        let report = new CaseReport(heading);
-        this.caseReports.push(report)
-        return report
-    }
-
-    printCaseReport(report) {
-        if (report.pass) {
-            this.readout += `PASS: ${report.heading}\n\n`
-            this.passes++
+function requireLanguage(dependency) {
+    //Language specific operations/assignment
+    try {
+        requiredLanguage = HarnessFileManager.hasDependency(dependency)
+        if (requiredLanguage) {
+            TestRunner.setTestLanguage(HarnessFileManager.getModel(dependency))
+            requireDependency(dependency)
         } else {
-            this.readout += `FAIL: ${report.heading}\n`
-            this.fails++
-            this.readout += `    Expected: ${report.expected}\n`
-            this.readout += `    Actual: ${report.actual}\n\n`
-            this.pass = false;
+            throw new slz_DependencyError(dependency)
         }
+    } catch (error) {
+        console.log(error)
+
     }
 
-    printAllCaseReports() {
-        this.pass = true;
-        this.caseReports.forEach(a => {
-            this.printCaseReport(a)
+}
+
+function requireEngines(...dependencies) {
+    //Engine specific operations/assignment
+    try {
+        dependencies.forEach(dependency => {
+            if (HarnessFileManager.F(dependency))
+                this.requireDependency(dependency)
+            else
+                throw new slz_DependencyError(dependency)
         })
-    }
-
-}
-
-class TestReport extends Report {
-    scenarioReports = [];
-    scenarioPasses = 0;
-    scenarioFails = 0;
-    casePasses = 0;
-    caseFails = 0;
-
-    addReport(heading) {
-        let report = new ScenarioReport(heading)
-
-        this.scenarioReports.push(report)
-        return report
-    }
-
-    printScenarioReport(report) {
-        if (report.pass) {
-            this.scenarioPasses++
-        } else {
-            this.scenarioFails++
-        }
-
-        report.printAllCaseReports()
-        this.casePasses += report.passes
-        this.caseFails += report.fails
-        return report.readout
-    }
-
-    printAllScenarioReports(report) {
-        let list = this.scenarioReports;
-        let length = list.length;
-        let title = ""
-        let results = ""
-        let readout = "";
-
-        this.pass = true;
-
-        for (let i = 0; i < length; i++) {
-            results = this.printScenarioReport(list[i])
-            title = `| SCENARIO: ${list[i].heading} --${list[i].pass ? 'PASS' : 'FAIL'}\n`
-            readout += "------------------------------------------------\n"
-            readout += `${title}`;
-            readout += "------------------------------------------------\n"
-            readout += results;
-            readout += "\n"
-
-            this.pass = list[i].pass ? this.pass : false;
-        }
-        this.readout += `Scenarios Passed: ${this.scenarioPasses}    Scenarios Failed: ${this.scenarioFails}\n\n`
-        this.readout += readout;
-
-        return this.readout
-    }
-}
-
-/* ///////////////////////////////////////////////////////////////////////////
-        slz_Reporter Class #reporter #_report
-   /////////////////////////////////////////////////////////////////////////// */
-
-class slz_Reporter {
-    static scenarioPasses = 0;
-    static scenarioFails = 0;
-    static casePasses = 0;
-    static caseFails = 0;
-    static testReports = [];
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-
-    static createTestReport() {
-        let report = new TestReport(TestRunner.testHeading)
-
-        this.testReports.push(report)
-        return report
-    }
-
-    static createScenarioReport() {
-        let currentTestReport = this.getCurrentTestReport();
-        let scenarioReport = currentTestReport.addReport(TestRunner.scenarioHeading)
-
-        return scenarioReport;
-    }
-
-    static createCaseReport() {
-        let currentScenarioReport = this.getCurrentScenarioReport()
-        let caseReport = currentScenarioReport.addReport(TestRunner.caseHeading)
-
-        return caseReport
-    }
-
-    static getCurrentTestReport() {
-        return this.testReports[this.testReports.length - 1]
-    }
-
-    static getCurrentScenarioReport() {
-        let currentTestReport = this.getCurrentTestReport();
-
-        return currentTestReport.scenarioReports[currentTestReport.scenarioReports.length - 1]
-    }
-
-    static getCurrentCaseReport() {
-        let currentScenarioReport = this.getCurrentScenarioReport();
-
-        return currentScenarioReport.testReports[currentScenarioReport.testReports.length - 1]
-    }
-
-    static printAllReports() {
-        let list = this.testReports;
-        let length = list.length;
-        let summary;
-        let header = "\n\n==================Test Results ==================\n"
-        let readout = ""
-        for (let i = 0; i < length; i++) {
-            readout += list[i].heading + "\n\n";
-            readout += list[i].printAllScenarioReports()
-            this.scenarioPasses += list[i].scenarioPasses
-            this.scenarioFails += list[i].scenarioFails
-            this.casePasses += list[i].casePasses
-            this.caseFails += list[i].caseFails
-        }
-
-        readout = header + this.summary() + readout
-        readout += "================================================="
-        console.log(readout)
-    }
-
-    static getTestPasses() {
-        let list = this.testReports;
-        let length = list.length;
-        let pass = 0;
-        let fail = 0;
-        for (let i = 0; i < length; i++) {
-            if (list[i].pass) {
-                pass++
-            } else {
-                fail++
-            }
-        }
-
-        return [pass, fail]
-    }
-
-    static summary() {
-        let str = "--Summary--\n";
-        let sPass = this.scenarioPasses;
-        let sFails = this.scenarioFails;
-        let sTotal = sPass + sFails
-        let sPercentage = sPass / sTotal;
-        let cPass = this.casePasses;
-        let cFails = this.caseFails;
-        let cTotal = cPass + cFails;
-        let cPercentage = cPass / cTotal;
-        let tPassFail = this.getTestPasses()
-        let tTotal = tPassFail[0] + tPassFail[1]
-        let tPercentage = tPassFail[0] / tTotal;
-
-        str += `Tests:     ${tPercentage.toFixed(2).substr(2)}% (${tPassFail[0]}/${tPassFail[1]})\n`
-        str += `Scenarios: ${sPercentage.toFixed(2).substr(2)}% (${sPass}/${sFails})\n`
-        str += `Cases:     ${cPercentage.toFixed(2).substr(2)}% (${cPass}/${cFails})\n\n\n`
-
-        return str
-    }
-
-    static resetResults() {
-        this.scenarioFails = 0;
-        this.scenarioPasses = 0;
-        this.caseFails = 0;
-        this.casePasses = 0;
-    }
-}
-
-
-
-/* ///////////////////////////////////////////////////////////////////////////
-        TestFileManager Class #FileManager #fm
-   /////////////////////////////////////////////////////////////////////////// */
-
-class TestFileManager {
-    static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
-    static missingDependency = [];
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-
-    static missingDependencyError() {
-        let str = "";
-        console.log('Cannot run tests, missing the following dependencies: ')
-
-        this.missingDependency.forEach(a => str += `${a}\n`)
-
-        console.log(str)
-        console.log('Please include these files in the slz_testHarness plugin params in RPG Maker')
-    }
-
-    static checkAllDependencies() {
-        this.missingDependency = [];
-        this.hasAllEngines()
-        this.hasAllPlugins()
-        this.hasAllRMPlugins()
-
-        return this.missingDependency.length == 0;
-    }
-
-
-    static hasAllEngines() {
-        let list = TestRunner.tests;
-        let length = list.length;
-        let test,
-            engines
-
-        //go through each test
-        for (let i = 0; i < length; i++) {
-            test = list[i]
-            engines = test.engines;
-
-            for (let j = 0; j < engines.length; j++) {
-                this.hasRequiredEngine(engines[i])
-            }
-        }
-    }
-
-
-
-    static hasAllPlugins() {
-        let list = TestRunner.tests;
-        let length = list.length;
-        let test,
-            plugins
-
-        for (let i = 0; i < length; i++) {
-            test = list[i]
-            plugins = test.plugins;
-
-            for (let j = 0; j < plugins.length; j++) {
-                this.hasRequiredPlugin(plugins[i])
-            }
-
-
-        }
-    }
-
-    static hasAllRMPlugins() {
-        let list = TestRunner.tests;
-        let length = list.length;
-        let test,
-            rmPlugins
-
-
-        for (let i = 0; i < length; i++) {
-            test = list[i]
-            rmPlugins = test.rmPlugins;
-
-            for (let j = 0; j < rmPlugins.length; j++) {
-                this.hasRequiredRMPlugin(rmPlugins[i])
-            }
-        }
-    }
-
-
-
-    static hasRequiredDependency(name, location, checkEnabled) {
-        let list = location;
-        let length = list.length
-        let enabled;
-        name = name.toLocaleLowerCase()
-
-        for (let i = 0; i < length; i++) {
-            enabled = checkEnabled ? list[i].enabled : true
-            if (list[i].name.toLocaleLowerCase() === name && enabled)
-                return true
-        }
-
-        if (!this.missingDependency.contains(name)) {
-            this.missingDependency.push(name)
-        }
-        return false
-
-    }
-
-
-    static hasRequiredEngine(name) {
-        return this.hasRequiredDependency(name, this.locations.assertions, true)
-    }
-
-    static hasRequiredPlugin(name) {
-        return this.hasRequiredDependency(name, this.locations.plugins, true)
-    }
-
-    static hasRequiredRMPlugin(name) {
-        return this.hasRequiredDependency(name, $plugins, false)
-    }
-
-
-    static onErrorCb(error) {
-        console.log('error loading file')
+    } catch (error) {
         console.log(error)
     }
 
+}
 
-    static findFilesInDir(includeDir, currentPath) {
-        let fs = require('fs');
-        let currentFile;
-        let stats;
-        let files;
-        let result = [];
-        let i = 0;
+function requireComponents(...dependencies) {
+    //Component specific operations/assignment
+    dependencies.forEach(dependency => {
+        this.requireDependency(dependency)
+    })
+}
 
-        files = fs.readdirSync(currentPath);
-        for (i in files) {
-            currentFile = currentPath + '/' + files[i];
-            stats = fs.statSync(currentFile);
-            if (stats.isFile()) {
-                result.push(currentFile);
-            }
-            else if (stats.isDirectory() && includeDir) {
-                result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
-            }
+function requirePlugins(...dependencies) {
+
+    dependencies.forEach(dependency => {
+        this.requireDependency(dependency)
+    })
+}
 
 
+function registerDependency(model, manifest) {
+    let list = Object.keys(manifest);
+    let length = list.length;
+
+    if (HarnessFileManager.globalElementNames.contains(model.name))
+        return
+
+    window[model.name] = { model: model }
+    model.install()
+
+    for (let i = 0; i < length; i++) {
+        window[list[i]] = manifest[list[i]]
+    }
+
+    HarnessFileManager.addGlobalElement(model.name, manifest)
+}
+
+function registerLanguage(model, manifest) {
+    //Language specific operations/assignment
+
+    if (!LanguageValidator.validate(model, manifest))
+        return
+
+    this.registerDependency(model, manifest)
+}
+
+function registerEngine(model, manifest) {
+    //Engine specific operations/assignment
+    if (!EngineValidator.validate(model, manifest))
+        return
+
+    this.registerDependency(model, manifest)
+
+}
+
+function registerComponent(model, manifest) {
+    //Component specific operations/assignment
+    if (!ComponentValidator.validate(model, manifest))
+        return
+
+    this.registerDependency(model, manifest)
+}
+
+function registerReporter(model, manifest, reporter) {
+
+    if (!ReporterValidator.validate(model, manifest, reporter))
+        return
+
+    this.registerDependency(model, manifest)
+    HarnessReporter.install(reporter)
+}
+
+class slz_ValidationDefinitionError extends Error {
+    message
+    moduleName
+    definition
+
+    constructor(moduleName, definition) {
+        super('slz_ValidationDefinitionError')
+        this.moduleName = moduleName
+        this.definition = definition
+    }
+
+    valueOf() {
+        return `ERROR while validating ${this.type}: ${this.moduleName}
+        Missing defintion: ${this.definition}`
+    }
+}
+
+class slz_TestModuleDefinitionError extends slz_ValidationDefinitionError {
+    type = "Test"
+
+    constructor(moduleName, definition) {
+        super(moduleName, definition)
+    }
+}
+
+class slz_LanguageModuleDefinitionError extends slz_ValidationDefinitionError {
+    type = "Language"
+
+    constructor(moduleName, definition) {
+        super(moduleName, definition)
+    }
+
+}
+
+class slz_EngineModuleDefinitionError extends slz_ValidationDefinitionError {
+    type = "Engine"
+
+    constructor(moduleName, definition) {
+        super(moduleName, definition)
+    }
+}
+
+class slz_ComponentModuleDefinitionError extends slz_ValidationDefinitionError {
+    type = "Component"
+
+    constructor(moduleName, definition, type) {
+        super(moduleName, definition)
+        this.type = typeof type != undefined ? type : this.type // <-- Haha
+    }
+}
+
+
+class slz_DependencyError extends Error {
+    dependency;
+
+    constructor(dependency) {
+        super(dependency)
+        this.dependency = dependency
+    }
+
+    valueOf() {
+        return `ERROR Missing Dependency: ${this.dependency}`
+    }
+}
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        Test Runner  #runner #tr
+   /////////////////////////////////////////////////////////////////////////// */
+
+class TestRunner {
+    static tests = []
+    static languages = []
+    
+
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static addTest(test) {
+        this.tests.push(test)
+        TestLogger.addNewLogIndex()
+    }
+
+    static setTestLanguage(model) {
+        if (!model) {
+            this.stopTests = true;
+            throw new slz_DependencyError('Error: Unable to load Test langauge')
         }
+
+        this.languages.push(model.runTest)
+
+    }
+
+
+    static run() {
+        this.initialize()
+        HarnessFileManager.checkAllDependencies()
+
+        if (!this.stopTests)
+            HarnessLoader.load()
+    }
+
+    static runTest(index, test) {
+        this.heading = test.title;
+        TestLogger.log(test.title)
+        this.languages[index](test.loadTestData())
+    }
+
+    static runAllTests() {
+        let list = this.tests;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            HarnessFileManager.checkAllDependencies()
+            if (this.stopTests) {
+                console.log('TestRunner stopping execution')
+                return this.running = false
+            }
+
+            this.runTest(i, list[i])
+        }
+
+        this.onComplete()
+    }
+
+    static initialize() {
+        this.tests = [];
+        this.logs = [];
+        this.languages = [];
+        this.stopTests = false;
+        HarnessLoader.runOnComplete = true;
+    }
+
+    static onComplete() {
+        this.running = false;
+        HarnessReporter.print()
+        HarnessFileManager.unload()
+    }
+
+
+}
+
+class TestLogger {
+    static rawData = []
+    static timeStamps = []
+    static logs = []
+    static logIndex = -1;
+    
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static addData(...data){
+        this.logs[this.logIndex].push(new TestPacket('data', data))
+    }
+
+    static log(message){
+        this.logs[this.logIndex].push(new TestPacket('log', message))
+    }
+
+    static addNewLogIndex(){
+        this.logs.push([])
+        this.logIndex++
+    }
+
+    static getTimeStamp(){
+        let dt = new Date()
+        return `<<<${dt.getHours()}:${dt.getUTCMinutes()}:${dt.getUTCSeconds()}:${dt.getMilliseconds()}>>> `
+    }
+
+    static removeTimeStamp(entry){
+        return entry.replace(entry.match(/(<<<)(.*?)(>>>)/)[0], '').trim()
+    }
+
+    
+
+    static printLogs(){
+        let readout = ""
+        let list = this.logs;
+        let length = list.length;
+
+        for(let i = 0; i < length; i++){
+            readout += `\n${list[i].join(`\n`)}`
+        }
+
+        console.log(readout)
+    }
+}
+
+
+class TestPacket {
+    type
+    data
+
+    constructor(type, data){
+        this.type = type
+        this.data = data;
+    }
+}
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessValidator  #hv #validate
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessValidator {
+    static model
+    static manifest
+    static missingMethods = []
+    static validCore = true;
+    static valid = true;
+
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        this.model = model;
+        this.manifest = manifest;
+        this.validCore = true;
+        try {
+            this.validateCoreObjects()
+            this.validateInstallMethod()
+        } catch (error) {
+            console.log(error.valueOf())
+            this.validCore = false;
+        }
+    }
+
+    static validateCoreObjects() {
+        if (typeof this.model !== 'object') {
+            throw new slz_ComponentModuleDefinitionError('<No model/Module Name Provided>', 'model', 'Reporting Component')
+        }
+
+        if (typeof this.model.name !== 'string') {
+            throw new slz_ComponentModuleDefinitionError('<No Module Name Provided>', 'model.name', 'Reporting Component')
+        }
+
+        if (typeof this.manifest !== 'object') {
+            throw new slz_ComponentModuleDefinitionError(model.name, 'manifest', 'Reporting Component')
+        }
+    }
+
+    static validateInstallMethod() {
+        if (typeof this.model.install !== 'function') {
+            throw new slz_ComponentModuleDefinitionError(model.name, 'model.install', 'Reporting Component')
+        }
+    }
+}
+
+class ReporterValidator extends HarnessValidator {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest, reporter) {
+        this.valid = true
+        try {
+            super.validate(model, manifest)
+            this.reporter = reporter
+            this.validateReporter()
+
+        } catch (error) {
+            console.log(error.valueOf())
+            this.valid = false;
+        }
+
+        this.model = undefined;
+        this.manifest = undefined;
+
+        return this.valid && this.validCore
+    }
+
+    static validateReporter() {
+        try {
+            this.validateIsClass()
+            this.validateExtendsHarnessReporter()
+            this.validateIsStaticClass()
+            this.validateCreateReport()
+            this.validatePrint()
+        } catch (error) {
+            console.log(error.valueOf())
+
+            this.valid = false;
+        }
+    }
+
+    static validateIsClass() {
+        if (typeof this.reporter.prototype !== 'object') {
+            console.log('Reporter should be a class or constructor function')
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter.prototype', 'Reporting Component')
+        }
+    }
+
+    static validateExtendsHarnessReporter() {
+        if (this.reporter.prototype instanceof HarnessReporter !== true) {
+            console.log('Custom Reporter classes should extend HarnessReporter')
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter', 'Reporting Component')
+        }
+    }
+
+    static validateIsStaticClass() {
+        let isStatic = false
+        try {
+            new this.reporter.prototype.constructor()
+        } catch (error) {
+            isStatic = true
+        }
+
+        if (!isStatic) {
+            console.log('Custom Reporter classes should not be instantiable')
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter instantiable constructor', 'Reporting Component')
+        }
+    }
+
+    static validateCreateReport() {
+        if (typeof this.reporter.createReport !== 'function') {
+            console.log('Custom Reporter classes should have a static createReport method')
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.createReport', 'Reporting Component')
+        }
+    }
+
+    static validatePrint() {
+        if (typeof this.reporter.print !== 'function') {
+            console.log('Custom Reporter classes should have a static print method')
+            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.print', 'Reporting Component')
+        }
+    }
+}
+
+
+class EngineValidator extends HarnessValidator {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        super.validate(model, manifest)
+        try {
+            this.validateEngine()
+        } catch (error) {
+            console.log(error)
+            this.valid = false;
+        }
+
+        return this.validCore && this.valid
+    }
+
+    static validateEngine() {
+
+    }
+}
+
+class LanguageValidator extends HarnessValidator {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        super.validate(model, manifest)
+        try {
+            this.validateLanguage()
+        } catch (error) {
+            console.log(error)
+            this.valid = false;
+        }
+
+        return this.validCore && this.valid
+    }
+
+    static validateLanguage() {
+        this.validateRunTesMethod()
+    }
+
+    static validateRunTesMethod() {
+        if (typeof this.manifest.runTest !== 'function') {
+            console.log('Languages must implement a runTest method, to define how their tests should be run')
+            throw new slz_LanguageModuleDefinitionError(this.model.name, 'manifest.runTest')
+        }
+    }
+}
+
+class ComponentValidator extends HarnessValidator {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static validate(model, manifest) {
+        super.validate(model, manifest)
+        try {
+            this.validateComponent()
+        } catch (error) {
+            console.log(error)
+            this.valid = false;
+        }
+
+        return this.validCore && this.valid
+    }
+
+    static validateComponent() {
+
+    }
+
+}
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessReporter #rp #hp #harness reporter
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessReporter {
+    static reporters = []
+    static includeLogs = false;
+
+    constructor() {
+        throw new Error('This is a static class')
+    }
+
+    static install(reporter) {
+        this.reporters.push(reporter)
+    }
+
+    static hasReporters() {
+        return this.reporters.length > 0
+    }
+
+    static print() {
+        let list = this.reporters;
+        let length = list.length;
+
+        for (let i = 0; i < length; i++)
+            list[i].print()
+    }
+}
+
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessReport #rep #hr #report
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessReport {
+    currentReport
+    reports = []
+    data = []
+    readout = ""
+    logs = []
+    includeLogs = false;
+
+    constructor(heading) {
+        this.heading = heading;
+    }
+
+    addLog(log) {
+        this.logs.push(log)
+    }
+
+    printLogs() {
+
+    }
+
+    print() {
+
+    }
+
+}
+
+/* ///////////////////////////////////////////////////////////////////////////
+        HarnessFileManager  #fm #file #manager
+   /////////////////////////////////////////////////////////////////////////// */
+
+class HarnessFileManager {
+    static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
+    static missingDependency = [];
+    static testFiles = []
+    static languageFiles = []
+    static engineFiles = []
+    static componentFiles = []
+    static reporterFiles = []
+    static globalElementNames = []
+    static globalElementManifests = []
+    static dependencies = [];
+
+    constructor() {
+        throw new Error('This is a static class. Stop trying to instantiate everything')
+    }
+
+    static initializeGlobalElements() {
+        this.globalElementNames = []
+        this.globalElementManifests = [];
+        this.missingDependency = [];
+
+        $plugins.forEach(a => this.globalElementNames.push(a.name))
+        this.globalElementNames.forEach(a => this.globalElementManifests.push({ name: a, install: {} }))
+    }
+
+    static getModel(dependencyName) {
+        let list = this.globalElementNames
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            if (list[i].toLocaleLowerCase() === dependencyName.toLocaleLowerCase()) {
+                return this.globalElementManifests[i]
+            }
+        }
+        return false;
+    }
+
+    static getTestFileNames() {
+        this.defaultTestFiles = this.getFileNames(this.locations.tests)
+    }
+
+    static getLanguageFileNames() {
+        this.languageFiles = this.getFileNames(this.locations.languages)
+    }
+
+    static getEngineFileNames() {
+        this.engineFiles = this.getFileNames(this.locations.engines)
+    }
+
+    static getComponentFileNames() {
+        this.componentFiles = this.getFileNames(this.locations.components)
+    }
+
+    static getFileNames(list) {
+        let results = [];
+        let length = list.length;
+
+        for (let i = 0; i < length; i++) {
+            results = results.concat(standardPlayer.sp_Core.findFilesInDir(true, list[i].directory))
+        }
+
+
+        return results
+    }
+
+    static defaultFiles(name) {
+        let list = this.locations[name].defaults;
+        let length = list.length;
+        let result = [];
+        let prefix = this.locations[name].directory + "/"
+
+        for (let i = 0; i < length; i++) {
+            result.push(prefix + list[i])
+        }
+
         return result
     }
 
 
+    static addGlobalElement(name, data) {
+        this.globalElementNames.push(name)
+        this.globalElementManifests.push(data)
+    }
+
+
+    static readAllFileNames() {
+        this.getTestFileNames()
+        this.getLanguageFileNames()
+        this.getEngineFileNames()
+        this.getComponentFileNames()
+    }
+
     static unload() {
-        let locations = this.locations;
-        let list = locations.plugins.concat(locations.assertions)
+        this.unloadGlobalElements()
+    }
+
+    static unloadGlobalElements() {
+        let names = this.globalElementNames;
+        let manifests = this.globalElementManifests;
+        let namesLength = names.length;
+        let manifest,
+            manifestLength
+
+        for (let i = 0; i < namesLength; i++) {
+            manifest = Object.keys(manifests[i])
+            manifestLength = manifest.length;
+
+            window[names[i]] = undefined
+            delete window[names[i]]
+
+            for (let j = 0; j < manifestLength; j++) {
+                window[manifest[j]] = undefined
+                delete window[manifest[j]]
+            }
+
+            this.initializeGlobalElements()
+        }
+    }
+
+    static addDependency(dependency) {
+        let list = this.dependencies;
+
+        if (!list.contains(dependency))
+            list.push(dependency)
+
+
+    }
+
+    static hasDependency(name) {
+        let list = this.globalElementNames
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            if (!list[i].enabled)
-                continue
-
-            console.log(list[i])
-            window[list[i].name] = undefined
-            delete window[list[i].name]
+            if (list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
+                return true;
         }
+        console.log('pushing missing dependency: ' + name)
+        this.missingDependency.push(name)
+        return false
+    }
+
+    static checkAllDependencies() {
+        let list = this.dependencies;
+        let length = list.length;
+        let loadedDependencies = this.globalElementNames;
+        let missingDependencies = [];
+
+        for (let i = 0; i < length; i++) {
+            if (!loadedDependencies.contains(list[i]))
+                missingDependencies.push(list[i])
+        }
+
+        this.missingDependency = missingDependencies;
+
+        if (missingDependencies.length) {
+            throw new slz_DependencyError(missingDependencies.toString())
+        }
+
+        TestRunner.stopTests = missingDependencies.length > 0;
     }
 
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
-        slz_TestLoader Class #loader 
+        HarnessLoader  hl loader
    /////////////////////////////////////////////////////////////////////////// */
 
-
-class slz_TestLoader {
-    static index = 0;
-    static preLoaded = false;
+class HarnessLoader {
     static manifest = [];
     static loading = false;
     static runOnComplete = false;
 
     constructor() {
-        throw new Error("This is a static class");
+        throw new Error('This is a static class')
     }
-
-
 
     static createFullManifest() {
         let fm = this.fm();
-        let engines = fm.locations.assertions;
-        let plugins = fm.locations.plugins;
-        let list = engines.concat(plugins)
+        let tests = fm.defaultFiles('tests')
+        let engines = fm.defaultFiles('engines')
+        let components = fm.defaultFiles('components')
+        let languages = fm.defaultFiles('languages')
+        let list = languages.concat(engines.concat(components.concat(tests)))
         let length = list.length;
         let manifest = [];
 
 
         for (let i = 0; i < length; i++) {
-            if (!list[i].enabled)
-                continue
-
             manifest.push(
                 () => {
-                    this.loadFile(list[i].filePath, this.continue)
+                    this.loadFile(list[i])
                 }
             )
         }
@@ -678,41 +830,12 @@ class slz_TestLoader {
         return manifest
     }
 
-    static createTestManifest() {
-        let fm = this.fm()
-        let list = fm.findFilesInDir(true, fm.locations.testDirectory)
-        let loadFunctions = []
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            loadFunctions.push(
-                () => {
-                    this.loadFile(list[i], this.continue)
-                }
-            )
-        }
-
-        return loadFunctions
-    }
-
-
-    static preLoad() {
-        this.manifest = this.createTestManifest()
-
-        if (!this.manifest.length)
-            return
-
-        this.loading = true;
-        this.manifest.shift()()
-    }
 
     static load() {
-        if (!this.preLoaded) {
-            return this.preLoad()
-        }
-
         this.loading = true;
         this.manifest = this.createFullManifest()
+
+        HarnessFileManager.initializeGlobalElements()
 
         if (this.manifest.length)
             this.manifest.shift()()
@@ -720,58 +843,45 @@ class slz_TestLoader {
     }
 
     static continue() {
-
         if (this.manifest.length) { //if there is more to run
             this.manifest.shift()()
-        } else if (!this.preLoaded) { //if you are finished preloading
-            this.preLoaded = true;
-            this.load()
         } else { //if you are finished loading altogether
             this.loading = false;
-            this.preLoaded = false;
-            this.onComplete()
+            try {
+                this.onComplete()
+            }
+            catch (error) {
+                console.log(error)
+            }
         }
     }
 
     static onComplete() {
-        this.fm().checkAllDependencies()
-
         if (!this.runOnComplete)
             return
+
+        if (HarnessFileManager.missingDependency.length > 0) {
+            throw new slz_DependencyError(`Missing Dependencies:
+            ${HarnessFileManager.missingDependency.toString()}
+
+            Check HarnessFileManager.missingDependency to access the missing dependency names array`)
+        }
 
         this.runOnComplete = false;
         TestRunner.runAllTests();
     }
 
+    static onError(error, name) {
+        console.log('Error loading file ' + name)
+        console.log(error)
+    }
+
     static fm() {
-        return TestFileManager
+        return HarnessFileManager
     }
 
 
-    static loadFile(filePath, success) {
-
-        let xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200 || xhr.status == 0) {
-                    try {
-                        eval(xhr.responseText);
-                    } catch (e) {
-                        TestFileManager.onErrorCb(e);
-                        return;
-                    }
-                    success.call(this);
-                } else {
-                    TestFileManager.onErrorCb(xhr.status);
-                }
-            }
-        }.bind(this);
-
-        try {
-            xhr.open("GET", filePath, true);
-            xhr.send();
-        } catch (e) {
-            TestFileManager.onErrorCb(e);
-        }
+    static loadFile(filePath) {
+        standardPlayer.sp_Core.loadFile(filePath, () => { this.continue() }, (error, name) => { this.onError(error, name) })
     }
 }

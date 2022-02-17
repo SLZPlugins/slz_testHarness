@@ -1,13 +1,39 @@
+let model = {
+    name: "rmAssert",
+    install: ()=>{
+        loadBanner()
+    }
+}
+
+function loadBanner(){
+    console.log(`
+ /RRRRRRR /MM      /MM                                      
+| RR__  R| MMM    /MMM                                      
+| RR  \\ R| MMMM  /MMMM                                      
+| RRRRRRR| MM MM/MM MM                                      
+| RR__  R| MM  MMM| MM                                      
+| RR  \\ R| MM\\  M | MM                                      
+| RR  | R| MM \\/  | MM                                      
+|__/  |_/AAAAAA   |__/                               /TT    
+       /AA__  AA                                    | TT    
+      | AA \\ AA /SSSSSSS/SSSSSSS /EEEEEE  /RRRRRR /TTTTTT  
+      | AAAAAAAA/SS_____/SS_____//EE__  EE/RR__  R|_  TT_/  
+      | AA__  A|  SSSSS|  SSSSSS| EEEEEEE| RR \\__/ | TT    
+      | AA  | AA\\___  S\\___    S| EE_____| RR      | TT /TT
+      | AA  | AA/SSSSSSS/SSSSSSS|  EEEEEE| RR      | TTTT/
+      |__/  |__|_______|_______/\\_______|__/        \\___/
+    `)    
+}
 class rmAssert {
-    'use strict'
-    static reporter = slz_Reporter;
+     'use strict'
+    static logger = TestLogger
+
     constructor() {
         throw new Error('This is a static class')
     }
 
     static assertTrue(expression) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (expression === true) {
             result = true
@@ -15,14 +41,14 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, expression)
+        
+        this.logger.addData(result, true, expression)
         return result
 
     }
 
     static assertFalse(expression) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (expression === false) {
             //Report pass
@@ -32,14 +58,13 @@ class rmAssert {
             result = false
             
             //Finalize Report
-            report.reportCase(result, false, expression)
+            this.logger.addData(result, false, expression)
             return result
         }
     }
 
     static assertEquals(obj1, obj2) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
@@ -49,13 +74,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, obj1, obj2)
+        this.logger.addData(result, obj1, obj2)
         return result
     }
 
     static assertNotEquals(obj1, obj2){
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
             //Report pass
@@ -65,13 +89,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, result)
+        this.logger.addData(result, true, result)
         return result
     }
 
     static assertNull(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
@@ -81,13 +104,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, null, obj1)
+        this.logger.addData(result, null, obj1)
         return result
     }
 
     static assertNotNull(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
             //Report pass
@@ -97,13 +119,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, "Not Null", expression)
+        this.logger.addData(result, "Not Null", expression)
         return result
     }
 
     static assertString(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
             //Report pass
@@ -113,13 +134,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'string', typeof obj1)
+        this.logger.addData(result, 'string', typeof obj1)
         return result
     }
 
     static assertNumber(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
             //Report pass
@@ -129,13 +149,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'number', typeof obj1)
+        this.logger.addData(result, 'number', typeof obj1)
         return result
     }
 
     static assertObject(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
             //Report pass
@@ -145,13 +164,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'object', typeof obj1)
+        this.logger.addData(result, 'object', typeof obj1)
         return result
     }
 
     static assertBoolean(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
             //Report pass
@@ -161,13 +179,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'boolean', typeof obj1)
+        this.logger.addData(result, 'boolean', typeof obj1)
         return result
     }
 
     static assertFunction(obj1) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
             //Report pass
@@ -177,13 +194,12 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, 'function', typeof obj1)
+        this.logger.addData(result, 'function', typeof obj1)
         return result
     }
 
     static assertInstance(obj1, obj2) {
         let result = false;
-        let report = this.reporter.createCaseReport()
 
         if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
             //Report pass
@@ -193,13 +209,14 @@ class rmAssert {
             result = false
         }
         //Finalize Report
-        report.reportCase(result, true, false)
+        this.logger.addData(result, true, false)
         return result
     }
 }
 
-console.log('****Loading slz_Assertions to rmAssert class****')
 
-window.rmAssert = rmAssert
+let manifest = {
+    rmAssert:rmAssert    
+}
 
-
+registerEngine(model, manifest)

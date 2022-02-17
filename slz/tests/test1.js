@@ -1,36 +1,31 @@
-slz_Test("Test A", 
-//RPG Maker Plugins,
-["sp_Core"],
-//Assertion Engines
-['rmAssert'], 
-//Plugins
-[],
-//Tests
-() => {
+requireLanguage('sinot')
+requirePlugins('sp_Core')
+sinot_Test("Test A", () => {
     
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
     return [
-        beforeAll(()=>{
-            console.log('This will run once, before the first scenario runs')
-        }),
-        beforeEachScenario(()=>{
-            console.log('This will run before each test scenario runs')
-        }),
-        afterEachScenario(()=>{
-            console.log('This will run before each test scenario runs')
-        }),
+        // beforeAll(()=>{
+        //     console.log('This will run once, before the first scenario runs')
+        // }),
+        // beforeEachScenario(()=>{
+        //     console.log('This will run before each test scenario runs')
+        // }),
+        // afterEachScenario(()=>{
+        //     console.log('This will run before each test scenario runs')
+        // }),
         scenario("Testing Add to Storage", () => {
             //can scope varibles to individual scenario
             let scenarioLevelVar = 'first before each case'
             return [
-                beforeEachCase(()=>{
-                    console.log('this will run before each case, just for this scenario')
-                }),
-                afterEachCase(()=>{
-                    console.log('this will run after each case, just for this scenario')
-                }),
+                // beforeEachCase(()=>{
+                //     console.log('this will run before each case, just for this scenario')
+                // }),
+                // afterEachCase(()=>{
+                //     console.log('this will run after each case, just for this scenario')
+                // }),
                 testCase("Check Length is greater than one", () => {
+                    TestLogger.log('poooooooo')
                     rmAssert.assertTrue(10 > 1)
                 }),
                 testCase("Amount in inventory should be decremented", () => {
@@ -46,8 +41,8 @@ slz_Test("Test A",
             ]
         }),
 
-
         scenario("Testing Subtract from Storage", () => {
+            TestLogger.log('Before second scenario')
             return [
                 testCase("Should remove successfully when contents exist", () => {
                     rmAssert.assertNotEquals(10, 10)

@@ -1,3 +1,28 @@
+let model = {
+    name:"slz_sandbox",
+    install:()=>{
+        loadBanner()
+    }
+}
+
+function loadBanner(){
+    console.log(`
+ _____________________________________________________
+|                 _____  __  _____                   |
+|                / ___/ / / /__  /                   |
+|                \\__ \\ / /    / /                    |
+|               ___/ // /___ / /__                   |
+|              /____//_____//____/                   |
+|                                                    |
+|    _____                    __ __                  |
+|   / ___/ ____ _ ____   ____/ // /_   ____   _  __  |
+|   \\__ \\ / __ \`// __ \\ / __  // __ \\ / __ \\ | |/_/  |
+|  ___/ // /_/ // / / // /_/ // /_/ // /_/ /_>  <    |
+| /____/ \\__,_//_/ /_/ \\__,_//_.___/ \\____//_/|_|    |
+|____________________________________________________|    
+ `)
+}
+
 class Sandbox {
     spies = []
     stubs = []
@@ -46,8 +71,7 @@ class slz_Spy {
 
             this.callCount++
             this.calledArgs.push(args)
-            console.log(this)
-            console.log(f)
+
             return f.apply(obj, args)
         }
 
@@ -73,7 +97,6 @@ class slz_Spy {
         let length = list.length;
         let count = 0;
 
-        console.log(args)
         args.sort((a, b) => a.toString().localeCompare(b.toString()))
         for (let i = 0; i < length; i++) {
             currentArgList = list[i].clone()
@@ -182,14 +205,7 @@ class slz_Stub {
     }
 
     getAllFunctionNames() {
-        let props = new Set()
-        let obj = this.obj
-        let currentObj = obj
-
-        do {
-            Object.getOwnPropertyNames(currentObj).map(item => props.add(item))
-        } while ((currentObj = Object.getPrototypeOf(currentObj)))
-        return [...props.keys()].filter(item => typeof obj[item] === 'function')
+        return standardPlayer.sp_Core.getAllFunctionNames(this.obj)
 
     }
 
@@ -289,7 +305,6 @@ class Mock_Function {
         let length = list.length;
 
         for (let i = 0; i < length; i++) {
-            console.log(list[i], args)
             if (standardPlayer.sp_Core.areEquivalent(list[i], args)) {
                 return [this.cb[i], i]
             }
@@ -312,10 +327,10 @@ class Mock_Function {
     }
 }
 
+let manifest = {
+    Sandbox:Sandbox,
+    slz_Spy:slz_Spy,
+    slz_Stub:slz_Stub
+}
 
-
-
-console.log('****Loading slz_Sandbox to slz_sandbox class****')
-
-window.slz_sandbox = Sandbox
-
+registerComponent(model, manifest)
