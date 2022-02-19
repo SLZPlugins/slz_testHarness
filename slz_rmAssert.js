@@ -1,11 +1,3 @@
-let model = {
-    name: "rmAssert",
-    install: ()=>{
-        loadBanner()
-    }
-}
-
-function loadBanner(){
     console.log(`
  /RRRRRRR /MM      /MM                                      
 | RR__  R| MMM    /MMM                                      
@@ -23,7 +15,6 @@ function loadBanner(){
       | AA  | AA/SSSSSSS/SSSSSSS|  EEEEEE| RR      | TTTT/
       |__/  |__|_______|_______/\\_______|__/        \\___/
     `)    
-}
 class rmAssert {
      'use strict'
     static logger = TestLogger
@@ -213,10 +204,3 @@ class rmAssert {
         return result
     }
 }
-
-
-let manifest = {
-    rmAssert:rmAssert    
-}
-
-registerEngine(model, manifest)

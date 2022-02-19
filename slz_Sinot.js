@@ -1,18 +1,6 @@
-let model = {
-    name:"sinot",
-    testLevel:'test',
-    beforeAll:()=>{},
-    beforeEachCase:()=>{},
-    beforeEachScenario:()=>{},
-    afterEachCase:()=>{},
-    afterEachScenario:()=>{},
-    install:()=>{
-        loadBanner()
-    }
-}
+let sinot = {};
 
-function loadBanner(){
-    console.log(`
+console.log(`
                   iiii                                          tttt                           jjjj                 
                  i::::i                                      ttt:::t                          j::::j                
                   iiii                                       t:::::t                           jjjj                 
@@ -37,12 +25,12 @@ s::::::::::::::si::::::in::::n    n::::o:::::::::::::::o     tt::::::::::::::t  
                                                                                       jjj::::::jjj                  
                                                                                          jjjjjj
     `)
-}
 
 function sinot_Test(title, getTestData) {
     console.log(`Found sinot_Test: ${title}`)
     let obj = {
         title: title,
+        type: 'test',
         loadTestData: () => { return getTestData().filter(a => typeof a == 'object') }
     }
 
@@ -52,24 +40,25 @@ function sinot_Test(title, getTestData) {
 function resetHooks() {
     resetCaseHooks()
     resetScenarioHooks()
-    sinot.model.beforeAll = () => { }
+    sinot.beforeAll = () => { }
 }
 
 function resetCaseHooks() {
-    sinot.model.beforeEachCase = () => { }
-    sinot.model.afterEachCase = () => { }
-    sinot.model.beforeAll = () => { }
+    sinot.beforeEachCase = () => { }
+    sinot.afterEachCase = () => { }
+    sinot.beforeAll = () => { }
 }
 
 function resetScenarioHooks() {
-    sinot.model.beforeEachScenario = () => { }
-    sinot.model.afterEachScenario = () => { }
+    sinot.beforeEachScenario = () => { }
+    sinot.afterEachScenario = () => { }
 }
 
 
 function scenario(title, getScenarioData) {
     return {
         title: title,
+        type: 'scenario',
         getScenarioData: () => { return getScenarioData().filter(a => typeof a == 'object') }
     }
 }
@@ -77,77 +66,61 @@ function scenario(title, getScenarioData) {
 function testCase(title, testCaseRunner) {
     return {
         title: title,
+        type: 'case',
         testCaseRunner: testCaseRunner
     }
 }
 
 function beforeAll(f) {
-    sinot.model.beforeAll = f;
+    sinot.beforeAll = f;
 }
 
 function beforeEachCase(f) {
-    sinot.model.beforeEachCase = f
+    sinot.beforeEachCase = f
 }
 
 function afterEachCase(f) {
-    sinot.model.afterEachCase = f
+    sinot.afterEachCase = f
 }
 
 function beforeEachScenario(f) {
-    sinot.model.beforeEachScenario = f
+    sinot.beforeEachScenario = f
 }
 
 function afterEachScenario(f) {
-    sinot.model.afterEachScenario = f
+    sinot.afterEachScenario = f
 }
 
 function runTest(list) { //list is test file using Sinot.js
     let length = list.length;
-    let reporter = HarnessReporter;
     //list is array of Scenarios for individual test file
-    sinot.model.reportLevel = "test"
-    sinot.model.beforeAll()
+    sinot.reportLevel = "test"
+    sinot.beforeAll()
     for (let i = 0; i < length; i++) {
         let scenario = list[i]
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
 
-        TestLogger.log(scenario.title)
-        sinot.model.reportLevel = "scenario"
-        sinot.model.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
-        sinot.model.beforeEachScenario()
+        TestLogger.addData(scenario.type, scenario.title)
+        sinot.reportLevel = "scenario"
+        sinot.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
+        sinot.beforeEachScenario()
 
         for (let j = 0; j < length2; j++) {
-            sinot.model.reportLevel = "case"
-            TestLogger.log(testCases[j].title)
+            sinot.reportLevel = "case"
+            TestLogger.addData(testCases[j].type, testCases[j].title)
 
-            sinot.model.beforeEachCase()
+            sinot.beforeEachCase()
 
             testCases[j].testCaseRunner();
             
-            sinot.model.afterEachCase()
+            sinot.afterEachCase()
             
         }
         resetCaseHooks()
-        sinot.model.afterEachScenario()
+        sinot.afterEachScenario()
     }
 }
 
-
-let manifest = {
-    sinot_Test: sinot_Test,
-    scenario: scenario,
-    testCase: testCase,
-    beforeAll: beforeAll,
-    beforeEachCase: beforeEachCase,
-    beforeEachScenario: beforeEachScenario,
-    afterEachCase: afterEachCase,
-    afterEachScenario: afterEachScenario,
-    resetHooks: resetHooks,
-    resetCaseHooks: resetCaseHooks,
-    resetScenarioHooks: resetScenarioHooks,
-    runTest: runTest,
-}
-
-
-registerLanguage(model, manifest)
+TestRunner.languages.push(runTest)
+resetHooks()
