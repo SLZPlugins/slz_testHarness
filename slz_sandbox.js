@@ -1,11 +1,5 @@
-let model = {
-    name:"slz_sandbox",
-    install:()=>{
-        loadBanner()
-    }
-}
 
-function loadBanner(){
+
     console.log(`
  _____________________________________________________
 |                 _____  __  _____                   |
@@ -21,7 +15,7 @@ function loadBanner(){
 | /____/ \\__,_//_/ /_/ \\__,_//_.___/ \\____//_/|_|    |
 |____________________________________________________|    
  `)
-}
+
 
 class Sandbox {
     spies = []
@@ -326,11 +320,3 @@ class Mock_Function {
 
     }
 }
-
-let manifest = {
-    Sandbox:Sandbox,
-    slz_Spy:slz_Spy,
-    slz_Stub:slz_Stub
-}
-
-registerComponent(model, manifest)

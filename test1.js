@@ -1,5 +1,4 @@
-requireLanguage('sinot')
-requirePlugins('sp_Core')
+
 sinot_Test("Test A", () => {
     
     //can scope varibles to entire test instace
