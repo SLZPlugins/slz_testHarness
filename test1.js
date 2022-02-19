@@ -41,7 +41,6 @@ sinot_Test("Test A", () => {
         }),
 
         scenario("Testing Subtract from Storage", () => {
-            TestLogger.log('Before second scenario')
             return [
                 testCase("Should remove successfully when contents exist", () => {
                     rmAssert.assertNotEquals(10, 10)
