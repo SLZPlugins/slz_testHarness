@@ -58,6 +58,7 @@ class TestRunner {
             }
 
             this.runTest(i, list[i])
+            TestLogger.logIndex++
         }
 
         this.onComplete()
@@ -74,7 +75,7 @@ class TestLogger {
     static rawData = []
     static timeStamps = []
     static logs = []
-    static logIndex = -1;
+    static logIndex = 0;
     
     constructor() {
         throw new Error('This is a static class')
@@ -90,7 +91,6 @@ class TestLogger {
 
     static addNewLogIndex(){
         this.logs.push([])
-        this.logIndex++
     }
 
     static getTimeStamp(){
