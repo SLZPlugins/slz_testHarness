@@ -67,12 +67,14 @@ class TellonReporter {
         let readout;
         let list = this.reports;
         let length = list.length;
+        let summary;
 
         for(let i = 0; i < length; i++){
             readout += list[i].print()
         }
         
-        this.readout = this.summary() + readout;
+        summary = this.summary()
+        this.readout =  summary + readout + summary;
         console.log(this.readout)
     }
 
@@ -150,7 +152,7 @@ class TellonTestReport extends TellonReport {
 
     summary() {
         let readout = `\n------------------------------------------------------\n`
-        readout += `| [TEST] ${this.title} (${this.isPass() ? 'PASS' : 'FAIL'})\n`;
+        readout += `| [TEST] ${this.title} (${this.isPass() ? '\u2713' : '\u2717'})\n`;
         readout += `|\n`
         readout +=    `|                     Pass|Fail\n`
         readout +=    `|\t-Scenarios ${this.scenarioPasses}|${this.scenarioFails}\n`;
@@ -258,7 +260,7 @@ class TellonCaseReport extends TellonReport {
 
     print() {
         let assertionData = this.assertionData;
-        let passFail = this.pass ? "PASS" : "FAIL"
+        let passFail = this.pass ? "\u2713" : "\u2717"
         let readout = `\n\t${passFail} - ${this.title}\n${this.logs.join("\n")}`
 
         this.readout = readout;
@@ -270,19 +272,21 @@ class TellonCaseReport extends TellonReport {
     }
 
     printAssertionData(expected, actual) {
-        this.readout += `\t\tExpected: ${expected}\n\t\tActual: ${actual}\n`
+        this.readout += `\n\t\tExpected: ${expected}\n\t\tActual: ${actual}\n`
     }
 
 }
 
 
 console.log(`
-___________       __    __                    
-\\__    ___/____  |  |  |  |    ____    ____   
-  |    | _/ __ \\ |  |  |  |   /    \\  /    \\  
-  |    | \\  ___/ |  |__|  |__(<0--0>)|   |  \\ 
-  |____|  \\___  >|____/|____/ \\____/ |___|  / 
-              \\/                          \\/  
+ ____  ____  __    __     __   __ _ 
+(_  _)(  __)(  )  (  )   /  \\ (  ( \\
+  )(   ) _) / (_/\\/ (_/\\(  O )/    /
+ (__) (____)\\____/\\____/ \\__/ \\_)__)
     `)
 
 
+TestRunner._onCompleteCallbacks.push(()=>{
+    TellonReporter.parseAllTests();
+    TellonReporter.print()
+})
