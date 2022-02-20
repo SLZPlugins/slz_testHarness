@@ -69,6 +69,7 @@ class TellonReporter {
         let length = list.length;
         let summary;
 
+
         for(let i = 0; i < length; i++){
             readout += list[i].print()
         }
