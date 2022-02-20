@@ -150,7 +150,7 @@ class TellonTestReport extends TellonReport {
 
     summary() {
         let readout = `\n------------------------------------------------------\n`
-        readout += `| [TEST] ${this.title} (${this.isPass() ? 'PASS' : 'FAIL'})\n`;
+        readout += `| [TEST] ${this.title} (${this.isPass() ? '\u2713' : '\u2717'})\n`;
         readout += `|\n`
         readout +=    `|                     Pass|Fail\n`
         readout +=    `|\t-Scenarios ${this.scenarioPasses}|${this.scenarioFails}\n`;
@@ -258,7 +258,7 @@ class TellonCaseReport extends TellonReport {
 
     print() {
         let assertionData = this.assertionData;
-        let passFail = this.pass ? "PASS" : "FAIL"
+        let passFail = this.pass ? "\u2713" : "\u2717"
         let readout = `\n\t${passFail} - ${this.title}\n${this.logs.join("\n")}`
 
         this.readout = readout;
