@@ -1,19 +1,8 @@
     console.log(`
- /RRRRRRR /MM      /MM                                      
-| RR__  R| MMM    /MMM                                      
-| RR  \\ R| MMMM  /MMMM                                      
-| RRRRRRR| MM MM/MM MM                                      
-| RR__  R| MM  MMM| MM                                      
-| RR  \\ R| MM\\  M | MM                                      
-| RR  | R| MM \\/  | MM                                      
-|__/  |_/AAAAAA   |__/                               /TT    
-       /AA__  AA                                    | TT    
-      | AA \\ AA /SSSSSSS/SSSSSSS /EEEEEE  /RRRRRR /TTTTTT  
-      | AAAAAAAA/SS_____/SS_____//EE__  EE/RR__  R|_  TT_/  
-      | AA__  A|  SSSSS|  SSSSSS| EEEEEEE| RR \\__/ | TT    
-      | AA  | AA\\___  S\\___    S| EE_____| RR      | TT /TT
-      | AA  | AA/SSSSSSS/SSSSSSS|  EEEEEE| RR      | TTTT/
-      |__/  |__|_______|_______/\\_______|__/        \\___/
+ ____  _  _     __   ____  ____  ____  ____  ____ 
+(  _ \\( \\/ )   / _\\ / ___)/ ___)(  __)(  _ \\(_  _)
+ )   // \\/ \\  /    \\\\___ \\\\___ \\ ) _)  )   /  )(  
+(__\\_)\\_)(_/  \\_/\\_/(____/(____/(____)(__\\_) (__)
     `)    
 class rmAssert {
      'use strict'

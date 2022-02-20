@@ -67,12 +67,15 @@ class TellonReporter {
         let readout;
         let list = this.reports;
         let length = list.length;
+        let summary;
+
 
         for(let i = 0; i < length; i++){
             readout += list[i].print()
         }
         
-        this.readout = this.summary() + readout;
+        summary = this.summary()
+        this.readout =  summary + readout + summary;
         console.log(this.readout)
     }
 
@@ -270,19 +273,21 @@ class TellonCaseReport extends TellonReport {
     }
 
     printAssertionData(expected, actual) {
-        this.readout += `\t\tExpected: ${expected}\n\t\tActual: ${actual}\n`
+        this.readout += `\n\t\tExpected: ${expected}\n\t\tActual: ${actual}\n`
     }
 
 }
 
 
 console.log(`
-___________       __    __                    
-\\__    ___/____  |  |  |  |    ____    ____   
-  |    | _/ __ \\ |  |  |  |   /    \\  /    \\  
-  |    | \\  ___/ |  |__|  |__(<0--0>)|   |  \\ 
-  |____|  \\___  >|____/|____/ \\____/ |___|  / 
-              \\/                          \\/  
+ ____  ____  __    __     __   __ _ 
+(_  _)(  __)(  )  (  )   /  \\ (  ( \\
+  )(   ) _) / (_/\\/ (_/\\(  O )/    /
+ (__) (____)\\____/\\____/ \\__/ \\_)__)
     `)
 
 
+TestRunner._onCompleteCallbacks.push(()=>{
+    TellonReporter.parseAllTests();
+    TellonReporter.print()
+})

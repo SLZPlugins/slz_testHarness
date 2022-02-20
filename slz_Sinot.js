@@ -1,29 +1,10 @@
 let sinot = {};
 
 console.log(`
-                  iiii                                          tttt                           jjjj                 
-                 i::::i                                      ttt:::t                          j::::j                
-                  iiii                                       t:::::t                           jjjj                 
-                                                             t:::::t                                                
-    ssssssssss  iiiiiinnnn  nnnnnnnn      ooooooooooo  ttttttt:::::ttttttt                   jjjjjjj   ssssssssss   
-  ss::::::::::s i:::::n:::nn::::::::nn  oo:::::::::::oot:::::::::::::::::t                   j:::::j ss::::::::::s  
-ss:::::::::::::s i::::n::::::::::::::nno:::::::::::::::t:::::::::::::::::t                    j::::ss:::::::::::::s 
-s::::::ssss:::::si::::nn:::::::::::::::o:::::ooooo:::::tttttt:::::::tttttt                    j::::s::::::ssss:::::s
- s:::::s  ssssss i::::i n:::::nnnn:::::o::::o     o::::o     t:::::t                          j::::js:::::s  ssssss 
-   s::::::s      i::::i n::::n    n::::o::::o     o::::o     t:::::t                          j::::j  s::::::s      
-      s::::::s   i::::i n::::n    n::::o::::o     o::::o     t:::::t                          j::::j     s::::::s   
-ssssss   s:::::s i::::i n::::n    n::::o::::o     o::::o     t:::::t    tttttt                j::::ssssss   s:::::s 
-s:::::ssss::::::i::::::in::::n    n::::o:::::ooooo:::::o     t::::::tttt:::::t                j::::s:::::ssss::::::s
-s::::::::::::::si::::::in::::n    n::::o:::::::::::::::o     tt::::::::::::::t                j::::s::::::::::::::s 
- s:::::::::::ss i::::::in::::n    n::::noo:::::::::::oo        tt:::::::::::tt                j::::js:::::::::::ss  
-  sssssssssss   iiiiiiiinnnnnn    nnnnnn  ooooooooooo            ttttttttttt                  j::::j sssssssssss    
-                                                                                              j::::j                
-                                                                                    jjjj      j::::j                
-                                                                                   j::::jj   j:::::j                
-                                                                                   j::::::jjj::::::j                
-                                                                                    jj::::::::::::j                 
-                                                                                      jjj::::::jjj                  
-                                                                                         jjjjjj
+ ____  __  __ _   __  ____      __  ____ 
+/ ___)(  )(  ( \\ /  \\(_  _)   _(  )/ ___)
+\\___ \\ )( /    /(  O ) )(    / \\) \\\___ \\
+(____/(__)\\_)__) \\__/ (__)   \\____/(____/
     `)
 
 function sinot_Test(title, getTestData) {
@@ -35,6 +16,7 @@ function sinot_Test(title, getTestData) {
     }
 
     TestRunner.addTest(obj)
+    TestRunner.languages.push(runTest)
 }
 
 function resetHooks() {
@@ -122,5 +104,4 @@ function runTest(list) { //list is test file using Sinot.js
     }
 }
 
-TestRunner.languages.push(runTest)
 resetHooks()

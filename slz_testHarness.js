@@ -19,7 +19,7 @@ slz.testHarness = slz.testHarness || {};
 class TestRunner {
     static tests = []
     static languages = []
-    
+    static _onCompleteCallbacks = []
 
     constructor() {
         throw new Error('This is a static class')
@@ -65,6 +65,7 @@ class TestRunner {
     }
 
     static onComplete() {
+        this._onCompleteCallbacks.forEach(a => a())
         this.running = false;
     }
 
