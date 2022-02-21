@@ -23,6 +23,7 @@ function resetHooks() {
     resetCaseHooks()
     resetScenarioHooks()
     sinot.beforeAll = () => { }
+    sinot.afterAll = () => { }
 }
 
 function resetCaseHooks() {
@@ -55,6 +56,10 @@ function testCase(title, testCaseRunner) {
 
 function beforeAll(f) {
     sinot.beforeAll = f;
+}
+
+function afterAll(f) {
+    sinot.afterAll = f
 }
 
 function beforeEachCase(f) {
@@ -102,6 +107,8 @@ function runTest(list) { //list is test file using Sinot.js
         resetCaseHooks()
         sinot.afterEachScenario()
     }
+    sinot.afterAll()
+    resetHooks()
 }
 
 resetHooks()
