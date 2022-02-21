@@ -69,7 +69,6 @@ class TellonReporter {
         let length = list.length;
         let summary;
 
-
         for(let i = 0; i < length; i++){
             readout += list[i].print()
         }
@@ -83,11 +82,54 @@ class TellonReporter {
         let readout = `*****************************************************\n`
         readout +=    `|                ***Tellon Report***\n`
         readout +=    `|                     Pass|Fail\n`
-        readout +=    `|\t-Tests     ${this.totalTestsPassed}|${this.totalTestsFailed}\n`
-        readout +=    `|\t-Scenarios ${this.totalScenariosPassed}|${this.totalScenariosFailed}\n`
-        readout +=    `|\t-Cases     ${this.totalCasePasses}|${this.totalCaseFails}\n`  
+        readout +=    `|\t-Tests     ${this.totalTestsPassed} | ${this.totalTestsFailed}\n`
+        readout +=    `|\t-Scenarios ${this.totalScenariosPassed} | ${this.totalScenariosFailed}\n`
+        readout +=    `|\t-Cases     ${this.totalCasePasses} | ${this.totalCaseFails}\n`  
         readout +=    `*****************************************************\n`
         return readout
+    }
+
+    static getSquashedReport(){
+        return this.readout.replace(/^\s*[\r\n]/gm, '')
+    }
+
+    static exportLogs(filename){
+        let report = this.getSquashedReport()
+        filename = filename || 'tellonLog'
+        let path = `js/plugins/TestLogs/${filename}.md`
+
+        report = this.formatMarkdown(report)
+        require("fs").writeFile(path, report, (e)=>{if(e) throw e; console.log('complete')});
+    }
+
+    static formatMarkdown(report){
+        let data = report.split('\n')
+        console.log(data.length)
+        let mdPrintout = data.map(a => {
+            a = a.replace('|', '')
+            a = a.replaceAll('*', '\*')
+            a = a.replace('------------------------------------------------------', '')
+
+            if(a.contains('[SCENARIO]'))
+                return "## " + a
+            else if(a.contains('[TEST]'))
+                return "# " + a
+            else if(a.contains('-Test') || a.contains('-Scen') || a.contains('-Case') || a.contains('***'))
+                return a.trim()
+            else if(!a.contains('Pass|Fail') && !a.contains('undefined'))
+                return '\t' + a
+            else {
+                console.log(a)
+                return undefined
+            }
+        })
+
+        console.log(mdPrintout.length)
+        mdPrintout = mdPrintout.filter(a => {
+            return typeof a != 'undefined' && a.length
+        })
+
+        return mdPrintout.join('  \n')
     }
 
 }
@@ -156,8 +198,8 @@ class TellonTestReport extends TellonReport {
         readout += `| [TEST] ${this.title} (${this.isPass() ? '\u2713' : '\u2717'})\n`;
         readout += `|\n`
         readout +=    `|                     Pass|Fail\n`
-        readout +=    `|\t-Scenarios ${this.scenarioPasses}|${this.scenarioFails}\n`;
-        readout +=    `|\t-Cases     ${this.casePasses}|${this.caseFails}\n`;
+        readout +=    `|\t-Scenarios ${this.scenarioPasses} | ${this.scenarioFails}\n`;
+        readout +=    `|\t-Cases     ${this.casePasses} | ${this.caseFails}\n`;
 
         return readout;
     }
