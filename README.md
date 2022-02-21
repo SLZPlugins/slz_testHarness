@@ -231,11 +231,11 @@ automatically run.
 
 ## Exporting logs
 There is a function in the Alpha build available on slz_Tellon.js. 
-After running TestRunner.runAllTests(), you can run the following command
-    TellonReporter.exportLogs() //Will export to/overwrite file called TellonLog.md
-    TellonReporter.exportLogs('Zach-S1') //Will export to/overwrite file called Zach-S1.md
-This creates a markdown-formatted version of your reports, and saves it in your js/plugins/TestLogs folder.
-If you push to github, you'll have a neatly formatted report with the results of the test run prior to running the export command
+After running TestRunner.runAllTests(), you can run the following command  
+    TellonReporter.exportLogs() //Will export to/overwrite file called TellonLog.md  
+    TellonReporter.exportLogs('Zach-S1') //Will export to/overwrite file called Zach-S1.md  
+This creates a markdown-formatted version of your reports, and saves it in your js/plugins/TestLogs folder.  
+If you push to github, you'll have a neatly formatted report with the results of the test run prior to running the export command  
 
 ## Understanding the current state
 This harness allows you to set up tests to work with live situations. If you want t
