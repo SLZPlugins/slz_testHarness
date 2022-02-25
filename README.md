@@ -17,48 +17,15 @@ This document will explain how to use sinotJS to easily write tests to execute w
 
 
 ## Setting up slz_TestHarness on your project
-slz_TestHarness.js is the only actual RM plugin you'll need to install like a normal RM plugin.
-Once added, use the params to set the locations for the following:
-* Test Directory
-* Engines
-* Test Plugins
+The alpha build requires you to install each module as a plugin. TestHarness should come first, followed by slz_Sinot.js. The order after that  
+shouldn't matter, as long as ___your test files go last___
 
 
 ### Test Directory
-In order to run tests, you'll need to specify a directory in the plugin params. The test directory
-can be anywhere on your machine. ***Only folders and your test files*** should be within your test
-directory. You can have any amount of test files, sub folders, sub sub folders, so on. Just know
-any files found at all within your test directory and it's sub-directories will be considered tests When the
-TestFileManager reads it.
+In the Alpha build, there is no 'test directory'. However, there should be a folder in your project with the following path
+    js/plugins/TestLogs
+This is where your logs will be output
 
-### Engines 
-Engines are most frequently going to be javascript files that define assertion functions, to assist
-in testing. The default engine provided with this project is slz_Assertions, which makes the library
-***rmAssert*** available whenn enabled. When adding an engine, you must look at the documentation
-and find the name associated with that engine, so the harness knows how other plugins or tests will
-refer to it. The default plugin, slz_Assertions includes the following code
-
-    window.rmAssert = rmAssert
-    
-This is the name it should be referred to with, and the name that should be specified when configuring it
-in the Engine section. The point is, you would normally find this name from the documentation. In the 
-future, this will likely not be necessary, and the name setting will be used for something else. For
-now, it is required.
-
-
-### Plugins
-Plugins (when talking about this test harness) are considered add ons that aren't exclusively about
-asserting or validating tests. Truthfully, it should be ok to load an Engine or a Plugin as either
-or, but in the future it's important to know that Engines shouldn't have dependencies. Plugins, on 
-the other hand may have dependencies.
-The name of a plugin should be in the documentation for that plugin, but can be found by looking at the code for the window assignment, like below
-
-    windows.slz_sandbox = slz_sandbox
-    
-This is the name it should be referred to with, and the name that should be specified when configuring it
-in the Engine section. The point is, you would normally find this name from the documentation. In the 
-future, this will likely not be necessary, and the name setting will be used for something else. For
-now, it is required.
 
 
 
@@ -72,34 +39,17 @@ params, including inside of an internal folder.
 Setting up a test will be the same every time, and the process will be documented in the slz_TestHarness.js
 help file. 
 
-
-There are __five__ arguments required for a Test definition
--Test Name
--Required RM Plugins
--Required Engines
--Required Test Plugins
--Test Code
-
 You should start with the following:
 
     slz_Test(
     
     )
 
-Next, we'll add the five arguments
+Next, we'll add callback that contains the rest of the code
 
     slz_Test(
         //Title
         "My First Test",
-        
-        //RPG Maker Plugins Your engines or plugins require
-        ['sp_Core'],
-        
-        //Required Engines for this test
-        ['rmAssert'],
-        
-        //Required Test Plugins for this test
-        ['slz_sandbox'],
         
         ()=>{
             return [ 
@@ -108,8 +58,6 @@ Next, we'll add the five arguments
         }
     )
     
-If you don't have required RM Plugins, Test Plugins or Engines, leave their
-associated arrays empty. You __must__ have the arrays, even if they are empty.
 
 ### Scenarios and Test Cases
 A single test is made up of one or more 'scenarios'. 
@@ -187,12 +135,13 @@ It's really just like writing a function, because it literaly is writing
 a function. You can create local variables, or access any ones that are 
 in scope at the time. 
 
-There are also five methods to help facilitate tests. 
+There are also six methods to help facilitate tests. 
 beforeEachCase
 beforeEachScenario
-beforeAll
+beforeAll <------ ## Not available in Alpha
 afterEachCase
 afterEachScenario
+afterAll
 
 Each of them accepts a single argument, a function where you can write code
 to fire on the trigger described in each name. For example, to have a 
@@ -212,13 +161,7 @@ all of the above calls being used, although they aren't necessary.
 Here's an example of that completed test.
 
     slz_Test("Test A", 
-    //RPG Maker Plugins,
-    ["sp_Core"],
-    //Assertion Engines
-    ['rmAssert'], 
-    //Plugins
-    [],
-    //Tests
+ 
     () => {
         
         //can scope varibles to entire test instace
@@ -280,10 +223,21 @@ Running tests is simple.
 -Open the console (usually F12, might be different for you)
 -Enter the following
 
-    TestRunner.run()
+    TestRunner.runAllTests()
 
 That's it. Your tests will run, and if your Engine provides reporting, a report
-of your results will print out to the console. 
+of your results will print out to the console. In the case of the Alpha build, TellonReporter.print will  
+automatically run.
+
+## Exporting logs
+There is a function in the Alpha build available on slz_Tellon.js. 
+After running TestRunner.runAllTests(), you can run the following command  
+
+    TellonReporter.exportLogs() //Will export to/overwrite file called TellonLog.md  
+    TellonReporter.exportLogs('Zach-S1') //Will export to/overwrite file called Zach-S1.md  
+    
+This creates a markdown-formatted version of your reports, and saves it in your js/plugins/TestLogs folder.  
+If you push to github, you'll have a neatly formatted report with the results of the test run prior to running the export command  
 
 ## Understanding the current state
 This harness allows you to set up tests to work with live situations. If you want t

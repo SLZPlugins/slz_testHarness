@@ -20,6 +20,7 @@ TellonReporter.intialize = function () {
     this.totalTestsFailed = 0
 }
 
+
 TellonReporter.parseTest = function (index) {
     let logs = TestLogger.logs[index]
     let length = logs.length;
@@ -49,7 +50,6 @@ TellonReporter.parseTest = function (index) {
     }
     return curTest
 }
-
 
 TellonReporter.parseAllTests = function () {
     let list = TestLogger.logs
