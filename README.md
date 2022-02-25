@@ -18,7 +18,8 @@ This document will explain how to use sinotJS to easily write tests to execute w
 
 ## Setting up slz_TestHarness on your project
 The alpha build requires you to install each module as a plugin. sp_Core should come first, followed by TestHarness, then by slz_Sinot.js. The order after that  
-shouldn't matter, as long as ___your test files go last___. However, just for fun here's the plugin order used during alpha testing.
+shouldn't matter, as long as ___your test files go last___. However, just for fun here's the plugin order used during alpha testing.  
+
   sp_Core  
   slz_TestHarness  
   slz_Sinot  
