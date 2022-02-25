@@ -16,117 +16,106 @@ slz.testHarness = slz.testHarness || {};
         Test Runner  #runner #tr
    /////////////////////////////////////////////////////////////////////////// */
 
-class TestRunner {
-    static tests = []
-    static languages = []
-    static _onCompleteCallbacks = []
-
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static addTest(test) {
-        this.tests.push(test)
-        TestLogger.addNewLogIndex()
-    }
-
-    static initialize() {
-        this.tests = [];
-        this.logs = [];
-        this.languages = [];
-        this.stopTests = false;
-    }
-
-    static run() {
-        this.initialize()
-    }
-
-    static runTest(index, test) {
-        this.heading = test.title;
-        TestLogger.addData(test.type, test.title)
-        this.languages[index](test.loadTestData())
-    }
-
-    static runAllTests() {
-        let list = this.tests;
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            if (this.stopTests) {
-                console.log('TestRunner stopping execution')
-                return this.running = false
-            }
-
-            this.runTest(i, list[i])
-            TestLogger.logIndex++
-        }
-
-        this.onComplete()
-    }
-
-    static onComplete() {
-        this._onCompleteCallbacks.forEach(a => a())
-        this.running = false;
-    }
-
-
+function TestRunner() {
+    throw new Error('This is a static class')
 }
 
-class TestLogger {
-    static rawData = []
-    static timeStamps = []
-    static logs = []
-    static logIndex = 0;
-    
-    constructor() {
-        throw new Error('This is a static class')
-    }
+TestRunner.tests = []
+TestRunner.languages = []
+TestRunner._onCompleteCallbacks = []
+TestRunner.addTest = function (test) {
+    this.tests.push(test)
+    TestLogger.addNewLogIndex()
+}
 
-    static addData(...data){
-        this.logs[this.logIndex].push(new TestPacket('data', data))
-    }
+TestRunner.initialize = function () {
+    this.tests = [];
+    this.logs = [];
+    this.languages = [];
+    this.stopTests = false;
+}
 
-    static log(message){
-        this.logs[this.logIndex].push(new TestPacket('log', message))
-    }
+TestRunner.run = function () {
+    this.initialize()
+    this.runAllTests()
+}
 
-    static addNewLogIndex(){
-        this.logs.push([])
-    }
+TestRunner.runTest = function (index, test) {
+    this.heading = test.title;
+    TestLogger.addData(test.type, test.title)
+    this.languages[index](test.loadTestData())
+}
 
-    static getTimeStamp(){
-        let dt = new Date()
-        return `<<<${dt.getHours()}:${dt.getUTCMinutes()}:${dt.getUTCSeconds()}:${dt.getMilliseconds()}>>> `
-    }
+TestRunner.runAllTests = function () {
+    let list = this.tests;
+    let length = list.length;
 
-    static removeTimeStamp(entry){
-        return entry.replace(entry.match(/(<<<)(.*?)(>>>)/)[0], '').trim()
-    }
-
-    
-
-    static printLogs(){
-        let readout = ""
-        let list = this.logs;
-        let length = list.length;
-
-        for(let i = 0; i < length; i++){
-            readout += `\n${list[i].join(`\n`)}`
+    for (let i = 0; i < length; i++) {
+        if (this.stopTests) {
+            console.log('TestRunner stopping execution')
+            return this.running = false
         }
 
-        console.log(readout)
+        this.runTest(i, list[i])
+        TestLogger.logIndex++
     }
+
+    this.onComplete()
+}
+
+TestRunner.onComplete = function () {
+    this._onCompleteCallbacks.forEach(a => a())
+    this.running = false;
 }
 
 
-class TestPacket {
-    type
-    data
-    stamp
+function TestLogger() {
+    throw new Error('This is a static class')
+}
 
-    constructor(type, data){
-        this.type = type
-        this.data = data;
-        this.stamp = TestLogger.getTimeStamp()
+TestLogger.rawData = []
+TestLogger.timeStamps = []
+TestLogger.logs = []
+TestLogger.logIndex = 0;
+
+TestLogger.addData = function (...data) {
+    this.logs[this.logIndex].push(new TestPacket('data', data))
+}
+
+TestLogger.log = function (message) {
+    this.logs[this.logIndex].push(new TestPacket('log', message))
+}
+
+TestLogger.addNewLogIndex = function () {
+    this.logs.push([])
+}
+
+TestLogger.getTimeStamp = function () {
+    let dt = new Date()
+    return `<<<${dt.getHours()}:${dt.getUTCMinutes()}:${dt.getUTCSeconds()}:${dt.getMilliseconds()}>>> `
+}
+
+TestLogger.removeTimeStamp = function (entry) {
+    return entry.replace(entry.match(/(<<<)(.*?)(>>>)/)[0], '').trim()
+}
+
+
+
+TestLogger.printLogs = function () {
+    let readout = ""
+    let list = this.logs;
+    let length = list.length;
+
+    for (let i = 0; i < length; i++) {
+        readout += `\n${list[i].join(`\n`)}`
     }
+
+    console.log(readout)
+}
+
+
+function TestPacket(type, data) {
+    this.type = type
+    this.data = data;
+    this.stamp = TestLogger.getTimeStamp()
 }

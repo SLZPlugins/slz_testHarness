@@ -1,195 +1,191 @@
-    console.log(`
+console.log(`
  ____  _  _     __   ____  ____  ____  ____  ____ 
 (  _ \\( \\/ )   / _\\ / ___)/ ___)(  __)(  _ \\(_  _)
  )   // \\/ \\  /    \\\\___ \\\\___ \\ ) _)  )   /  )(  
 (__\\_)\\_)(_/  \\_/\\_/(____/(____/(____)(__\\_) (__)
-    `)    
-class rmAssert {
-     'use strict'
-    static logger = TestLogger
+    `)
+function rmAssert() {
+    throw new Error('This is a rmAssert.class')
+}
 
-    constructor() {
-        throw new Error('This is a static class')
+rmAssert.logger = TestLogger
+
+rmAssert.assertTrue = function (expression) {
+    let result = false;
+
+    if (expression === true) {
+        result = true
+    } else {
+        result = false
     }
+    //Finalize Report
 
-    static assertTrue(expression) {
-        let result = false;
+    this.logger.addData(result, true, expression)
+    return result
 
-        if (expression === true) {
-            result = true
-        } else {
-            result = false
-        }
-        //Finalize Report
-        
-        this.logger.addData(result, true, expression)
-        return result
+}
 
+rmAssert.assertFalse = function (expression) {
+    let result = false;
+
+    if (expression === false) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, false, expression)
+    return result
+}
 
-    static assertFalse(expression) {
-        let result = false;
+rmAssert.assertEquals = function (obj1, obj2) {
+    let result = false;
 
-        if (expression === false) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-            
-            //Finalize Report
-            this.logger.addData(result, false, expression)
-            return result
-        }
+    if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, obj1, obj2)
+    return result
+}
 
-    static assertEquals(obj1, obj2) {
-        let result = false;
+rmAssert.assertNotEquals = function (obj1, obj2) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, obj1, obj2)
-        return result
+    if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, true, result)
+    return result
+}
 
-    static assertNotEquals(obj1, obj2){
-        let result = false;
+rmAssert.assertNull = function (obj1) {
+    let result = false;
 
-        if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, true, result)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, null, obj1)
+    return result
+}
 
-    static assertNull(obj1) {
-        let result = false;
+rmAssert.assertNotNull = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, null, obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, "Not Null", expression)
+    return result
+}
 
-    static assertNotNull(obj1) {
-        let result = false;
+rmAssert.assertString = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, "Not Null", expression)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, 'string', typeof obj1)
+    return result
+}
 
-    static assertString(obj1) {
-        let result = false;
+rmAssert.assertNumber = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, 'string', typeof obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, 'number', typeof obj1)
+    return result
+}
 
-    static assertNumber(obj1) {
-        let result = false;
+rmAssert.assertObject = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, 'number', typeof obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, 'object', typeof obj1)
+    return result
+}
 
-    static assertObject(obj1) {
-        let result = false;
+rmAssert.assertBoolean = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, 'object', typeof obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, 'boolean', typeof obj1)
+    return result
+}
 
-    static assertBoolean(obj1) {
-        let result = false;
+rmAssert.assertFunction = function (obj1) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, 'boolean', typeof obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
+    //Finalize Report
+    this.logger.addData(result, 'function', typeof obj1)
+    return result
+}
 
-    static assertFunction(obj1) {
-        let result = false;
+rmAssert.assertInstance = function (obj1, obj2) {
+    let result = false;
 
-        if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, 'function', typeof obj1)
-        return result
+    if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
+        //Report pass
+        result = true
+    } else {
+        //Report fail
+        result = false
     }
-
-    static assertInstance(obj1, obj2) {
-        let result = false;
-
-        if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
-            //Report pass
-            result = true
-        } else {
-            //Report fail
-            result = false
-        }
-        //Finalize Report
-        this.logger.addData(result, true, false)
-        return result
-    }
+    //Finalize Report
+    this.logger.addData(result, true, false)
+    return result
 }
