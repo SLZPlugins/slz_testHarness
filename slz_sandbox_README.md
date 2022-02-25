@@ -33,7 +33,7 @@ is proceeding as planned.
 ## Stubs
 A stub is sometimes mistakenly called a __mock__. And sometimes...it's not 
 mistakenly called a mock... it actually depends on the language, and who you're
-asking. In slz_sandbox, a stub is __an independent copy of an instance object,
+asking. In slz_sandbox, a stub is __an independent copy of an instance object__,
 with properties identical to it's source and 'mocked' methods
 
 If you stub out $gamePlayer, you get an object that is a 'clone' of $gamePlayer. 
