@@ -1,5 +1,5 @@
 # slz_testHarness
-A simple testing suite designed to work in RPG Maker MV and MZ (currently on MZ Model, MV testing to come)
+A simple testing suite designed to work in RPG Maker MV and MZ 
 
 ## Overview
 The purpose of this plugin is to act as a harness that supports testing of RPG Maker JavaScript plugins. 
@@ -17,8 +17,15 @@ This document will explain how to use sinotJS to easily write tests to execute w
 
 
 ## Setting up slz_TestHarness on your project
-The alpha build requires you to install each module as a plugin. TestHarness should come first, followed by slz_Sinot.js. The order after that  
-shouldn't matter, as long as ___your test files go last___
+The alpha build requires you to install each module as a plugin. sp_Core should come first, followed by TestHarness, then by slz_Sinot.js. The order after that  
+shouldn't matter, as long as ___your test files go last___. However, just for fun here's the plugin order used during alpha testing.
+  sp_Core
+  slz_TestHarness
+  slz_Sinot
+  slz_rmAssert
+  slz_tellon
+  slz_sandbox
+  slz_Test1
 
 
 ### Test Directory
@@ -28,16 +35,11 @@ This is where your logs will be output
 
 
 
-
-
-
 ## Creating your own test
 
-Add a .js file to the test folder. It can be anywhere within the test folder specified in the plugin
-params, including inside of an internal folder. 
+Add a .js file to the plugins folder. In the example of above, Test1 is the test file. 
 
-Setting up a test will be the same every time, and the process will be documented in the slz_TestHarness.js
-help file. 
+Setting up a test will be the same every time, although initially the syntax may seem confusing
 
 You should start with the following:
 
@@ -135,13 +137,14 @@ It's really just like writing a function, because it literaly is writing
 a function. You can create local variables, or access any ones that are 
 in scope at the time. 
 
-There are also six methods to help facilitate tests. 
-beforeEachCase
-beforeEachScenario
-beforeAll <------ ## Not available in Alpha
-afterEachCase
-afterEachScenario
-afterAll
+There are also six methods to help facilitate tests. __Because of the change from modular loading to individual plugin loading, some of these ooks don't work properly anymore. You can safely assume beforeEachCase and afterEachCase work correctly, and honestly they can accomplish everything the others could accomplish, just less efficiently than originally planned__
+
+  beforeEachCase
+  beforeEachScenario
+  beforeAll <------ ## Not available in Alpha
+  afterEachCase
+  afterEachScenario
+  afterAll
 
 Each of them accepts a single argument, a function where you can write code
 to fire on the trigger described in each name. For example, to have a 
@@ -231,7 +234,7 @@ automatically run.
 
 ## Exporting logs
 There is a function in the Alpha build available on slz_Tellon.js. 
-After running TestRunner.runAllTests(), you can run the following command  
+After running TestRunner.runAllTests(), you can run one of the following commands  
 
     TellonReporter.exportLogs() //Will export to/overwrite file called TellonLog.md  
     TellonReporter.exportLogs('Zach-S1') //Will export to/overwrite file called Zach-S1.md  
