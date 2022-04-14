@@ -47,11 +47,11 @@ class rmAssert {
         } else {
             //Report fail
             result = false
-            
-            //Finalize Report
-            this.logger.addData(result, false, expression)
-            return result
         }
+        //Finalize Report
+        
+        this.logger.addData(result, false, expression)
+        return result
     }
 
     static assertEquals(obj1, obj2) {
