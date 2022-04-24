@@ -26,9 +26,8 @@ TellonReporter.parseTest = function (index) {
     let length = logs.length;
     let curTest = new TellonTestReport(logs[0].data[1])
     let curReport = curTest
-    let curScenario,
-        curCase
-
+    let curScenario;
+    let curCase;
 
     for (let i = 1; i < length; i++) {
         if (logs[i].type === 'data')
@@ -42,6 +41,10 @@ TellonReporter.parseTest = function (index) {
                     curReport = curCase;
                     break
                 default:
+                    console.log("Adding Log");
+                    console.log(logs[i].data);
+                    console.log("To Current Report");
+                    console.log(curReport);
                     curReport.addLog(logs[i].data)
                     break;
             }
@@ -287,13 +290,19 @@ TellonCaseReport.prototype = Object.create(TellonReport.prototype)
 
 TellonCaseReport.prototype.addLog = function(data) {
     if (Array.isArray(data))
-        return this.assertionData = data
+        return this.assertionData.push(data);
 
     this.logs.push(`\t\t[LOGGER:>>] ${data.data}`)
 }
 
 TellonCaseReport.prototype.tally = function() {
-    this.pass = this.assertionData[0];
+    this.pass = true;
+    for (let i = 0; i < this.assertionData.length; i++) {
+        if (!this.assertionData[i][0]) {
+            this.pass = false;
+            break;
+        }
+    }
     return this.pass;
 }
 
@@ -304,8 +313,9 @@ TellonCaseReport.prototype.print = function() {
 
     this.readout = readout;
 
-    if (!this.pass)
-        this.printAssertionData(assertionData[1], assertionData[2])
+    if (!this.pass) {
+        assertionData.forEach((ad) => {if (!ad[0]) this.printAssertionData(ad[1], ad[2])});
+    }
 
     return `${this.readout}\n`
 }
