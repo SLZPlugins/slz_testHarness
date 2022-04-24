@@ -41,10 +41,6 @@ TellonReporter.parseTest = function (index) {
                     curReport = curCase;
                     break
                 default:
-                    console.log("Adding Log");
-                    console.log(logs[i].data);
-                    console.log("To Current Report");
-                    console.log(curReport);
                     curReport.addLog(logs[i].data)
                     break;
             }
