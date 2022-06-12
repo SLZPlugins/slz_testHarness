@@ -90,7 +90,7 @@ slz_Harness.createHooks = function(){
 }
 
 slz_Harness.addBeforeAllTestHook = function(cb){
-    let hasCb = this._beforeAllTestHooks.find(hook => hook.toString() == cb.toString()).length
+    let hasCb = this._beforeAllTestHooks.find(hook => hook.toString() == cb.toString())
 
     if(!hasCb){
         this._beforeAllTestHooks.push(cb)
@@ -98,9 +98,9 @@ slz_Harness.addBeforeAllTestHook = function(cb){
 }
 
 slz_Harness.addBeforeTestHook = function(cb){
-    let hasCb = this._beforeTestHooks.find(hook => hook.toString() == cb.toString()).length
+    let hasCb = this._beforeTestHooks.find(hook => hook.toString() == cb.toString())
 
-    if(!hasCb){
+    if(!hasCb.length){
         this._beforeTestHooks.push(cb)
     }
 }
@@ -122,25 +122,33 @@ slz_Harness.addafterAllTestHook = function(cb){
 }
 
 slz_Harness.addTest = function (data) {
-    this._loadedTests.push(data.loadTestData)
+    try{
+        data.validate()
+        if(data.isValid()){
+            this._loadedTests.push(data)
+        }
+    } catch(e){
+        console.log(e)
+    }
+    
 }
 
-slz_Harness.runAllLoadedTests = function () {
-    this._selectedTests = this._loadedTests;
-    this.runTests()
+slz_Harness.execute = function () {   //<-- should/could accept test running params
+    this._selectedTests = this._loadedTests; //<-- should be replaced or this should be default value
+    this.runAllTests()
 }
 
-slz_Harness.runTests = function(){
+slz_Harness.runAllTests = function(){
     this.runTestHooks(this._beforeAllTestHooks)
     this._selectedTests.forEach(test => {
-        test()
+        this.runTest(test)
     })
     this.runTestHooks(this._afterAllTestHooks)
 }
 
 slz_Harness.runTest = function(test){
     this.runTestHooks(this._beforeTestHooks)
-    test()
+    test.testRunner(test.loadTestData())
     this.runTestHooks(this._afterTestHooks)
 }
 
@@ -287,7 +295,27 @@ slz_TestLogger.createStandardProps = function () {
 }
 
 slz_TestLogger.log = function (data) {
-    this.allLogs.push(data)
+    let record = new slz_LogRecord('LOG', 'LOG', data)
+
+    this.allLogs.push(record)
+}
+
+slz_TestLogger.addData = function(stamp, ...data) {
+    let record = new slz_LogRecord('DATA', stamp, data)
+
+    this.allLogs.push(record)
+}
+
+slz_TestLogger.beginSegment = function(segmentName){
+    let record = new slz_LogRecord('SEGMENT', segmentName)
+
+    this.allLogs.push(record)
+}
+
+slz_TestLogger.endSegment = function(segmentName){
+    let record = new slz_LogRecord('/SEGMENT', segmentName)
+
+    this.allLogs.push(record)
 }
 
 slz_TestLogger.clearLogs = function () {
@@ -299,11 +327,46 @@ slz_TestLogger.clearLogs = function () {
 }
 
 
+/* ///////////////////////////////////////////////////////////////////////////
+        LogRecord
+   /////////////////////////////////////////////////////////////////////////// */
 
 
+class slz_LogRecord {
+    constructor(category, stamp, data){
+        this.category = category
+        this.setStandardProps(stamp, data)
+    }
+
+    setStandardProps(stamp, data){
+        this.stamp = stamp || 'LOG';
+        this.data = data || undefined;
+        this.logIndex = slz_Harness.logger.allLogs.length;
+    }
+
+    setCategory(category){
+        this.category = category
+
+        return this
+    }
+
+    setData(data){
+        this.data = data;
+        
+        return this
+    }
+
+    setStamp(stamp){
+        this.stamp = stamp
+        
+        return this
+    }
+}
 
 
-
+/* ///////////////////////////////////////////////////////////////////////////
+        Error Classes
+   /////////////////////////////////////////////////////////////////////////// */
 
 
 class slz_InterfaceEnforcedMethodError extends Error {
@@ -338,54 +401,46 @@ class slz_modelValidationError extends Error {
    /////////////////////////////////////////////////////////////////////////// */
 
 class iTestModule {
-    constructor(name, model) {
-        //First arg should always be Official handle for module (eg rmAssert or sinot)
-        //remaining args should b
-        this.name = name || false;
-        this.model = model || {}
+    constructor() {
         this._isValid = [];
-        this.validate()
     }
 
     validate() {
-        let validName = typeof this.name == 'string' && this.name && this.name.length
-        let validModel = this.validateModel()
-
-        this._isValid.push(validName && validModel ? true : false)
+        throw new slz_InterfaceEnforcedMethodError(this, 'validate')
     }
 
-    validateModel() {
-        let hasInstall = typeof this.model.install == 'function'
-        let hasUninstall = typeof this.model.uninstall == 'function'
-
-        return hasInstall && hasUninstall
-    }
 
     isValid() {
-        this._isValid.filter(element => element).length == this._isValid.length;
+        return this._isValid.filter(element => element).length == this._isValid.length;
     }
 }
 
 
 class iTestLanguage extends iTestModule {
-    constructor(name, model) {
-        super(name, model)
+    constructor() {
+        super()
     }
 
     validate() {
-        let validTestRunner = typeof this.model.runTest == 'function'
-
-        super.validate()
+        let validTestRunner = this.isValidTestLanaguage()
 
         this._isValid.push(validTestRunner ? true : false)
+    }
+
+    isValidTestLanaguage(){
+        let hasTitle = typeof this.title == 'string'
+        let hasTestRunner = typeof this.testRunner == 'function'
+        let hasLoadTestData = typeof this.loadTestData == 'function'
+
+        return hasTitle && hasTestRunner && hasLoadTestData
     }
 
 }
 
 
 class iReporter extends iTestModule {
-    constructor(name, model) {
-        super(name, model)
+    constructor() {
+        super()
     }
 
     print() {
@@ -398,8 +453,8 @@ class iReporter extends iTestModule {
 }
 
 class iReport extends iTestModule {
-    constructor(name, model) {
-        super(name, model)
+    constructor() {
+        super()
     }
 
     print() {
@@ -413,16 +468,3 @@ class iReport extends iTestModule {
 ============================================================================================================================================
 */
 slz_Harness.initialize()
-
-
-
-
-
-
-
-
-class testClass extends iReporter {
-    constructor(name, model) {
-        super(name, model)
-    }
-}

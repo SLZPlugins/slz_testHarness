@@ -1,10 +1,10 @@
 // requireLanguage('sinot')
 // requirePlugins('sp_Core')
-sinot_Test("Test A", () => {
+sinot.createTest("Test A", () => {
     
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
-    
+    let logger = slz_Harness.logger;
     return [
         // beforeAll(()=>{
         //     console.log('This will run once, before the first scenario runs')
@@ -15,7 +15,7 @@ sinot_Test("Test A", () => {
         // afterEachScenario(()=>{
         //     console.log('This will run before each test scenario runs')
         // }),
-        scenario("Testing Add to Storage", () => {
+        sinot.scenario("Testing Add to Storage", () => {
             //can scope varibles to individual scenario
             let scenarioLevelVar = 'first before each case'
             return [
@@ -25,17 +25,17 @@ sinot_Test("Test A", () => {
                 // afterEachCase(()=>{
                 //     console.log('this will run after each case, just for this scenario')
                 // }),
-                testCase("Check Length is greater than one", () => {
-                    TestLogger.log('poooooooo')
+                sinot.testCase("Check Length is greater than one", () => {
+                    logger.log('poooooooo')
                     console.log('happening')
                     rmAssert.assertTrue(10 > 1)
                 }),
-                testCase("Amount in inventory should be decremented", () => {
+                sinot.testCase("Amount in inventory should be decremented", () => {
                     let expected = 10;
                     let actual = 9;
                     rmAssert.assertEquals(expected, actual)
                 }),
-                testCase("Should be an instance of Scene_Battle", () => {
+                sinot.testCase("Should be an instance of Scene_Battle", () => {
                     let expected = SceneManager._scene;
                     let actual = Scene_Battle
                     rmAssert.assertInstance(expected, actual)
@@ -43,13 +43,13 @@ sinot_Test("Test A", () => {
             ]
         }),
 
-        scenario("Testing Subtract from Storage", () => {
-            TestLogger.log('Before second scenario')
+        sinot.scenario("Testing Subtract from Storage", () => {
+            logger.log('Before second scenario')
             return [
-                testCase("Should remove successfully when contents exist", () => {
+                sinot.testCase("Should remove successfully when contents exist", () => {
                     rmAssert.assertNotEquals(10, 10)
                 }),
-                testCase("Some prop should be null", () => {
+                sinot.testCase("Some prop should be null", () => {
                     rmAssert.assertNull(null)
                 })
             ]

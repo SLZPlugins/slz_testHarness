@@ -23,6 +23,14 @@ class rmAssert {
     }
 }
 
+rmAssert.initialize = function(){
+    this.setStandardProps()
+}
+
+rmAssert.setStandardProps = function(){
+    this.logger = slz_Harness.logger
+}
+
 rmAssert.assertTrue = function(expression) {
     let result = false;
 
@@ -33,7 +41,7 @@ rmAssert.assertTrue = function(expression) {
     }
     //Finalize Report
     
-    this.logger.addData(result, true, expression)
+    this.logger.addData('rmAssert-result', result, true, expression)
     return result
 
 }
@@ -49,7 +57,7 @@ rmAssert.assertFalse = function(expression) {
         result = false
         
         //Finalize Report
-        this.logger.addData(result, false, expression)
+        this.logger.addData('rmAssert-result', result, false, expression)
         return result
     }
 }
@@ -65,7 +73,7 @@ rmAssert.assertEquals = function(obj1, obj2) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, obj1, obj2)
+    this.logger.addData('rmAssert-result', result, obj1, obj2)
     return result
 }
 
@@ -80,7 +88,7 @@ rmAssert.assertNotEquals = function(obj1, obj2){
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, true, result)
+    this.logger.addData('rmAssert-result', result, true, result)
     return result
 }
 
@@ -95,7 +103,7 @@ rmAssert.assertNull = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, null, obj1)
+    this.logger.addData('rmAssert-result', result, null, obj1)
     return result
 }
 
@@ -110,7 +118,7 @@ rmAssert.assertNotNull = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, "Not Null", expression)
+    this.logger.addData('rmAssert-result', result, "Not Null", expression)
     return result
 }
 
@@ -125,7 +133,7 @@ rmAssert.assertString = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, 'string', typeof obj1)
+    this.logger.addData('rmAssert-result', result, 'string', typeof obj1)
     return result
 }
 
@@ -140,7 +148,7 @@ rmAssert.assertNumber = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, 'number', typeof obj1)
+    this.logger.addData('rmAssert-result', result, 'number', typeof obj1)
     return result
 }
 
@@ -155,7 +163,7 @@ rmAssert.assertObject = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, 'object', typeof obj1)
+    this.logger.addData('rmAssert-result', result, 'object', typeof obj1)
     return result
 }
 
@@ -170,7 +178,7 @@ rmAssert.assertBoolean = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, 'boolean', typeof obj1)
+    this.logger.addData('rmAssert-result', result, 'boolean', typeof obj1)
     return result
 }
 
@@ -185,7 +193,7 @@ rmAssert.assertFunction = function(obj1) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, 'function', typeof obj1)
+    this.logger.addData('rmAssert-result', result, 'function', typeof obj1)
     return result
 }
 
@@ -200,8 +208,9 @@ rmAssert.assertInstance = function(obj1, obj2) {
         result = false
     }
     //Finalize Report
-    this.logger.addData(result, true, false)
+    this.logger.addData('rmAssert-result', result, true, false)
     return result
 }
 
+rmAssert.initialize()
 slz_Harness.registerModule('rmAssert') //When registering, pass rmAssert to the register function, and it will run the initialize function on rmAssert
