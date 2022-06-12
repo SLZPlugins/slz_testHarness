@@ -1,11 +1,3 @@
-let model = {
-    name: 'tellon', 
-    install: () => {
-        loadBanner()
-
-    }
-}
-
 class TellonReporter {
     constructor(){
         throw new Error('This is a static class')
@@ -24,13 +16,4 @@ ___________       __    __
     `)
 }
 
-let manifest = {
-    TellonReport: TellonReport,
-    CaseReport: CaseReport,
-    TestReport: TestReport,
-    ScenarioReport: ScenarioReport
-}
-
-requireLanguage('sinot')
-requirePlugins('sp_Core')
-registerReporter(model, manifest, TellonReporter)
+slz_Harness.registerModule('tellon')

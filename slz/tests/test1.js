@@ -1,9 +1,10 @@
-requireLanguage('sinot')
-requirePlugins('sp_Core')
+// requireLanguage('sinot')
+// requirePlugins('sp_Core')
 sinot_Test("Test A", () => {
     
     //can scope varibles to entire test instace
     let testLevelVar = 'Running Before All'
+    
     return [
         // beforeAll(()=>{
         //     console.log('This will run once, before the first scenario runs')
@@ -26,6 +27,7 @@ sinot_Test("Test A", () => {
                 // }),
                 testCase("Check Length is greater than one", () => {
                     TestLogger.log('poooooooo')
+                    console.log('happening')
                     rmAssert.assertTrue(10 > 1)
                 }),
                 testCase("Amount in inventory should be decremented", () => {

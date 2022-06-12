@@ -20,4 +20,4 @@ let manifest = {
     readAllGlobalFunctionNames:readAllGlobalFunctionNames
 }
 
-registerComponent(model, manifest)
+// registerComponent(model, manifest)

@@ -25,7 +25,7 @@
 * @type struct<Module>
 * @text Components
 * @desc Configure paths for Component Modules
-* @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\"]"}
+* @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\",\"slz_tellon.js\"]"}
 */
 
 /*~struct~Module:
@@ -51,837 +51,378 @@ Imported.slz = 'slz_TestHarness';
 var slz = slz || { params: {} };
 slz.testHarness = slz.testHarness || {};
 
+slz.testHarness.parameters = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_TestHarness'));
+
 /* ///////////////////////////////////////////////////////////////////////////
-        Global Functions global scenario describe
+        Harness
    /////////////////////////////////////////////////////////////////////////// */
 
-
-function requireDependency(dependency) {
-    HarnessFileManager.addDependency(dependency)
-}
-
-function requireLanguage(dependency) {
-    //Language specific operations/assignment
-    try {
-        requiredLanguage = HarnessFileManager.hasDependency(dependency)
-        if (requiredLanguage) {
-            TestRunner.setTestLanguage(HarnessFileManager.getModel(dependency))
-            requireDependency(dependency)
-        } else {
-            throw new slz_DependencyError(dependency)
-        }
-    } catch (error) {
-        console.log(error)
-
+class slz_Harness {
+    constructor() {
+        throw new Error('This is a static class')
     }
-
 }
 
-function requireEngines(...dependencies) {
-    //Engine specific operations/assignment
-    try {
-        dependencies.forEach(dependency => {
-            if (HarnessFileManager.F(dependency))
-                this.requireDependency(dependency)
-            else
-                throw new slz_DependencyError(dependency)
-        })
-    } catch (error) {
-        console.log(error)
+slz_Harness.initialize = function () {
+    this.createHarnessClassRefs()
+    this.createStandardProps()
+    this.createHooks()
+}
+
+slz_Harness.createHarnessClassRefs = function () {
+    this.loader = slz_HarnessLoader.initialize()
+    this.logger = slz_TestLogger.initialize()
+}
+
+slz_Harness.createStandardProps = function () {
+    this._missingResources = [];
+    this._hasError = false;
+    this._loadedModules = [];
+    this._loadedTests = [];
+    this._selectedTests = [];
+}
+
+slz_Harness.createHooks = function(){
+    this._beforeAllTestHooks = []
+    this._beforeTestHooks = []
+    this._afterTestHooks = []
+    this._afterAllTestHooks = []
+}
+
+slz_Harness.addBeforeAllTestHook = function(cb){
+    let hasCb = this._beforeAllTestHooks.find(hook => hook.toString() == cb.toString()).length
+
+    if(!hasCb){
+        this._beforeAllTestHooks.push(cb)
     }
-
 }
 
-function requireComponents(...dependencies) {
-    //Component specific operations/assignment
-    dependencies.forEach(dependency => {
-        this.requireDependency(dependency)
+slz_Harness.addBeforeTestHook = function(cb){
+    let hasCb = this._beforeTestHooks.find(hook => hook.toString() == cb.toString()).length
+
+    if(!hasCb){
+        this._beforeTestHooks.push(cb)
+    }
+}
+
+slz_Harness.addAfterTestHook = function(cb){
+    let hasCb = this._afterTestHooks.find(hook => hook.toString() == cb.toString()).length
+
+    if(!hasCb){
+        this._afterTestHooks.push(cb)
+    }
+}
+
+slz_Harness.addafterAllTestHook = function(cb){
+    let hasCb = this._afterAllTestHooks.find(hook => hook.toString() == cb.toString()).length
+
+    if(!hasCb){
+        this._afterAllTestHooks.push(cb)
+    }
+}
+
+slz_Harness.addTest = function (data) {
+    this._loadedTests.push(data.loadTestData)
+}
+
+slz_Harness.runAllLoadedTests = function () {
+    this._selectedTests = this._loadedTests;
+    this.runTests()
+}
+
+slz_Harness.runTests = function(){
+    this.runTestHooks(this._beforeAllTestHooks)
+    this._selectedTests.forEach(test => {
+        test()
     })
+    this.runTestHooks(this._afterAllTestHooks)
 }
 
-function requirePlugins(...dependencies) {
+slz_Harness.runTest = function(test){
+    this.runTestHooks(this._beforeTestHooks)
+    test()
+    this.runTestHooks(this._afterTestHooks)
+}
 
-    dependencies.forEach(dependency => {
-        this.requireDependency(dependency)
+slz_Harness.runTestHooks = function(hooks){
+    hooks.forEach(hook => hook())
+}
+
+slz_Harness.addMissingResource = function(type, requirer, assetName){
+    this._missingModule.push(
+        {
+            type: type,
+            requirer: requirer,
+            resourceName: assetName
+        }
+    )
+
+    this._hasError = true;
+}
+
+slz_Harness.registerModule = function(name){
+    if(!this.hasModule(name)){
+        console.log(name)
+        this._loadedModules.push({name:name})
+    }
+}
+
+slz_Harness.hasModule = function (name) {
+    return this._loadedModules.filter(module => {
+        module.name == name
+    }).length ? true : false
+
+    
+}
+
+slz_Harness.hasPlugin = function(name) {
+    return $plugins.find(plugin => {
+        plugin.name == name
+    }).length ? true : falses
+}
+
+
+slz_Harness.requirePlugin = function (requirer, rmPluginName) {
+    if (!this.hasPlugin(rmPluginName)) {
+        this.addMissingResource('rmPlugin', requirer, rmPluginName)
+    }
+}
+
+slz_Harness.requireModule = function(requirer, moduleName){
+    if(!this.hasModule(moduleName)){
+        this.addMissingResource('module', requirer, moduleName)
+    }
+}   
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        Loader
+   /////////////////////////////////////////////////////////////////////////// */
+
+class slz_HarnessLoader {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+}
+
+slz_HarnessLoader.initialize = function () {
+    this.createStandardProps()
+    this.loadAllParameterModules()
+
+    return this
+}
+
+slz_HarnessLoader.createStandardProps = function () {
+    this._scriptElements = [];
+    this._modules = []
+    this._pathPrefix = "js/"
+}
+
+slz_HarnessLoader.load = function (path) {
+    let url = this._pathPrefix + path.replace(this._pathPrefix, '');
+
+    if (!this.fileAlreadyLoaded(url)) {
+        this.loadScript(url)
+    }
+}
+
+slz_HarnessLoader.loadScript = function (url) {
+
+    let script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+    script.async = false;
+    script.onerror = () => { console.log('Error loading script') }
+    script._url = url;
+    document.body.appendChild(script);
+
+    this._scriptElements.push(script)
+};
+
+slz_HarnessLoader.fileAlreadyLoaded = function (url) {
+    let result = this._scriptElements.find(element => {
+        element._url === url
     })
+
+    return result || false
 }
 
+slz_HarnessLoader.loadParameterModules = function (paramterObject) {
+    let prefix = paramterObject.directory;
+    let list = paramterObject.defaults;
 
-function registerDependency(model, manifest) {
-    let list = Object.keys(manifest);
-    let length = list.length;
-
-    if (HarnessFileManager.globalElementNames.contains(model.name))
-        return
-
-    window[model.name] = { model: model }
-    model.install()
-
-    for (let i = 0; i < length; i++) {
-        window[list[i]] = manifest[list[i]]
-    }
-
-    HarnessFileManager.addGlobalElement(model.name, manifest)
-}
-
-function registerLanguage(model, manifest) {
-    //Language specific operations/assignment
-
-    if (!LanguageValidator.validate(model, manifest))
-        return
-
-    this.registerDependency(model, manifest)
-}
-
-function registerEngine(model, manifest) {
-    //Engine specific operations/assignment
-    if (!EngineValidator.validate(model, manifest))
-        return
-
-    this.registerDependency(model, manifest)
+    list.forEach(path => {
+        this.load(`${prefix}/${path}`)
+    })
 
 }
 
-function registerComponent(model, manifest) {
-    //Component specific operations/assignment
-    if (!ComponentValidator.validate(model, manifest))
-        return
-
-    this.registerDependency(model, manifest)
-}
-
-function registerReporter(model, manifest, reporter) {
-
-    if (!ReporterValidator.validate(model, manifest, reporter))
-        return
-
-    this.registerDependency(model, manifest)
-    HarnessReporter.install(reporter)
-}
-
-class slz_ValidationDefinitionError extends Error {
-    message
-    moduleName
-    definition
-
-    constructor(moduleName, definition) {
-        super('slz_ValidationDefinitionError')
-        this.moduleName = moduleName
-        this.definition = definition
-    }
-
-    valueOf() {
-        return `ERROR while validating ${this.type}: ${this.moduleName}
-        Missing defintion: ${this.definition}`
-    }
-}
-
-class slz_TestModuleDefinitionError extends slz_ValidationDefinitionError {
-    type = "Test"
-
-    constructor(moduleName, definition) {
-        super(moduleName, definition)
-    }
-}
-
-class slz_LanguageModuleDefinitionError extends slz_ValidationDefinitionError {
-    type = "Language"
-
-    constructor(moduleName, definition) {
-        super(moduleName, definition)
-    }
-
-}
-
-class slz_EngineModuleDefinitionError extends slz_ValidationDefinitionError {
-    type = "Engine"
-
-    constructor(moduleName, definition) {
-        super(moduleName, definition)
-    }
-}
-
-class slz_ComponentModuleDefinitionError extends slz_ValidationDefinitionError {
-    type = "Component"
-
-    constructor(moduleName, definition, type) {
-        super(moduleName, definition)
-        this.type = typeof type != undefined ? type : this.type // <-- Haha
-    }
-}
-
-
-class slz_DependencyError extends Error {
-    dependency;
-
-    constructor(dependency) {
-        super(dependency)
-        this.dependency = dependency
-    }
-
-    valueOf() {
-        return `ERROR Missing Dependency: ${this.dependency}`
-    }
-}
-
-
-
-/* ///////////////////////////////////////////////////////////////////////////
-        Test Runner  #runner #tr
-   /////////////////////////////////////////////////////////////////////////// */
-
-class TestRunner {
-    static tests = []
-    static languages = []
-    
-
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static addTest(test) {
-        this.tests.push(test)
-        TestLogger.addNewLogIndex()
-    }
-
-    static setTestLanguage(model) {
-        if (!model) {
-            this.stopTests = true;
-            throw new slz_DependencyError('Error: Unable to load Test langauge')
-        }
-
-        this.languages.push(model.runTest)
-
-    }
-
-
-    static run() {
-        this.initialize()
-        HarnessFileManager.checkAllDependencies()
-
-        if (!this.stopTests)
-            HarnessLoader.load()
-    }
-
-    static runTest(index, test) {
-        this.heading = test.title;
-        TestLogger.log(test.title)
-        this.languages[index](test.loadTestData())
-    }
-
-    static runAllTests() {
-        let list = this.tests;
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            HarnessFileManager.checkAllDependencies()
-            if (this.stopTests) {
-                console.log('TestRunner stopping execution')
-                return this.running = false
-            }
-
-            this.runTest(i, list[i])
-        }
-
-        this.onComplete()
-    }
-
-    static initialize() {
-        this.tests = [];
-        this.logs = [];
-        this.languages = [];
-        this.stopTests = false;
-        HarnessLoader.runOnComplete = true;
-    }
-
-    static onComplete() {
-        this.running = false;
-        HarnessReporter.print()
-        HarnessFileManager.unload()
-    }
-
-
-}
-
-class TestLogger {
-    static rawData = []
-    static timeStamps = []
-    static logs = []
-    static logIndex = -1;
-    
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static addData(...data){
-        this.logs[this.logIndex].push(new TestPacket('data', data))
-    }
-
-    static log(message){
-        this.logs[this.logIndex].push(new TestPacket('log', message))
-    }
-
-    static addNewLogIndex(){
-        this.logs.push([])
-        this.logIndex++
-    }
-
-    static getTimeStamp(){
-        let dt = new Date()
-        return `<<<${dt.getHours()}:${dt.getUTCMinutes()}:${dt.getUTCSeconds()}:${dt.getMilliseconds()}>>> `
-    }
-
-    static removeTimeStamp(entry){
-        return entry.replace(entry.match(/(<<<)(.*?)(>>>)/)[0], '').trim()
-    }
-
-    
-
-    static printLogs(){
-        let readout = ""
-        let list = this.logs;
-        let length = list.length;
-
-        for(let i = 0; i < length; i++){
-            readout += `\n${list[i].join(`\n`)}`
-        }
-
-        console.log(readout)
-    }
-}
-
-
-class TestPacket {
-    type
-    data
-
-    constructor(type, data){
-        this.type = type
-        this.data = data;
-    }
-}
-
-/* ///////////////////////////////////////////////////////////////////////////
-        HarnessValidator  #hv #validate
-   /////////////////////////////////////////////////////////////////////////// */
-
-class HarnessValidator {
-    static model
-    static manifest
-    static missingMethods = []
-    static validCore = true;
-    static valid = true;
-
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static validate(model, manifest) {
-        this.model = model;
-        this.manifest = manifest;
-        this.validCore = true;
-        try {
-            this.validateCoreObjects()
-            this.validateInstallMethod()
-        } catch (error) {
-            console.log(error.valueOf())
-            this.validCore = false;
-        }
-    }
-
-    static validateCoreObjects() {
-        if (typeof this.model !== 'object') {
-            throw new slz_ComponentModuleDefinitionError('<No model/Module Name Provided>', 'model', 'Reporting Component')
-        }
-
-        if (typeof this.model.name !== 'string') {
-            throw new slz_ComponentModuleDefinitionError('<No Module Name Provided>', 'model.name', 'Reporting Component')
-        }
-
-        if (typeof this.manifest !== 'object') {
-            throw new slz_ComponentModuleDefinitionError(model.name, 'manifest', 'Reporting Component')
-        }
-    }
-
-    static validateInstallMethod() {
-        if (typeof this.model.install !== 'function') {
-            throw new slz_ComponentModuleDefinitionError(model.name, 'model.install', 'Reporting Component')
-        }
-    }
-}
-
-class ReporterValidator extends HarnessValidator {
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static validate(model, manifest, reporter) {
-        this.valid = true
-        try {
-            super.validate(model, manifest)
-            this.reporter = reporter
-            this.validateReporter()
-
-        } catch (error) {
-            console.log(error.valueOf())
-            this.valid = false;
-        }
-
-        this.model = undefined;
-        this.manifest = undefined;
-
-        return this.valid && this.validCore
-    }
-
-    static validateReporter() {
-        try {
-            this.validateIsClass()
-            this.validateExtendsHarnessReporter()
-            this.validateIsStaticClass()
-            this.validateCreateReport()
-            this.validatePrint()
-        } catch (error) {
-            console.log(error.valueOf())
-
-            this.valid = false;
-        }
-    }
-
-    static validateIsClass() {
-        if (typeof this.reporter.prototype !== 'object') {
-            console.log('Reporter should be a class or constructor function')
-            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter.prototype', 'Reporting Component')
-        }
-    }
-
-    static validateExtendsHarnessReporter() {
-        if (this.reporter.prototype instanceof HarnessReporter !== true) {
-            console.log('Custom Reporter classes should extend HarnessReporter')
-            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter', 'Reporting Component')
-        }
-    }
-
-    static validateIsStaticClass() {
-        let isStatic = false
-        try {
-            new this.reporter.prototype.constructor()
-        } catch (error) {
-            isStatic = true
-        }
-
-        if (!isStatic) {
-            console.log('Custom Reporter classes should not be instantiable')
-            throw new slz_ComponentModuleDefinitionError(this.model.name, 'reporter instantiable constructor', 'Reporting Component')
-        }
-    }
-
-    static validateCreateReport() {
-        if (typeof this.reporter.createReport !== 'function') {
-            console.log('Custom Reporter classes should have a static createReport method')
-            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.createReport', 'Reporting Component')
-        }
-    }
-
-    static validatePrint() {
-        if (typeof this.reporter.print !== 'function') {
-            console.log('Custom Reporter classes should have a static print method')
-            throw new slz_ComponentModuleDefinitionError(this.model.name, 'static reporter.print', 'Reporting Component')
-        }
-    }
-}
-
-
-class EngineValidator extends HarnessValidator {
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static validate(model, manifest) {
-        super.validate(model, manifest)
-        try {
-            this.validateEngine()
-        } catch (error) {
-            console.log(error)
-            this.valid = false;
-        }
-
-        return this.validCore && this.valid
-    }
-
-    static validateEngine() {
-
-    }
-}
-
-class LanguageValidator extends HarnessValidator {
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static validate(model, manifest) {
-        super.validate(model, manifest)
-        try {
-            this.validateLanguage()
-        } catch (error) {
-            console.log(error)
-            this.valid = false;
-        }
-
-        return this.validCore && this.valid
-    }
-
-    static validateLanguage() {
-        this.validateRunTesMethod()
-    }
-
-    static validateRunTesMethod() {
-        if (typeof this.manifest.runTest !== 'function') {
-            console.log('Languages must implement a runTest method, to define how their tests should be run')
-            throw new slz_LanguageModuleDefinitionError(this.model.name, 'manifest.runTest')
-        }
-    }
-}
-
-class ComponentValidator extends HarnessValidator {
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static validate(model, manifest) {
-        super.validate(model, manifest)
-        try {
-            this.validateComponent()
-        } catch (error) {
-            console.log(error)
-            this.valid = false;
-        }
-
-        return this.validCore && this.valid
-    }
-
-    static validateComponent() {
-
-    }
-
+slz_HarnessLoader.loadAllParameterModules = function () {
+    this.loadParameterModules(slz.testHarness.parameters.languages)
+    this.loadParameterModules(slz.testHarness.parameters.engines)
+    this.loadParameterModules(slz.testHarness.parameters.components)
+    this.loadParameterModules(slz.testHarness.parameters.tests)
 }
 
 
 /* ///////////////////////////////////////////////////////////////////////////
-        HarnessReporter #rp #hp #harness reporter
+        logger
    /////////////////////////////////////////////////////////////////////////// */
 
-class HarnessReporter {
-    static reporters = []
-    static includeLogs = false;
-
+class slz_TestLogger {
     constructor() {
         throw new Error('This is a static class')
     }
+}
 
-    static install(reporter) {
-        this.reporters.push(reporter)
-    }
+slz_TestLogger.initialize = function () {
+    this.createStandardProps()
 
-    static hasReporters() {
-        return this.reporters.length > 0
-    }
+    return this
+}
 
-    static print() {
-        let list = this.reporters;
-        let length = list.length;
+slz_TestLogger.createStandardProps = function () {
+    this.allLogs = [];
+}
 
-        for (let i = 0; i < length; i++)
-            list[i].print()
+slz_TestLogger.log = function (data) {
+    this.allLogs.push(data)
+}
+
+slz_TestLogger.clearLogs = function () {
+    let allLogs = Array(...this.allLogs)
+
+    this.allLogs = [];
+
+    return allLogs
+}
+
+
+
+
+
+
+
+
+
+class slz_InterfaceEnforcedMethodError extends Error {
+    constructor(c, methodName) {
+        let message = `This is an interface enforced method. Classes exending ${Object.getPrototypeOf(c.constructor).name} must have their own implementation of ${methodName}`
+        super(message);
+        this.name = this.constructor.name;
+        this.message = message;
+        Error.captureStackTrace(this, this.constructor);
     }
 }
+
+class slz_modelValidationError extends Error {
+    constructor(name) {
+        let message = `No model supplied for ${name}`
+        super(message);
+        this.name = this.constructor.name;
+        this.message = message;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+
+
+
 
 
 
 
 /* ///////////////////////////////////////////////////////////////////////////
-        HarnessReport #rep #hr #report
+        Interfaces
    /////////////////////////////////////////////////////////////////////////// */
 
-class HarnessReport {
-    currentReport
-    reports = []
-    data = []
-    readout = ""
-    logs = []
-    includeLogs = false;
-
-    constructor(heading) {
-        this.heading = heading;
+class iTestModule {
+    constructor(name, model) {
+        //First arg should always be Official handle for module (eg rmAssert or sinot)
+        //remaining args should b
+        this.name = name || false;
+        this.model = model || {}
+        this._isValid = [];
+        this.validate()
     }
 
-    addLog(log) {
-        this.logs.push(log)
+    validate() {
+        let validName = typeof this.name == 'string' && this.name && this.name.length
+        let validModel = this.validateModel()
+
+        this._isValid.push(validName && validModel ? true : false)
     }
 
-    printLogs() {
+    validateModel() {
+        let hasInstall = typeof this.model.install == 'function'
+        let hasUninstall = typeof this.model.uninstall == 'function'
 
+        return hasInstall && hasUninstall
+    }
+
+    isValid() {
+        this._isValid.filter(element => element).length == this._isValid.length;
+    }
+}
+
+
+class iTestLanguage extends iTestModule {
+    constructor(name, model) {
+        super(name, model)
+    }
+
+    validate() {
+        let validTestRunner = typeof this.model.runTest == 'function'
+
+        super.validate()
+
+        this._isValid.push(validTestRunner ? true : false)
+    }
+
+}
+
+
+class iReporter extends iTestModule {
+    constructor(name, model) {
+        super(name, model)
     }
 
     print() {
-
+        throw new slz_InterfaceEnforcedMethodError(this, 'print')
     }
 
+    createReport() {
+        throw new slz_InterfaceEnforcedMethodError(this, 'createReport')
+    }
 }
 
-/* ///////////////////////////////////////////////////////////////////////////
-        HarnessFileManager  #fm #file #manager
-   /////////////////////////////////////////////////////////////////////////// */
-
-class HarnessFileManager {
-    static locations = standardPlayer.sp_Core.fullUnpack(PluginManager.parameters('slz_testHarness'));
-    static missingDependency = [];
-    static testFiles = []
-    static languageFiles = []
-    static engineFiles = []
-    static componentFiles = []
-    static reporterFiles = []
-    static globalElementNames = []
-    static globalElementManifests = []
-    static dependencies = [];
-
-    constructor() {
-        throw new Error('This is a static class. Stop trying to instantiate everything')
+class iReport extends iTestModule {
+    constructor(name, model) {
+        super(name, model)
     }
 
-    static initializeGlobalElements() {
-        this.globalElementNames = []
-        this.globalElementManifests = [];
-        this.missingDependency = [];
-
-        $plugins.forEach(a => this.globalElementNames.push(a.name))
-        this.globalElementNames.forEach(a => this.globalElementManifests.push({ name: a, install: {} }))
+    print() {
+        throw new slz_InterfaceEnforcedMethodError(this, 'print')
     }
-
-    static getModel(dependencyName) {
-        let list = this.globalElementNames
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            if (list[i].toLocaleLowerCase() === dependencyName.toLocaleLowerCase()) {
-                return this.globalElementManifests[i]
-            }
-        }
-        return false;
-    }
-
-    static getTestFileNames() {
-        this.defaultTestFiles = this.getFileNames(this.locations.tests)
-    }
-
-    static getLanguageFileNames() {
-        this.languageFiles = this.getFileNames(this.locations.languages)
-    }
-
-    static getEngineFileNames() {
-        this.engineFiles = this.getFileNames(this.locations.engines)
-    }
-
-    static getComponentFileNames() {
-        this.componentFiles = this.getFileNames(this.locations.components)
-    }
-
-    static getFileNames(list) {
-        let results = [];
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            results = results.concat(standardPlayer.sp_Core.findFilesInDir(true, list[i].directory))
-        }
-
-
-        return results
-    }
-
-    static defaultFiles(name) {
-        let list = this.locations[name].defaults;
-        let length = list.length;
-        let result = [];
-        let prefix = this.locations[name].directory + "/"
-
-        for (let i = 0; i < length; i++) {
-            result.push(prefix + list[i])
-        }
-
-        return result
-    }
-
-
-    static addGlobalElement(name, data) {
-        this.globalElementNames.push(name)
-        this.globalElementManifests.push(data)
-    }
-
-
-    static readAllFileNames() {
-        this.getTestFileNames()
-        this.getLanguageFileNames()
-        this.getEngineFileNames()
-        this.getComponentFileNames()
-    }
-
-    static unload() {
-        this.unloadGlobalElements()
-    }
-
-    static unloadGlobalElements() {
-        let names = this.globalElementNames;
-        let manifests = this.globalElementManifests;
-        let namesLength = names.length;
-        let manifest,
-            manifestLength
-
-        for (let i = 0; i < namesLength; i++) {
-            manifest = Object.keys(manifests[i])
-            manifestLength = manifest.length;
-
-            window[names[i]] = undefined
-            delete window[names[i]]
-
-            for (let j = 0; j < manifestLength; j++) {
-                window[manifest[j]] = undefined
-                delete window[manifest[j]]
-            }
-
-            this.initializeGlobalElements()
-        }
-    }
-
-    static addDependency(dependency) {
-        let list = this.dependencies;
-
-        if (!list.contains(dependency))
-            list.push(dependency)
-
-
-    }
-
-    static hasDependency(name) {
-        let list = this.globalElementNames
-        let length = list.length;
-
-        for (let i = 0; i < length; i++) {
-            if (list[i].toLocaleLowerCase() == name.toLocaleLowerCase())
-                return true;
-        }
-        console.log('pushing missing dependency: ' + name)
-        this.missingDependency.push(name)
-        return false
-    }
-
-    static checkAllDependencies() {
-        let list = this.dependencies;
-        let length = list.length;
-        let loadedDependencies = this.globalElementNames;
-        let missingDependencies = [];
-
-        for (let i = 0; i < length; i++) {
-            if (!loadedDependencies.contains(list[i]))
-                missingDependencies.push(list[i])
-        }
-
-        this.missingDependency = missingDependencies;
-
-        if (missingDependencies.length) {
-            throw new slz_DependencyError(missingDependencies.toString())
-        }
-
-        TestRunner.stopTests = missingDependencies.length > 0;
-    }
-
 }
 
-/* ///////////////////////////////////////////////////////////////////////////
-        HarnessLoader  hl loader
-   /////////////////////////////////////////////////////////////////////////// */
-
-class HarnessLoader {
-    static manifest = [];
-    static loading = false;
-    static runOnComplete = false;
-
-    constructor() {
-        throw new Error('This is a static class')
-    }
-
-    static createFullManifest() {
-        let fm = this.fm();
-        let tests = fm.defaultFiles('tests')
-        let engines = fm.defaultFiles('engines')
-        let components = fm.defaultFiles('components')
-        let languages = fm.defaultFiles('languages')
-        let list = languages.concat(engines.concat(components.concat(tests)))
-        let length = list.length;
-        let manifest = [];
+/*
+============================================================================================================================================
+============================================================================================================================================
+============================================================================================================================================
+*/
+slz_Harness.initialize()
 
 
-        for (let i = 0; i < length; i++) {
-            manifest.push(
-                () => {
-                    this.loadFile(list[i])
-                }
-            )
-        }
-
-        return manifest
-    }
 
 
-    static load() {
-        this.loading = true;
-        this.manifest = this.createFullManifest()
-
-        HarnessFileManager.initializeGlobalElements()
-
-        if (this.manifest.length)
-            this.manifest.shift()()
-
-    }
-
-    static continue() {
-        if (this.manifest.length) { //if there is more to run
-            this.manifest.shift()()
-        } else { //if you are finished loading altogether
-            this.loading = false;
-            try {
-                this.onComplete()
-            }
-            catch (error) {
-                console.log(error)
-            }
-        }
-    }
-
-    static onComplete() {
-        if (!this.runOnComplete)
-            return
-
-        if (HarnessFileManager.missingDependency.length > 0) {
-            throw new slz_DependencyError(`Missing Dependencies:
-            ${HarnessFileManager.missingDependency.toString()}
-
-            Check HarnessFileManager.missingDependency to access the missing dependency names array`)
-        }
-
-        this.runOnComplete = false;
-        TestRunner.runAllTests();
-    }
-
-    static onError(error, name) {
-        console.log('Error loading file ' + name)
-        console.log(error)
-    }
-
-    static fm() {
-        return HarnessFileManager
-    }
 
 
-    static loadFile(filePath) {
-        standardPlayer.sp_Core.loadFile(filePath, () => { this.continue() }, (error, name) => { this.onError(error, name) })
+
+
+class testClass extends iReporter {
+    constructor(name, model) {
+        super(name, model)
     }
 }
