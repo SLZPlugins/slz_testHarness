@@ -89,20 +89,14 @@ slz_Harness.createHooks = function(){
     this._afterAllTestHooks = []
 }
 
-slz_Harness.addBeforeAllTestHook = function(cb){
-    let hasCb = this._beforeAllTestHooks.find(hook => hook.toString() == cb.toString())
-
-    if(!hasCb){
-        this._beforeAllTestHooks.push(cb)
+slz_Harness.addCbToHookArr = function(hookArr, cb) {
+    if(!hookArr.find(hook => hook.toString() === cb.toString())) {
+        hookArr.push(cb);
     }
 }
 
-slz_Harness.addBeforeTestHook = function(cb){
-    let hasCb = this._beforeTestHooks.find(hook => hook.toString() == cb.toString())
-
-    if(!hasCb.length){
-        this._beforeTestHooks.push(cb)
-    }
+slz_Harness.addBeforeAllTestHook = function(cb) {
+    this.addCbToHookArr(this._beforeAllTestHooks, cb);
 }
 
 slz_Harness.addAfterTestHook = function(cb){
@@ -121,7 +115,11 @@ slz_Harness.addafterAllTestHook = function(cb){
     }
 }
 
-slz_Harness.addTest = function (data) {
+slz_Harness.addafterAllTestHook = function(cb) {
+    this.addCbToHookArr(this._afterAllTestHooks, cb);
+}
+
+slz_Harness.addTest = function(data) {
     try{
         data.validate()
         if(data.isValid()){
@@ -129,8 +127,7 @@ slz_Harness.addTest = function (data) {
         }
     } catch(e){
         console.log(e)
-    }
-    
+    }    
 }
 
 slz_Harness.execute = function () {   //<-- should/could accept test running params
@@ -142,7 +139,7 @@ slz_Harness.execute = function () {   //<-- should/could accept test running par
     this.runAllTests()
 }
 
-slz_Harness.runAllTests = function(){
+slz_Harness.runAllTests = function() {
     this.runTestHooks(this._beforeAllTestHooks)
     this._selectedTests.forEach(test => {
         this.runTest(test)
@@ -150,13 +147,13 @@ slz_Harness.runAllTests = function(){
     this.runTestHooks(this._afterAllTestHooks)
 }
 
-slz_Harness.runTest = function(test){
+slz_Harness.runTest = function(test) {
     this.runTestHooks(this._beforeTestHooks)
     test.testRunner(test.loadTestData())
     this.runTestHooks(this._afterTestHooks)
 }
 
-slz_Harness.runTestHooks = function(hooks){
+slz_Harness.runTestHooks = function(hooks) {
     hooks.forEach(hook => hook())
 }
 
@@ -172,25 +169,23 @@ slz_Harness.addMissingResource = function(type, requirer, assetName){
     this._hasError = true;
 }
 
-slz_Harness.registerModule = function(name){
+slz_Harness.registerModule = function(name) {
     if(!this.hasModule(name)){
         console.log(name)
         this._loadedModules.push({name:name})
     }
 }
 
-slz_Harness.hasModule = function (name) {
+slz_Harness.hasModule = function(name) {
     return this._loadedModules.filter(module => {
         module.name == name
-    }).length ? true : false
-
-    
+    }).length > 0;    
 }
 
 slz_Harness.hasPlugin = function(name) {
     return $plugins.find(plugin => {
         plugin.name == name
-    }).length ? true : falses
+    }).length > 0;
 }
 
 
@@ -226,7 +221,6 @@ slz_Harness.printMissingResources = function(){
 
     return message
 }
-
 
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -274,16 +268,12 @@ slz_HarnessLoader.loadScript = function (url) {
 };
 
 slz_HarnessLoader.fileAlreadyLoaded = function (url) {
-    let result = this._scriptElements.find(element => {
-        element._url === url
-    })
-
-    return result || false
+    return this._scriptElements.filter(element => element._url === url).length > 0;
 }
 
-slz_HarnessLoader.loadParameterModules = function (paramterObject) {
-    let prefix = paramterObject.directory;
-    let list = paramterObject.defaults;
+slz_HarnessLoader.loadParameterModules = function (parameterObject) {
+    let prefix = parameterObject.directory;
+    let list = parameterObject.defaults;
 
     list.forEach(path => {
         this.load(`${prefix}/${path}`)
@@ -401,10 +391,8 @@ class slz_LogRecord {
         Error Classes
    /////////////////////////////////////////////////////////////////////////// */
 
-
-class slz_InterfaceEnforcedMethodError extends Error {
-    constructor(c, methodName) {
-        let message = `This is an interface enforced method. Classes exending ${Object.getPrototypeOf(c.constructor).name} must have their own implementation of ${methodName}`
+class slz_ErrorBaseClass extends Error {
+    constructor(message) {
         super(message);
         this.name = this.constructor.name;
         this.message = message;
@@ -412,6 +400,12 @@ class slz_InterfaceEnforcedMethodError extends Error {
     }
 }
 
+class slz_InterfaceEnforcedMethodError extends slz_ErrorBaseClass {
+    constructor(c, methodName) {
+        let message = `This is an interface enforced method. Classes exending ${Object.getPrototypeOf(c.constructor).name} must have their own implementation of ${methodName}`
+        super(message);
+    }
+}
 
 
 
@@ -441,9 +435,7 @@ class iTestLanguage extends iTestModule {
     }
 
     validate() {
-        let validTestRunner = this.isValidTestLanaguage()
-
-        this._isValid.push(validTestRunner ? true : false)
+        this._isValid.push(this.isValidTestLanaguage());
     }
 
     isValidTestLanaguage(){
