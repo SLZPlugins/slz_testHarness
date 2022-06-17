@@ -65,29 +65,25 @@ sinot.runTest = function(list) { //list is test file using Sinot.js
     let length = list.length;
     let logger = slz_Harness.logger
     //list is array of Scenarios for individual test file
-    this.reportLevel = "test"
 
     for (let i = 0; i < length; i++) {
-        let scenario = list[i]
+        let scenario = list[i] 
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
 
-        logger.beginSegment(`SCENARIO - ${scenario.title}`)
-        logger.log(scenario.title)
-        this.reportLevel = "scenario"
-        this.scenarioHeading = scenario.title //<-- Don't think this was even used in POC
+        logger.info('sinot', scenario.title)
+            .setLevel('Scenario')
+            .setDepth(1)
 
         for (let j = 0; j < length2; j++) {
             this.reportLevel = "case"
-            logger.beginSegment(`TEST CASE - ${testCases[j].title}`)
-            logger.log(testCases[j].title)
+            logger.info('sinot', testCases[j].title)
+                .setLevel('Sinot-Test')
+                .setDepth(2)
 
             testCases[j].testCaseRunner();
-            logger.endSegment(testCases[j].title)
         }
-
-        logger.endSegment(`SCENARIO - ${scenario.title}`)
     }
-}
+} 
 
 slz_Harness.registerModule('sinot')

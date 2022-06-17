@@ -122,7 +122,11 @@ slz_Harness.addTest = function(data) {
     }    
 }
 
-slz_Harness.execute = function() {   //<-- should/could accept test running params
+slz_Harness.execute = function () {   //<-- should/could accept test running params
+    if(this._hasError){
+       console.log(this.errorMessage()) 
+       return;
+    }
     this._selectedTests = this._loadedTests; //<-- should be replaced or this should be default value
     this.runAllTests()
 }
@@ -179,15 +183,36 @@ slz_Harness.hasPlugin = function(name) {
 
 slz_Harness.requirePlugin = function (requirer, rmPluginName) {
     if (!this.hasPlugin(rmPluginName)) {
-        this.addMissingResource('rmPlugin', requirer, rmPluginName)
+        this.addMissingResource('RM Plugin', requirer, rmPluginName)
     }
 }
 
 slz_Harness.requireModule = function(requirer, moduleName){
     if(!this.hasModule(moduleName)){
-        this.addMissingResource('module', requirer, moduleName)
+        this.addMissingResource('Harness Module', requirer, moduleName)
     }
 }   
+
+slz_Harness.errorMessage = function(){
+    console.log('Unable to run tests, because of the following missing resources : ')
+    console.log(this.printMissingResources())
+}
+
+slz_Harness.printMissingResources = function(){
+    let list = this._missingResources;
+    let length = list.length;
+    let message = "";
+
+    for(let i = 0; i < length; i++){
+    message += 
+        `        Type: ${list[i].type}
+        Resource: ${list[i].resourceName}
+        Required By: ${list[i].requirer}
+        `
+    }
+
+    return message
+}
 
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -295,11 +320,10 @@ slz_TestLogger.endSegment = function(segmentName){
 slz_TestLogger.clearLogs = function () {
     let allLogs = Array(...this.allLogs)
 
-    this.allLogs = [];
+    this.createStandardProps()
 
     return allLogs
 }
-
 
 /* ///////////////////////////////////////////////////////////////////////////
         LogRecord
@@ -307,31 +331,39 @@ slz_TestLogger.clearLogs = function () {
 
 
 class slz_LogRecord {
-    constructor(category, stamp, data){
-        this.category = category
-        this.setStandardProps(stamp, data)
+    constructor(module, text){
+        this.module = module
+        this.text = text;
+        this.setStandardProps()
     }
 
-    setStandardProps(stamp, data){
-        this.stamp = stamp || 'LOG';
-        this.data = data || undefined;
-        this.logIndex = slz_Harness.logger.allLogs.length;
+    setStandardProps(){
+        this.data = null;
+        this.depth = 0;
+        this.level = 'LOG'
+        this.index = slz_Harness.logger.allLogs.length;
     }
 
-    setCategory(category){
-        this.category = category
+    setModule(module){
+        this.module = module
 
+        return this
+    }
+
+    setLevel(level){
+        this.level = level
+
+        return this
+    }
+
+    setDepth(depth){
+        this.depth = depth;
+        
         return this
     }
 
     setData(data){
         this.data = data;
-        
-        return this
-    }
-
-    setStamp(stamp){
-        this.stamp = stamp
         
         return this
     }
@@ -364,7 +396,6 @@ class slz_modelValidationError extends slz_ErrorBaseClass {
         super(message);
     }
 }
-
 
 /* ///////////////////////////////////////////////////////////////////////////
         Interfaces
@@ -406,29 +437,6 @@ class iTestLanguage extends iTestModule {
 }
 
 
-class iReporter extends iTestModule {
-    constructor() {
-        super()
-    }
-
-    print() {
-        throw new slz_InterfaceEnforcedMethodError(this, 'print')
-    }
-
-    createReport() {
-        throw new slz_InterfaceEnforcedMethodError(this, 'createReport')
-    }
-}
-
-class iReport extends iTestModule {
-    constructor() {
-        super()
-    }
-
-    print() {
-        throw new slz_InterfaceEnforcedMethodError(this, 'print')
-    }
-}
 
 /*
 ============================================================================================================================================
