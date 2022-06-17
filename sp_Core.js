@@ -4,11 +4,13 @@
 * @target MZ
 */
 
+const { ok } = require('assert');
+
 var Imported = Imported || {};
 Imported.sp_Core = 'sp_Core';
 
 var standardPlayer = standardPlayer || { params: {} };
-standardPlayer.sp_Core = standardPlayer.sp_Core || {};
+standardPlayer.sp_Core = standardPlayer.sp_Core || {}; 
 
 standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_Core');
 
@@ -54,7 +56,7 @@ standardPlayer.sp_Core.addMenuUpdate = function (method, post, index) {
 }
 
 standardPlayer.sp_Core.addUpdate = function (location, method, index) { // [location, method, index]
-
+    let args = [location, method, index]
     index = typeof args[2] !== 'undefined' ?
         args[1] <= args[0].length ?
             args[1] :
@@ -271,8 +273,22 @@ standardPlayer.sp_Core.reassignKey = function (keyToReplace, replacement) {
 
 
 /* ===================================================================================================
+        TouchInput Handlers
+ ===================================================================================================*/
+    standardPlayer.sp_Core.aliasTouchInput_onMouseMove = TouchInput._onMouseMove;
+
+    TouchInput._onMouseMove = function(event){
+        let x = Graphics.pageToCanvasX(event.pageX);
+        let y = Graphics.pageToCanvasY(event.pageY);
+        
+        this._hoverX = x;
+        this._hoverY = y;
+        standardPlayer.sp_Core.aliasTouchInput_onMouseMove.call(this, event)
+    }
+
+/* ===================================================================================================
        Character Sprite tools
-===================================================================================================*/
+====================================================================================================*/
 
 standardPlayer.sp_Core.getCharactersSpriteset = function () {
     return SceneManager._scene._spriteset.children[0].children[2].children;
@@ -413,9 +429,36 @@ standardPlayer.sp_Core.angle = function (cx, cy, ex, ey) {
     return theta;
 }
 
+standardPlayer.sp_Core.angleToward = function(obj, targ, adj){
+    obj.angle = this.angle(obj.x, obj.y, targ.x, targ.y)
+    obj.rotation -= - (adj ? Math.PI * .5 : 0)
+}
 
-standardPlayer.sp_Core.moveByAngle = function (obj, spd) {
-    let angle = obj.rotation
+standardPlayer.sp_Core.calculateTurnAngle = function(obj, targ, adj){
+    let angle = this.angle(obj.x, obj.y, targ.x, targ.y);
+    let adjRadians = (Math.PI * .5) * 2
+    let adjDegrees = adjRadians * 180 / Math.PI
+    if(adj){
+        angle -=  adjDegrees
+    }
+
+    return angle;
+}
+
+standardPlayer.sp_Core.turnToward = function(obj, targ, adj, spd){
+    let angle = this.calculateTurnAngle(obj, targ, adj)
+    spd = spd || 1;
+
+    if(angle > obj.angle){
+        obj.angle = Math.min(obj.angle + spd, angle)
+    } else {
+        obj.angle = Math.max(obj.angle - spd, angle)
+    }
+}
+
+
+standardPlayer.sp_Core.moveByAngle = function (obj, spd, adj) {
+    let angle = obj.rotation - (adj ? Math.PI * .5 : 0)
     let dx = Math.cos(angle) * spd;
     let dy = Math.sin(angle) * spd;
 
@@ -569,7 +612,7 @@ standardPlayer.sp_Core.areEquivalent = function (a, b) {
     }
 }
 
-standardPlayer.sp_Core.findFilesInDir = function (includeDir, currentPath) {
+standardPlayer.sp_Core.findFilesInDir = function (searchSubfolders, currentPath) {
     let fs = require('fs');
     let currentFile;
     let stats;
@@ -584,14 +627,20 @@ standardPlayer.sp_Core.findFilesInDir = function (includeDir, currentPath) {
         if (stats.isFile()) {
             result.push(currentFile);
         }
-        else if (stats.isDirectory() && includeDir) {
-            result = result.concat(TestFileManager.findFilesInDir(true, currentFile));
+        else if (stats.isDirectory()) {
+            if(searchSubfolders){
+            result.concat(standardPlayer.sp_Core.findFilesInDir(true, currentFile)) 
+        } else {
+            result.push(`${currentFile.replace('/', '')}/`)
         }
+    }
+        
 
 
     }
     return result
 }
+
 
 standardPlayer.sp_Core.readTextFile = function (path) {
 
@@ -608,7 +657,7 @@ standardPlayer.sp_Core.readTextFile = function (path) {
     xhr.send(null);
 }
 
-standardPlayer.sp_Core.loadFile = function (filePath, success, onError) {
+standardPlayer.sp_Core.loadFile = function (filePath, onSuccess, onError) {
 
     let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
@@ -620,12 +669,12 @@ standardPlayer.sp_Core.loadFile = function (filePath, success, onError) {
                     onError(e, filePath);
                     return;
                 }
-                success();
+                onSuccess();
             } else {
                 onError(xhr.status, filePath);
             }
         }
-    }.bind(this);
+    }
 
     try {
         xhr.open("GET", filePath, true);
@@ -633,6 +682,13 @@ standardPlayer.sp_Core.loadFile = function (filePath, success, onError) {
     } catch (e) {
         onError(e, filePath);
     }
+}
+
+standardPlayer.sp_Core.writeTextFile = function(relativeFilePath, content){
+    let fs = require("fs");
+    fs.readFile(`${relativeFilePath}.txt`, (content) => {
+        let textByLine = text.split("\n");
+});
 }
 
 standardPlayer.sp_Core.getAllFunctionNames = function (obj) {
@@ -683,4 +739,44 @@ standardPlayer.sp_Core.combineObjectsAlpha = function (left, right, scope) {
 
 standardPlayer.sp_Core.hasReturnValue = function(func){
     return  typeof func() !== 'undefined'
+}
+
+standardPlayer.sp_Core.generateUUID = function(){
+    var dt = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (dt + Math.random()*16)%16 | 0;
+        dt = Math.floor(dt/16);
+        return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+        });
+    return uuid
+}
+
+standardPlayer.sp_Core.getEventByName = function(name){
+    let list = $dataEvents;
+    let length = list.length;
+
+    for(let i = 0; i < length; i++){
+        if(list[i].name == name)
+            return list[i]
+    }
+} 
+
+standardPlayer.sp_Core.clampNumber = function(number, min, max){
+    return Math.max(Math.min(number, max), min)
+}
+
+standardPlayer.sp_Core.deepCopy = function(obj){
+    let copy = Object.assign({}, obj)
+    let props = Object.keys(obj)
+    
+    props.forEach(prop => {
+        if(Array.isArray(obj[prop])){
+            obj[prop] = Array(...obj[prop])
+        }
+        else if(standardPlayer.sp_Core.isObject(obj[prop])){
+            copy[prop] = this.deepCopy(obj[prop])
+        }
+    })
+
+    return copy
 }

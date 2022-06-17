@@ -1,12 +1,4 @@
-let model = {
-    name:"slz_sandbox",
-    install:()=>{
-        loadBanner()
-    }
-}
-
-function loadBanner(){
-    console.log(`
+/*
  _____________________________________________________
 |                 _____  __  _____                   |
 |                / ___/ / / /__  /                   |
@@ -20,12 +12,15 @@ function loadBanner(){
 |  ___/ // /_/ // / / // /_/ // /_/ // /_/ /_>  <    |
 | /____/ \\__,_//_/ /_/ \\__,_//_.___/ \\____//_/|_|    |
 |____________________________________________________|    
- `)
-}
+ 
+*/
 
 class Sandbox {
-    spies = []
-    stubs = []
+    
+    constructor(){
+        this._spies = []
+        this._stubs = []
+    }
 
     spy(obj, func) {
         let spy = new slz_Spy(obj, func)
@@ -53,9 +48,10 @@ class Sandbox {
       ========================================================================    */
 
 class slz_Spy {
-    callCount = 0;
-    calledArgs = [];
+    
     constructor(obj, func) {
+        this.callCount = 0;
+        this.calledArgs = [];
         this.obj = func ? obj : window;
         this.func = func ? func : obj.__proto__.constructor.name;
 
@@ -153,17 +149,22 @@ class slz_Spy {
       ========================================================================    */
 
 class slz_Stub {
-    stub = {};
-    mockedFunctions = [];
-    onMethod;
-    onArgs;
-    onMockedFunction;
+    
 
     constructor(obj, func) {
         this.obj = obj;
         this.func = func;
 
+        this.createStandardProps()
         this.generateStub()
+    }
+
+    createStandardProps(){
+        this.stub = {};
+        this.mockedFunctions = [];
+        this.onMethod;
+        this.onArgs;
+        this.onMockedFunction;
     }
 
     generateStub() {
@@ -275,15 +276,16 @@ class slz_Stub {
 }
 
 class Mock_Function {
-    self;
-    methodName = "";
-    args = []
-    cb = []
-    noArgsFunction = () => { console.log(`No args function invoked on ${this.methodName}, but a no args mock function was never defined`) }
-
     constructor(self, methodName) {
+        this.createStandardProps()
         this.self = self;
         this.methodName = methodName
+    }
+
+    createStandardProps(){
+        this.args = []
+        this.cb = []
+        this.noArgsFunction = () => { console.log(`No args function invoked on ${this.methodName}, but a no args mock function was never defined`) }
     }
 
     addFunction(f, args) {
@@ -327,10 +329,4 @@ class Mock_Function {
     }
 }
 
-let manifest = {
-    Sandbox:Sandbox,
-    slz_Spy:slz_Spy,
-    slz_Stub:slz_Stub
-}
-
-registerComponent(model, manifest)
+slz_Harness.registerModule('sandbox')
