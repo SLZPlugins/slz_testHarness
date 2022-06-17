@@ -111,6 +111,10 @@ slz_Harness.addafterAllTestHook = function(cb) {
     this.addCbToHookArr(this._afterAllTestHooks, cb);
 }
 
+slz_Harness.addafterAllTestHook = function(cb) {
+    this.addCbToHookArr(this._afterAllTestHooks, cb);
+}
+
 slz_Harness.addTest = function(data) {
     try{
         data.validate()
