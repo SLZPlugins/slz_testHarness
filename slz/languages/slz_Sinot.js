@@ -27,14 +27,11 @@ s::::::::::::::si::::::in::::n    n::::o:::::::::::::::o     tt::::::::::::::t  
 
 class sinot extends iTestLanguage {
     constructor(testObject){
-        super()
-
+        super();
         this.title = testObject.title
         this.loadTestData = testObject.loadTestData
         this.testRunner = sinot.runTest;
-    }
-
-    
+    }    
 }
 
 sinot.createTest = function(title, getTestData){

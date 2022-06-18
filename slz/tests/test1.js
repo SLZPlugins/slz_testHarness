@@ -6,14 +6,22 @@ sinot.createTest("Test A", () => {
 
     let logger = slz_Harness.logger;
     return [
-        sinot.scenario("Testing Add to Storage", () => {
+        sinot.scenario("Testing Asserts", () => {
             return [
                 
-                sinot.testCase("Check Length is greater than one", () => {
-                    logger.log('Test Log')
-                    rmAssert.assertTrue(10 > 1)
+                sinot.testCase("Check assertFalse is true", () => {
+                    rmAssert.assertFalse(false);
+                }),   
+                sinot.testCase("Check assertFalse is false", () => {
+                    rmAssert.assertFalse(true);
+                }),             
+                sinot.testCase("Check assertTrue is true", () => {
+                    rmAssert.assertTrue(true)
+                }),             
+                sinot.testCase("Check assertTrue is false", () => {
+                    rmAssert.assertTrue(false);
                 }),
-                sinot.testCase("Amount in inventory should be decremented", () => {
+                sinot.testCase("Check assertEquals is false", () => {
                     let expected = 10;
                     let actual = 9;
                     rmAssert.assertEquals(expected, actual)
@@ -22,6 +30,19 @@ sinot.createTest("Test A", () => {
                     let expected = SceneManager._scene;
                     let actual = Scene_Battle
                     rmAssert.assertInstance(expected, actual)
+                }),
+                sinot.testCase("Check assertNotNull is true", () => {
+                    rmAssert.assertNotNull({objName:"name"});
+                }),
+                sinot.testCase("Check assertNotNull is false", () => {
+                    rmAssert.assertNotNull(null);
+                }),
+                sinot.testCase("Check assertInstance is true", () => {
+                    let sm = SceneManager._scene;
+                    rmAssert.assertInstance(sm._messageWindow, Window_Base);
+                }),
+                sinot.testCase("Check assertInstance is false", () => {
+                    rmAssert.assertInstance($gameParty, Window_Base);
                 })
             ]
         }),

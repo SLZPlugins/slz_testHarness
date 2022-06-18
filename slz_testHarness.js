@@ -99,20 +99,12 @@ slz_Harness.addBeforeAllTestHook = function(cb) {
     this.addCbToHookArr(this._beforeAllTestHooks, cb);
 }
 
-slz_Harness.addAfterTestHook = function(cb){
-    let hasCb = this._afterTestHooks.find(hook => hook.toString() == cb.toString())
-
-    if(!hasCb){
-        this._afterTestHooks.push(cb)
-    }
+slz_Harness.addAfterTestHook = function(cb) {
+    this.addCbToHookArr(this._afterTestHooks, cb);
 }
 
-slz_Harness.addafterAllTestHook = function(cb){
-    let hasCb = this._afterAllTestHooks.find(hook => hook.toString() == cb.toString())
-
-    if(!hasCb){
-        this._afterAllTestHooks.push(cb)
-    }
+slz_Harness.addafterAllTestHook = function(cb) {
+    this.addCbToHookArr(this._afterAllTestHooks, cb);
 }
 
 slz_Harness.addafterAllTestHook = function(cb) {
@@ -131,8 +123,8 @@ slz_Harness.addTest = function(data) {
 }
 
 slz_Harness.execute = function () {   //<-- should/could accept test running params
-    if(this._hasError){
-       console.log(this.errorMessage()) 
+    if (this._hasError) {
+       console.log(this.errorMessage()); 
        return;
     }
     this.logger.indexLogsForNewTest()
@@ -141,7 +133,7 @@ slz_Harness.execute = function () {   //<-- should/could accept test running par
 }
 
 slz_Harness.runAllTests = function() {
-    this.runTestHooks(this._beforeAllTestHooks)
+    this.runTestHooks(this._beforeAllTestHooks);
     this._selectedTests.forEach(test => {
         this.runTest(test)
     })
@@ -171,7 +163,7 @@ slz_Harness.addMissingResource = function(type, requirer, assetName){
 }
 
 slz_Harness.registerModule = function(name) {
-    if(!this.hasModule(name)){
+    if (!this.hasModule(name)) {
         console.log(name)
         this._loadedModules.push({name:name})
     }
@@ -189,21 +181,20 @@ slz_Harness.hasPlugin = function(name) {
     }).length > 0;
 }
 
-
-slz_Harness.requirePlugin = function (requirer, rmPluginName) {
+slz_Harness.requirePlugin = function(requirer, rmPluginName) {
     if (!this.hasPlugin(rmPluginName)) {
         this.addMissingResource('RM Plugin', requirer, rmPluginName)
     }
 }
 
-slz_Harness.requireModule = function(requirer, moduleName){
+slz_Harness.requireModule = function(requirer, moduleName) {
     if(!this.hasModule(moduleName)){
         this.addMissingResource('Harness Module', requirer, moduleName)
     }
 }   
 
-slz_Harness.errorMessage = function(){
-    console.log('Unable to run tests, because of the following missing resources : ')
+slz_Harness.errorMessage = function() {
+    console.log('Unable to run tests, because of the following missing resources: ')
     console.log(this.printMissingResources())
 }
 
@@ -212,8 +203,10 @@ slz_Harness.printMissingResources = function(){
     let length = list.length;
     let message = "";
 
-    for(let i = 0; i < length; i++){
+    for (let i = 0; i < length; i++) {
+        message += 
     message += 
+        message += 
         `        Type: ${list[i].type}
         Resource: ${list[i].resourceName}
         Required By: ${list[i].requirer}
@@ -243,8 +236,8 @@ slz_HarnessLoader.initialize = function () {
 
 slz_HarnessLoader.createStandardProps = function () {
     this._scriptElements = [];
-    this._modules = []
-    this._pathPrefix = "js/"
+    this._modules = [];
+    this._pathPrefix = "js/";
 }
 
 slz_HarnessLoader.load = function (path) {
@@ -269,7 +262,9 @@ slz_HarnessLoader.loadScript = function (url) {
 };
 
 slz_HarnessLoader.fileAlreadyLoaded = function (url) {
-    return this._scriptElements.filter(element => element._url === url).length > 0;
+    return this._scriptElements.filter(element => {
+        element._url === url;
+    }).length > 0;
 }
 
 slz_HarnessLoader.loadParameterModules = function (parameterObject) {
@@ -277,9 +272,8 @@ slz_HarnessLoader.loadParameterModules = function (parameterObject) {
     let list = parameterObject.defaults;
 
     list.forEach(path => {
-        this.load(`${prefix}/${path}`)
+        this.load(`${prefix}/${path}`);
     })
-
 }
 
 slz_HarnessLoader.loadAllParameterModules = function () {
@@ -288,7 +282,6 @@ slz_HarnessLoader.loadAllParameterModules = function () {
     this.loadParameterModules(slz.testHarness.parameters.components)
     this.loadParameterModules(slz.testHarness.parameters.tests)
 }
-
 
 /* ///////////////////////////////////////////////////////////////////////////
         logger
@@ -312,42 +305,39 @@ slz_TestLogger.createStandardProps = function () {
     this._testRuns = 0;
 }
 
-slz_TestLogger.log = function (message) {
-    let record = new slz_LogRecord('LOG', message)
+slz_TestLogger.addLog = function(type, message) {
+    let record = new slz_LogRecord(type, message)
 
     this.allLogs.push(record)
 
     return record
+}
+
+slz_TestLogger.log = function (message) {
+    return this.addLog('LOG', message);
 }
 
 slz_TestLogger.info = function (module, message) {
-    let record = new slz_LogRecord(module, message)
-
-    this.allLogs.push(record)
-
-    return record
+    return this.addLog(module, message);
 }
 
 slz_TestLogger.addAssertion = function(...args) {
-    let record = new slz_AssertionRecord(...args)
-    
-    this.allLogs.push(record)
+    this.allLogs.push(new slz_AssertionRecord(...args));
 }
 
 
-slz_TestLogger.clearLogs = function () {
-    let allLogs = Array(...this.allLogs)
+slz_TestLogger.clearLogs = function() {
+    let allLogs = Array(...this.allLogs);
 
-    this.createStandardProps()
+    this.createStandardProps();
 
     return allLogs
 }
 
-slz_TestLogger.indexLogsForNewTest = function(){
-    this._testRuns++
-    this.logIndexes.push(this.allLogs.length)
+slz_TestLogger.indexLogsForNewTest = function() {
+    this._testRuns++;
+    this.logIndexes.push(this.allLogs.length);
 }
-
 
 slz_TestLogger.getLastTestRunLogs = function(includeLogMessages){
     let indexes = this.logIndexes
@@ -364,7 +354,6 @@ slz_TestLogger.getLastTestRunLogs = function(includeLogMessages){
         })
     }
 }
-
 
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -431,14 +420,13 @@ class slz_LogRecord extends slz_TestRecord {
 
 }
 
-
 /* ///////////////////////////////////////////////////////////////////////////
         AssertionRecord
    /////////////////////////////////////////////////////////////////////////// */
 
 class slz_AssertionRecord extends slz_TestRecord{
 
-    constructor(module, isPassing, expected, actual, dataString){
+    constructor(module, isPassing, expected, actual, dataString) {
         super(module)
         this.isPassing = isPassing;
         this.expected = expected;
@@ -446,19 +434,17 @@ class slz_AssertionRecord extends slz_TestRecord{
         this.dataString = dataString;
     }
 
-    setStandardProps(){
+    setStandardProps() {
         this.level = 'ASSERTION'
         this.depth = -1
     }
 
-    toString(prefix, suffix){
-        prefix = typeof prefix == 'undefined' ? '' : prefix
-        suffix = typeof suffix == 'undefined' ? '' : suffix
-       return `${prefix}Expected: ${this.expected}${suffix}\n${prefix}Actual:${this.actual}${suffix}`
+    toString(prefix, suffix) {
+        this.prefix = prefix || '';
+        this.suffix = suffix || '';
+       return `${this.prefix}Expected: ${this.expected}${this.suffix}\n${this.prefix}Actual: ${this.actual}${this.suffix}`
     }
-
 }
-
 
 /* ///////////////////////////////////////////////////////////////////////////
         Error Classes
@@ -480,8 +466,6 @@ class slz_InterfaceEnforcedMethodError extends slz_ErrorBaseClass {
     }
 }
 
-
-
 /* ///////////////////////////////////////////////////////////////////////////
         Interfaces
    /////////////////////////////////////////////////////////////////////////// */
@@ -501,17 +485,16 @@ class iTestModule {
     }
 }
 
-
 class iTestLanguage extends iTestModule {
     constructor() {
         super()
     }
 
     validate() {
-        this._isValid.push(this.isValidTestLanaguage());
+        this._isValid.push(this.isValidTestLanguage());
     }
 
-    isValidTestLanaguage(){
+    isValidTestLanguage(){
         let hasTitle = typeof this.title == 'string'
         let hasTestRunner = typeof this.testRunner == 'function'
         let hasLoadTestData = typeof this.loadTestData == 'function'
@@ -519,9 +502,10 @@ class iTestLanguage extends iTestModule {
         return hasTitle && hasTestRunner && hasLoadTestData
     }
 
+    loadTestRunner() {
+        this.testRunner(this.loadTestData());
+    }
 }
-
-
 
 /*
 ============================================================================================================================================
