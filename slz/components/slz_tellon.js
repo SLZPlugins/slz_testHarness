@@ -55,12 +55,12 @@ class TellonReport {
             current = list[i];
             if(current instanceof slz_AssertionRecord){
                 if(current.isPassing){
-                    this.reportString += '\tPASS'
+                    this.reportString += '\t\u2713'
                     this.reportString += '\n'
                 } else {
-                    this.reportString += '\tFAIL'
+                    this.reportString += '\t\u274c'
                     this.reportString += '\n'
-                    this.reportString += current.toString()
+                    this.reportString += current.toString(this.indent(current))
                 }
 
                 this.reportString += '\n'
@@ -74,6 +74,20 @@ class TellonReport {
     print(){
         console.log(this.reportString)
     }   
+
+    indent(log){
+        let length = log.depth;
+        let indent = ""
+
+        if(length == -1){
+            length = 1;
+        }
+        for(let i = 0; i < length; i++){
+            indent += '\t'
+        }
+
+        return indent
+    }
 
 }
 

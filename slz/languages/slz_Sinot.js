@@ -71,13 +71,13 @@ sinot.runTest = function(list) { //list is test file using Sinot.js
         let testCases = scenario.getScenarioData()
         let length2 = testCases.length;
 
-        logger.info('sinot', scenario.title)
+        logger.info('sinot', `\nScenario: ${scenario.title}\n`)
             .setLevel('Scenario')
             .setDepth(1)
 
         for (let j = 0; j < length2; j++) {
             this.reportLevel = "case"
-            logger.info('sinot', testCases[j].title)
+            logger.info('sinot', `Test: ${testCases[j].title}`)
                 .setLevel('Sinot-Test')
                 .setDepth(2)
 

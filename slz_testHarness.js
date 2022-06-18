@@ -451,8 +451,10 @@ class slz_AssertionRecord extends slz_TestRecord{
         this.depth = -1
     }
 
-    toString(){
-       return `Expected: ${this.expected}\nActual:${this.actual}`
+    toString(prefix, suffix){
+        prefix = typeof prefix == 'undefined' ? '' : prefix
+        suffix = typeof suffix == 'undefined' ? '' : suffix
+       return `${prefix}Expected: ${this.expected}${suffix}\n${prefix}Actual:${this.actual}${suffix}`
     }
 
 }
