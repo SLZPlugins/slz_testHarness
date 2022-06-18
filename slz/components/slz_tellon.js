@@ -16,79 +16,71 @@ class TellonReporter {
     }
 }
 
-TellonReporter.setStandardProps = function(){
+TellonReporter.setStandardProps = function() {
     this._reports = [];
 }
 
-TellonReporter.createReport = function(){
+TellonReporter.createReport = function() {
     this._reports.push(new TellonReport(slz_Harness.logger.getLastTestRunLogs()))
     this.printLastReport()
 }
 
-TellonReporter.printLastReport = function(){
+TellonReporter.printLastReport = function() {
     this._reports[this._reports.length - 1].generateReport()
     this._reports[this._reports.length - 1].print()
 }
 
-TellonReporter.printAllReports = function(){
+TellonReporter.printAllReports = function() {
     this._reports.forEach(report => {
         report.generateReport()
         report.print()
     })
 }
 
-
-
 class TellonReport {
 
     constructor(logs){
         this.logs = logs;
-        this.reportString = ""
+        this.reportString = "";
     }
 
-    generateReport(){
+    generateReport() {
         let list = this.logs;
         let length = list.length;
         let current;
 
-        for(let i = 0; i < length; i++){
+        for(let i = 0; i < length; i++) {
             current = list[i];
-            if(current instanceof slz_AssertionRecord){
-                if(current.isPassing){
-                    this.reportString += '\t\u2713'
-                    this.reportString += '\n'
-                } else {
-                    this.reportString += '\t\u274c'
-                    this.reportString += '\n'
-                    this.reportString += current.toString(this.indent(current))
-                }
-
-                this.reportString += '\n'
+            if(current instanceof slz_AssertionRecord) {
+                this.reportString += current.isPassing ? this.getPassString() : this.getFailString(current);
             } else {
-                this.reportString += '\n' + current.toString()
+                this.reportString += '\n' + current.toString();
             }
         }
-
     }
 
-    print(){
+    getPassString() {
+        return '\t\u2713' + '\n' + '\n'
+    }
+
+    getFailString(current) {
+        return '\t\u274c' + '\n' + current.toString(this.indent(current)) + '\n';
+    }
+
+    print() {
         console.log(this.reportString)
     }   
 
-    indent(log){
-        let length = log.depth;
-        let indent = ""
+    indent(log) {
+        let length = log.depth == -1 ? 1 : log.depth;
+        let indent = "";
 
-        if(length == -1){
-            length = 1;
-        }
-        for(let i = 0; i < length; i++){
-            indent += '\t'
+        for(let i = 0; i < length; i++) {
+            indent += '\t';
         }
 
-        return indent
+        return indent;
     }
-
 }
 
 TellonReporter.setStandardProps()

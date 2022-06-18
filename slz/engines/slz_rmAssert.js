@@ -32,182 +32,71 @@ rmAssert.setStandardProps = function(){
 }
 
 rmAssert.assertTrue = function(expression) {
-    let result = false;
-
-    if (expression === true) {
-        result = true
-    } else {
-        result = false
-    }
-    //Finalize Report
-    
-    this.logger.addAssertion('rmAssert', result, true, expression)
-    return result
-
+    this.logger.addAssertion('rmAssert', expression, true, expression)
+    return expression;
 }
 
 rmAssert.assertFalse = function(expression) {
-    let result = false;
-
-    if (expression === false) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-        
-        //Finalize Report
-        this.logger.addAssertion('rmAssert', result, false, expression)
-        return result
-    }
+    this.logger.addAssertion('rmAssert', !expression, false, expression)
+    return !expression;
 }
 
 rmAssert.assertEquals = function(obj1, obj2) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(obj1, obj2);
     this.logger.addAssertion('rmAssert', result, obj1, obj2)
     return result
 }
 
 rmAssert.assertNotEquals = function(obj1, obj2){
-    let result = false;
-
-    if (!standardPlayer.sp_Core.areEquivalent(obj1, obj2)) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = !standardPlayer.sp_Core.areEquivalent(obj1, obj2);
     this.logger.addAssertion('rmAssert', result, true, result)
     return result
 }
 
 rmAssert.assertNull = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(obj1, null);
     this.logger.addAssertion('rmAssert', result, null, obj1)
     return result
 }
 
 rmAssert.assertNotNull = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(obj1, null)) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
-    this.logger.addAssertion('rmAssert', result, "Not Null", expression)
+    let result = !standardPlayer.sp_Core.areEquivalent(obj1, null);
+    this.logger.addAssertion('rmAssert', result, "Not Null", obj1)
     return result
 }
 
 rmAssert.assertString = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "string")) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(typeof obj1, "string");
     this.logger.addAssertion('rmAssert', result, 'string', typeof obj1)
     return result
 }
 
 rmAssert.assertNumber = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "number")) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(typeof obj1, "number");
     this.logger.addAssertion('rmAssert', result, 'number', typeof obj1)
     return result
 }
 
 rmAssert.assertObject = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "object")) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(typeof obj1, "object");
     this.logger.addAssertion('rmAssert', result, 'object', typeof obj1)
     return result
 }
 
 rmAssert.assertBoolean = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean")) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(typeof obj1, "boolean");
     this.logger.addAssertion('rmAssert', result, 'boolean', typeof obj1)
     return result
 }
 
 rmAssert.assertFunction = function(obj1) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(typeof obj1, "function")) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(typeof obj1, "function");
     this.logger.addAssertion('rmAssert', result, 'function', typeof obj1)
     return result
 }
 
 rmAssert.assertInstance = function(obj1, obj2) {
-    let result = false;
-
-    if (standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true)) {
-        //Report pass
-        result = true
-    } else {
-        //Report fail
-        result = false
-    }
-    //Finalize Report
+    let result = standardPlayer.sp_Core.areEquivalent(obj1 instanceof obj2, true);
     this.logger.addAssertion('rmAssert', result, true, false)
     return result
 }
