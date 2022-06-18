@@ -6,7 +6,7 @@
 * @param tests
 * @type struct<Module>
 * @text Tests
-* @desc Configure paths for Tests
+* @desc Configure paths for Tests/
 * @default {"directory":"js/plugins/slz/tests","defaults":"[\"test1.js\"]"}
 * 
 * @param languages
@@ -135,6 +135,7 @@ slz_Harness.execute = function () {   //<-- should/could accept test running par
        console.log(this.errorMessage()) 
        return;
     }
+    this.logger.indexLogsForNewTest()
     this._selectedTests = this._loadedTests; //<-- should be replaced or this should be default value
     this.runAllTests()
 }
@@ -307,10 +308,12 @@ slz_TestLogger.initialize = function () {
 
 slz_TestLogger.createStandardProps = function () {
     this.allLogs = [];
+    this.logIndexes = [];
+    this._testRuns = 0;
 }
 
 slz_TestLogger.log = function (message) {
-    let record = new slz_LogRecord('Harness', message)
+    let record = new slz_LogRecord('LOG', message)
 
     this.allLogs.push(record)
 
@@ -325,10 +328,9 @@ slz_TestLogger.info = function (module, message) {
     return record
 }
 
-slz_TestLogger.addAssertion = function(module, ...data) {
-    let record = new slz_LogRecord(module, '{Assertion}')
-        .setData(data)
-        .setDepth(-1)
+slz_TestLogger.addAssertion = function(...args) {
+    let record = new slz_AssertionRecord(...args)
+    
     this.allLogs.push(record)
 }
 
@@ -341,49 +343,118 @@ slz_TestLogger.clearLogs = function () {
     return allLogs
 }
 
+slz_TestLogger.indexLogsForNewTest = function(){
+    this._testRuns++
+    this.logIndexes.push(this.allLogs.length)
+}
+
+
+slz_TestLogger.getLastTestRunLogs = function(includeLogMessages){
+    let indexes = this.logIndexes
+    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0
+    let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
+    let slicedLogs = this.allLogs.slice(start, end)
+
+    if(includeLogMessages){
+        return slicedLogs
+    } else {
+        console.log(slicedLogs)
+        return slicedLogs.filter(record => {
+            return record.level != 'LOG'
+        })
+    }
+}
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        TestRecord
+   /////////////////////////////////////////////////////////////////////////// */
+
+   class slz_TestRecord {
+        constructor(module){
+            this.module = module
+            this.setStandardProps()
+        }
+
+        setStandardProps(){
+            this.depth = 0;
+            this.level = null;
+            this.index = slz_Harness.logger.allLogs.length;
+        }
+
+        setModule(module){
+            this.module = module
+    
+            return this
+        }
+    
+        setLevel(level){
+            this.level = level
+    
+            return this
+        }
+    
+        setDepth(depth){
+            this.depth = depth;
+            
+            return this
+        }
+   }
+
 
 /* ///////////////////////////////////////////////////////////////////////////
         LogRecord
    /////////////////////////////////////////////////////////////////////////// */
 
 
-class slz_LogRecord {
+class slz_LogRecord extends slz_TestRecord {
     constructor(module, text){
-        this.module = module
+        super(module)
         this.text = text;
-        this.setStandardProps()
     }
 
     setStandardProps(){
-        this.data = null;
-        this.depth = 0;
+        super.setStandardProps()
         this.level = 'LOG'
-        this.index = slz_Harness.logger.allLogs.length;
     }
 
-    setModule(module){
-        this.module = module
-
-        return this
-    }
-
-    setLevel(level){
-        this.level = level
-
-        return this
-    }
-
-    setDepth(depth){
-        this.depth = depth;
+    setText(text){
+        this.text = text;
         
         return this
     }
 
-    setData(data){
-        this.data = data;
-        
-        return this
+    toString(){
+        return this.text
     }
+
+}
+
+
+/* ///////////////////////////////////////////////////////////////////////////
+        AssertionRecord
+   /////////////////////////////////////////////////////////////////////////// */
+
+class slz_AssertionRecord extends slz_TestRecord{
+
+    constructor(module, isPassing, expected, actual, dataString){
+        super(module)
+        this.isPassing = isPassing;
+        this.expected = expected;
+        this.actual = actual;
+        this.dataString = dataString;
+    }
+
+    setStandardProps(){
+        this.level = 'ASSERTION'
+        this.depth = -1
+    }
+
+    toString(){
+       return `Expected: ${this.expected}\nActual:${this.actual}`
+    }
+
 }
 
 
