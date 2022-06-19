@@ -141,6 +141,7 @@ slz_Harness.runAllTests = function() {
         this.runTest(test)
     })
     this.runTestHooks(this._afterAllTestHooks)
+    this.logger.createAssertionTally()
 }
 
 slz_Harness.runTest = function(test) {
@@ -305,6 +306,7 @@ slz_TestLogger.initialize = function () {
 slz_TestLogger.createStandardProps = function () {
     this.allLogs = [];
     this.logIndexes = [];
+    this.assertionTallies = [];
     this._testRuns = 0;
 }
 
@@ -356,6 +358,20 @@ slz_TestLogger.getLastTestRunLogs = function(includeLogMessages){
             return record.level != 'LOG'
         })
     }
+}
+
+slz_TestLogger.createAssertionTally = function(){
+    let logs = this.getLastTestRunLogs()
+    let assertions = logs.filter(log => log instanceof slz_AssertionRecord)
+    let length = assertions.length;
+    let passes = assertions.filter(assertion => assertion.isPassing).length
+    let fails = length - passes
+
+    this.assertionTallies.push(new slz_AssertionTally(passes, fails))
+}
+
+slz_TestLogger.getLastAssertionTally = function(){
+    return this.assertionTallies[this.assertionTallies.length - 1]
 }
 
 
@@ -448,6 +464,33 @@ class slz_AssertionRecord extends slz_TestRecord{
        return `${this.prefix}Expected: ${this.expected}${this.suffix}\n${this.prefix}Actual: ${this.actual}${this.suffix}`
     }
 }
+
+/* ///////////////////////////////////////////////////////////////////////////
+        AssertionTally
+   /////////////////////////////////////////////////////////////////////////// */
+
+   class slz_AssertionTally {
+        constructor(passes, fails){
+            this.run = slz_TestLogger._testRuns
+            this.pass = passes;
+            this.fail = fails;
+        }
+
+        total(){
+            return this.pass + this.fail
+        }
+
+        passPercentage(){
+            return this.pass / this.total()
+        }
+
+        failPercentage(){
+            return this.fail / this.total()
+        }
+
+
+   }
+
 
 /* ///////////////////////////////////////////////////////////////////////////
         Error Classes
