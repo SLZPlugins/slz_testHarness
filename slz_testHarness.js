@@ -127,8 +127,9 @@ slz_Harness.execute = function () {   //<-- should/could accept test running par
        console.log(this.errorMessage()); 
        return;
     }
+
     this.logger.indexLogsForNewTest()
-    this._selectedTests = this._loadedTests; //<-- should be replaced or this should be default value
+    this._selectedTests = tests; //<-- should be replaced or this should be default value
     this.runAllTests()
 }
 
