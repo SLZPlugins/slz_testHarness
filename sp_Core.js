@@ -19,7 +19,7 @@ standardPlayer.sp_Core.Parameters = PluginManager.parameters('standardPlayer.sp_
 //         Update Handlers
 //  ===================================================================================================*/
 standardPlayer.sp_Core.updateContainer = {
-    _sceneBaseUpdatesPre: [],
+    _sceneBaseUpdatesPre: [], 
     _sceneMenuUpdatesPre: [],
     _sceneMapUpdatesPre: [],
     _sceneBaseUpdatesPost: [],
