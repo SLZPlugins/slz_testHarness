@@ -122,7 +122,9 @@ slz_Harness.addTest = function(data) {
     }    
 }
 
-slz_Harness.execute = function () {   //<-- should/could accept test running params
+slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
+    console.log(testIndex)
+    let tests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
     if (this._hasError) {
        console.log(this.errorMessage()); 
        return;
