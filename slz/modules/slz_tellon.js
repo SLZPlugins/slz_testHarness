@@ -85,6 +85,6 @@ class TellonReport {
 
 TellonReporter.setStandardProps()
 
-slz_Harness.addafterAllTestHook(TellonReporter.createReport.bind(TellonReporter))
+slz_Harness.addAfterAllTestHook(TellonReporter.createReport.bind(TellonReporter))
 
 slz_Harness.registerModule('tellon')
