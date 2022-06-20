@@ -4,28 +4,16 @@
 * @target MZ
 *
 * @param tests
-* @type struct<Module>
-* @text Tests
-* @desc Configure paths for Tests/
-* @default {"directory":"js/plugins/slz/tests","defaults":"[\"test1.js\"]"}
+* @type text
+* @text Test Directory
+* @desc Configure paths for Tests
+* @default "js/plugins/slz/tests"
 * 
-* @param languages
-* @type struct<Module>
-* @text Languages
-* @desc Configure paths for Language Modules
-* @default {"directory":"js/plugins/slz/languages","defaults":"[\"slz_Sinot.js\"]"}
-* 
-* @param engines
-* @type struct<Module>
-* @text Engines
-* @desc Configure paths for Engine Modules
-* @default {"directory":"js/plugins/slz/engines","defaults":"[\"slz_rmAssert.js\"]"}
 *
-* @param components
+* @param modules
 * @type struct<Module>
-* @text Components
+* @text Modules
 * @desc Configure paths for Component Modules
-* @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\",\"slz_tellon.js\"]"}
 *
 * @param moduleConfigs
 * @type struct<moduleConfig>[]
@@ -42,10 +30,10 @@
  * @desc Folder location for this type of module. 
  * @default js/slz/
  * 
- * @param defaults
+ * @param modules
  * @type text[]
- * @text Default Module Files
- * @desc List of Files to load by default. 
+ * @text Module Files
+ * @desc List of Modules to load into harness. Use filepath minus prefix set for Main Directory
  * @default []
  */
 
@@ -270,7 +258,7 @@ slz_HarnessLoader.initialize = function () {
 slz_HarnessLoader.createStandardProps = function () {
     this._scriptElements = [];
     this._modules = [];
-    this._pathPrefix = "js/";
+    this._pathPrefix = "js/plugins/";
 }
 
 slz_HarnessLoader.load = function (path) {
@@ -300,9 +288,10 @@ slz_HarnessLoader.fileAlreadyLoaded = function (url) {
     }).length > 0;
 }
 
-slz_HarnessLoader.loadParameterModules = function (parameterObject) {
-    let prefix = parameterObject.directory;
-    let list = parameterObject.defaults;
+slz_HarnessLoader.loadParameterModules = function () {
+    let params = slz.testHarness.parameters.modules
+    let prefix = params.directory
+    let list = params.modules;
 
     list.forEach(path => {
         this.load(`${prefix}/${path}`);
@@ -310,10 +299,17 @@ slz_HarnessLoader.loadParameterModules = function (parameterObject) {
 }
 
 slz_HarnessLoader.loadAllParameterModules = function () {
-    this.loadParameterModules(slz.testHarness.parameters.languages)
-    this.loadParameterModules(slz.testHarness.parameters.engines)
-    this.loadParameterModules(slz.testHarness.parameters.components)
-    this.loadParameterModules(slz.testHarness.parameters.tests)
+    this.loadParameterModules()
+    this.loadTestFiles()
+}
+
+slz_HarnessLoader.loadTestFiles = function(){
+    let prefix = slz.testHarness.parameters.tests;
+    let files = standardPlayer.sp_Core.findFilesInDir(true, prefix)
+
+    files.forEach(path => {
+        this.load(path)
+    })
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
