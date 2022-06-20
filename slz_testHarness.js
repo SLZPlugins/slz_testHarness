@@ -26,6 +26,12 @@
 * @text Components
 * @desc Configure paths for Component Modules
 * @default {"directory":"js/plugins/slz/components","defaults":"[\"slz_sandbox.js\",\"slz_tellon.js\"]"}
+*
+* @param moduleConfigs
+* @type struct<moduleConfig>[]
+* @text Module Parameter Configurations
+* @desc Plugin Parameters meant for individual harness Modules, like. Check module help files for details.
+* @default []
 */
 
 /*~struct~Module:
@@ -41,9 +47,26 @@
  * @text Default Module Files
  * @desc List of Files to load by default. 
  * @default []
- * 
- * 
  */
+
+/*~struct~moduleConfig:
+ * 
+ * @param module
+ * @type text
+ * @text Module
+ * @desc Module shared name. e.g. sinot   or    tellon
+ * 
+ * @param command
+ * @type text
+ * @text Command
+ * @desc Command to use. See Module help files for available commands
+ * 
+ * @param parameters
+ * @type text[]
+ * @text Parameters
+ * @desc List of parameters to be supplied with this command. See Module help for details
+ */
+
 
 var Imported = Imported || {};
 Imported.slz = 'slz_TestHarness';
@@ -196,6 +219,12 @@ slz_Harness.requireModule = function(requirer, moduleName) {
         this.addMissingResource('Harness Module', requirer, moduleName)
     }
 }   
+
+slz_Harness.requestConfig = function(module){
+    let list = slz.testHarness.parameters.moduleConfigs;
+
+    return list.filter(config => config.module == module)
+}
 
 slz_Harness.errorMessage = function() {
     console.log('Unable to run tests, because of the following missing resources: ')
