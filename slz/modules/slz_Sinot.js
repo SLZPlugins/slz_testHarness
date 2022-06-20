@@ -83,4 +83,5 @@ sinot.runTest = function(list) { //list is test file using Sinot.js
     }
 } 
 
+
 slz_Harness.registerModule('sinot')

@@ -75,9 +75,9 @@ class slz_Harness {
 }
 
 slz_Harness.initialize = function () {
-    this.createHarnessClassRefs()
-    this.createStandardProps()
     this.createHooks()
+    this.createStandardProps()
+    this.createHarnessClassRefs()
 }
 
 slz_Harness.createHarnessClassRefs = function () {
@@ -98,6 +98,8 @@ slz_Harness.createHooks = function(){
     this._beforeTestHooks = []
     this._afterTestHooks = []
     this._afterAllTestHooks = []
+    this._beforeExecuteHooks = [];
+    this._afterExecuteHooks = [];
 }
 
 slz_Harness.addCbToHookArr = function(hookArr, cb) {
@@ -106,20 +108,28 @@ slz_Harness.addCbToHookArr = function(hookArr, cb) {
     }
 }
 
-slz_Harness.addBeforeAllTestHook = function(cb) {
-    this.addCbToHookArr(this._beforeAllTestHooks, cb);
+slz_Harness.addBeforeTestHook = function(cb) {
+    this.addCbToHookArr(this._beforeTestHooks, cb);
 }
 
 slz_Harness.addAfterTestHook = function(cb) {
     this.addCbToHookArr(this._afterTestHooks, cb);
 }
 
-slz_Harness.addafterAllTestHook = function(cb) {
+slz_Harness.addBeforeAllTestHook = function(cb) {
+    this.addCbToHookArr(this._beforeAllTestHooks, cb);
+}
+
+slz_Harness.addAfterAllTestHook = function(cb) {
     this.addCbToHookArr(this._afterAllTestHooks, cb);
 }
 
-slz_Harness.addafterAllTestHook = function(cb) {
-    this.addCbToHookArr(this._afterAllTestHooks, cb);
+slz_Harness.addBeforeExecuteHook = function(cb) {
+    this.addCbToHookArr(this._beforeExecuteHooks, cb);
+}
+
+slz_Harness.addAfterExecuteHook = function(cb) {
+    this.addCbToHookArr(this._afterExecuteHooks, cb);
 }
 
 slz_Harness.addTest = function(data) {
@@ -143,7 +153,9 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
 
     this.logger.indexLogsForNewTest()
     this._selectedTests = tests; //<-- should be replaced or this should be default value
+    this.runTestHooks(this._beforeExecuteHooks)
     this.runAllTests()
+    this.runTestHooks(this._afterExecuteHooks)
 }
 
 slz_Harness.runAllTests = function() {
