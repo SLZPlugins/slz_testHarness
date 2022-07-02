@@ -319,7 +319,7 @@ slz_HarnessLoader.loadAllParameterModules = function () {
 }
 
 slz_HarnessLoader.loadTestFiles = function () {
-    let prefix = slz.testHarness.parameters.tests;
+    let prefix = slz.testHarness.parameters.tests.directory;
     let files = standardPlayer.sp_Core.findFilesInDir(true, prefix)
 
     files.forEach(path => {
