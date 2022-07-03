@@ -83,6 +83,7 @@ slz_Harness.initialize = function () {
 slz_Harness.createHarnessClassRefs = function () {
     this.loader = slz_HarnessLoader.initialize()
     this.logger = slz_TestLogger.initialize()
+    this.reporter = slz_HarnessReporter.initialize()
 }
 
 slz_Harness.createStandardProps = function () {
@@ -93,7 +94,7 @@ slz_Harness.createStandardProps = function () {
     this._selectedTests = [];
 }
 
-slz_Harness.createHooks = function(){
+slz_Harness.createHooks = function () {
     this._beforeAllTestHooks = []
     this._beforeTestHooks = []
     this._afterTestHooks = []
@@ -102,53 +103,53 @@ slz_Harness.createHooks = function(){
     this._afterExecuteHooks = [];
 }
 
-slz_Harness.addCbToHookArr = function(hookArr, cb) {
-    if(!hookArr.find(hook => hook.toString() === cb.toString())) {
+slz_Harness.addCbToHookArr = function (hookArr, cb) {
+    if (!hookArr.find(hook => hook.toString() === cb.toString())) {
         hookArr.push(cb);
     }
 }
 
-slz_Harness.addBeforeTestHook = function(cb) {
+slz_Harness.addBeforeTestHook = function (cb) {
     this.addCbToHookArr(this._beforeTestHooks, cb);
 }
 
-slz_Harness.addAfterTestHook = function(cb) {
+slz_Harness.addAfterTestHook = function (cb) {
     this.addCbToHookArr(this._afterTestHooks, cb);
 }
 
-slz_Harness.addBeforeAllTestHook = function(cb) {
+slz_Harness.addBeforeAllTestHook = function (cb) {
     this.addCbToHookArr(this._beforeAllTestHooks, cb);
 }
 
-slz_Harness.addAfterAllTestHook = function(cb) {
+slz_Harness.addAfterAllTestHook = function (cb) {
     this.addCbToHookArr(this._afterAllTestHooks, cb);
 }
 
-slz_Harness.addBeforeExecuteHook = function(cb) {
+slz_Harness.addBeforeExecuteHook = function (cb) {
     this.addCbToHookArr(this._beforeExecuteHooks, cb);
 }
 
-slz_Harness.addAfterExecuteHook = function(cb) {
+slz_Harness.addAfterExecuteHook = function (cb) {
     this.addCbToHookArr(this._afterExecuteHooks, cb);
 }
 
-slz_Harness.addTest = function(data) {
-    try{
+slz_Harness.addTest = function (data) {
+    try {
         data.validate()
-        if(data.isValid()){
+        if (data.isValid()) {
             this._loadedTests.push(data)
         }
-    } catch(e){
+    } catch (e) {
         console.log(e)
-    }    
+    }
 }
 
 slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
     console.log(testIndex)
     let tests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
     if (this._hasError) {
-       console.log(this.errorMessage()); 
-       return;
+        console.log(this.errorMessage());
+        return;
     }
 
     this.logger.indexLogsForNewTest()
@@ -158,26 +159,29 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
     this.runTestHooks(this._afterExecuteHooks)
 }
 
-slz_Harness.runAllTests = function() {
+slz_Harness.runAllTests = function () {
     this.runTestHooks(this._beforeAllTestHooks);
     this._selectedTests.forEach(test => {
         this.runTest(test)
     })
     this.runTestHooks(this._afterAllTestHooks)
-    this.logger.createAssertionTally()
+    this.logger.createAssertionTally(`Test Run ${this.logger._testRuns}`)
+    this.reporter.setTestTitle(`Test Run ${this.logger._testRuns}`)
+    this.reporter.createStandardReport();
+    this.reporter.print();
 }
 
-slz_Harness.runTest = function(test) {
+slz_Harness.runTest = function (test) {
     this.runTestHooks(this._beforeTestHooks)
     test.testRunner(test.loadTestData())
     this.runTestHooks(this._afterTestHooks)
 }
 
-slz_Harness.runTestHooks = function(hooks) {
+slz_Harness.runTestHooks = function (hooks) {
     hooks.forEach(hook => hook())
 }
 
-slz_Harness.addMissingResource = function(type, requirer, assetName){
+slz_Harness.addMissingResource = function (type, requirer, assetName) {
     this._missingResources.push(
         {
             type: type,
@@ -189,58 +193,58 @@ slz_Harness.addMissingResource = function(type, requirer, assetName){
     this._hasError = true;
 }
 
-slz_Harness.registerModule = function(name) {
+slz_Harness.registerModule = function (name) {
     if (!this.hasModule(name)) {
         console.log(name)
-        this._loadedModules.push({name:name})
+        this._loadedModules.push({ name: name })
     }
 }
 
-slz_Harness.hasModule = function(name) {
+slz_Harness.hasModule = function (name) {
     return this._loadedModules.filter(module => {
         module.name == name
-    }).length > 0;    
+    }).length > 0;
 }
 
-slz_Harness.hasPlugin = function(name) {
+slz_Harness.hasPlugin = function (name) {
     return $plugins.find(plugin => {
         plugin.name == name
     }).length > 0;
 }
 
-slz_Harness.requirePlugin = function(requirer, rmPluginName) {
+slz_Harness.requirePlugin = function (requirer, rmPluginName) {
     if (!this.hasPlugin(rmPluginName)) {
         this.addMissingResource('RM Plugin', requirer, rmPluginName)
     }
 }
 
-slz_Harness.requireModule = function(requirer, moduleName) {
-    if(!this.hasModule(moduleName)){
+slz_Harness.requireModule = function (requirer, moduleName) {
+    if (!this.hasModule(moduleName)) {
         this.addMissingResource('Harness Module', requirer, moduleName)
     }
-}   
+}
 
-slz_Harness.requestConfig = function(module){
+slz_Harness.requestConfig = function (module) {
     let list = slz.testHarness.parameters.moduleConfigs;
 
     return list.filter(config => config.module == module)
 }
 
-slz_Harness.errorMessage = function() {
+slz_Harness.errorMessage = function () {
     console.log('Unable to run tests, because of the following missing resources: ')
     console.log(this.printMissingResources())
 }
 
-slz_Harness.printMissingResources = function(){
+slz_Harness.printMissingResources = function () {
     let list = this._missingResources;
     let length = list.length;
     let message = "";
 
     for (let i = 0; i < length; i++) {
-        message += 
-    message += 
-        message += 
-        `        Type: ${list[i].type}
+        message +=
+            message +=
+            message +=
+            `        Type: ${list[i].type}
         Resource: ${list[i].resourceName}
         Required By: ${list[i].requirer}
         `
@@ -315,8 +319,8 @@ slz_HarnessLoader.loadAllParameterModules = function () {
     this.loadTestFiles()
 }
 
-slz_HarnessLoader.loadTestFiles = function(){
-    let prefix = slz.testHarness.parameters.tests;
+slz_HarnessLoader.loadTestFiles = function () {
+    let prefix = slz.testHarness.parameters.tests.directory;
     let files = standardPlayer.sp_Core.findFilesInDir(true, prefix)
 
     files.forEach(path => {
@@ -343,13 +347,12 @@ slz_TestLogger.initialize = function () {
 slz_TestLogger.createStandardProps = function () {
     this.allLogs = [];
     this.logIndexes = [];
-    this.assertionTallies = [];
+    this.assertionTally = null;
     this._testRuns = 0;
 }
 
-slz_TestLogger.addLog = function(type, message) {
+slz_TestLogger.addLog = function (type, message) {
     let record = new slz_LogRecord(type, message)
-
     this.allLogs.push(record)
 
     return record
@@ -363,12 +366,12 @@ slz_TestLogger.info = function (module, message) {
     return this.addLog(module, message);
 }
 
-slz_TestLogger.addAssertion = function(...args) {
+slz_TestLogger.addAssertion = function (...args) {
     this.allLogs.push(new slz_AssertionRecord(...args));
 }
 
 
-slz_TestLogger.clearLogs = function() {
+slz_TestLogger.clearLogs = function () {
     let allLogs = Array(...this.allLogs);
 
     this.createStandardProps();
@@ -376,76 +379,130 @@ slz_TestLogger.clearLogs = function() {
     return allLogs
 }
 
-slz_TestLogger.indexLogsForNewTest = function() {
+slz_TestLogger.indexLogsForNewTest = function () {
     this._testRuns++;
     this.logIndexes.push(this.allLogs.length);
 }
 
-slz_TestLogger.getLastTestRunLogs = function(includeLogMessages){
+slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
     let indexes = this.logIndexes
-    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0
+    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
     let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
-    let slicedLogs = this.allLogs.slice(start, end)
+    let slicedLogs = this.allLogs.slice(start, end);
 
-    if(includeLogMessages){
+    if (includeLogMessages) {
         return slicedLogs
     } else {
-        console.log(slicedLogs)
         return slicedLogs.filter(record => {
             return record.level != 'LOG'
         })
     }
 }
 
-slz_TestLogger.createAssertionTally = function(){
-    let logs = this.getLastTestRunLogs()
-    let assertions = logs.filter(log => log instanceof slz_AssertionRecord)
-    let length = assertions.length;
-    let passes = assertions.filter(assertion => assertion.isPassing).length
-    let fails = length - passes
+slz_TestLogger.createAssertionTally = function (testTitle) {
+    let logs = this.getLastTestRunLogs();
+    let assertionTally = new slz_AssertionTally(); 
+    let assertions = logs.filter(log => log instanceof slz_AssertionRecord);
+    let passes = assertions.filter(log => log.isPassing).length;
+    let fails = assertions.length - passes;
 
-    this.assertionTallies.push(new slz_AssertionTally(passes, fails))
+    assertionTally.title = testTitle;
+    assertionTally.pass = passes;
+    assertionTally.fail = fails;
+
+    this.assertionTally = assertionTally;
 }
 
-slz_TestLogger.getLastAssertionTally = function(){
-    return this.assertionTallies[this.assertionTallies.length - 1]
+slz_TestLogger.getLastAssertionTally = function () {
+    return this.assertionTally;
 }
 
+/* ///////////////////////////////////////////////////////////////////////////
+        Reporter
+   /////////////////////////////////////////////////////////////////////////// */
+
+class slz_HarnessReporter {
+    constructor() {
+        throw new Error('This is a static class')
+    }
+}
+
+slz_HarnessReporter.initialize = function(){
+    this.createStandardProps()
+
+    return this
+}
+
+slz_HarnessReporter.createStandardProps = function(){
+    this._reports = [];
+    this._currentTestTitle = null;
+}
+
+slz_HarnessReporter.testTitle = function(){
+    return this._currentTestTitle
+}
+
+slz_HarnessReporter.setTestTitle = function(title){
+    this._currentTestTitle = title;
+}
+
+slz_HarnessReporter.addReport = function(report){
+    if(this.isValidReport(report)){
+        this._reports.push(report)
+    }
+}
+
+slz_HarnessReporter.createStandardReport = function(){
+    this._reports.push(new iReport())
+}
+
+slz_HarnessReporter.isValidReport = function(report){
+    if(report instanceof iReport){
+        report.validate()
+        return report.isValid()
+    }
+
+    return false
+}
+
+slz_HarnessReporter.print = function(){
+    this._reports.forEach(report => console.log(report.print()))
+}
 
 /* ///////////////////////////////////////////////////////////////////////////
         TestRecord
    /////////////////////////////////////////////////////////////////////////// */
 
-   class slz_TestRecord {
-        constructor(module){
-            this.module = module
-            this.setStandardProps()
-        }
+class slz_TestRecord {
+    constructor(module) {
+        this.module = module
+        this.setStandardProps()
+    }
 
-        setStandardProps(){
-            this.depth = 0;
-            this.level = null;
-            this.index = slz_Harness.logger.allLogs.length;
-        }
+    setStandardProps() {
+        this.depth = 0;
+        this.level = null;
+        this.index = slz_Harness.logger.allLogs.length;
+    }
 
-        setModule(module){
-            this.module = module
-    
-            return this
-        }
-    
-        setLevel(level){
-            this.level = level
-    
-            return this
-        }
-    
-        setDepth(depth){
-            this.depth = depth;
-            
-            return this
-        }
-   }
+    setModule(module) {
+        this.module = module
+
+        return this
+    }
+
+    setLevel(level) {
+        this.level = level
+
+        return this
+    }
+
+    setDepth(depth) {
+        this.depth = depth;
+
+        return this
+    }
+}
 
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -454,23 +511,23 @@ slz_TestLogger.getLastAssertionTally = function(){
 
 
 class slz_LogRecord extends slz_TestRecord {
-    constructor(module, text){
+    constructor(module, text) {
         super(module)
         this.text = text;
     }
 
-    setStandardProps(){
+    setStandardProps() {
         super.setStandardProps()
         this.level = 'LOG'
     }
 
-    setText(text){
+    setText(text) {
         this.text = text;
-        
+
         return this
     }
 
-    toString(){
+    toString() {
         return this.text
     }
 
@@ -480,7 +537,7 @@ class slz_LogRecord extends slz_TestRecord {
         AssertionRecord
    /////////////////////////////////////////////////////////////////////////// */
 
-class slz_AssertionRecord extends slz_TestRecord{
+class slz_AssertionRecord extends slz_TestRecord {
 
     constructor(module, isPassing, expected, actual, dataString) {
         super(module)
@@ -498,7 +555,7 @@ class slz_AssertionRecord extends slz_TestRecord{
     toString(prefix, suffix) {
         this.prefix = prefix || '';
         this.suffix = suffix || '';
-       return `${this.prefix}Expected: ${this.expected}${this.suffix}\n${this.prefix}Actual: ${this.actual}${this.suffix}`
+        return `${this.prefix}Expected: ${this.expected}${this.suffix}\n${this.prefix}Actual: ${this.actual}${this.suffix}`
     }
 }
 
@@ -506,28 +563,25 @@ class slz_AssertionRecord extends slz_TestRecord{
         AssertionTally
    /////////////////////////////////////////////////////////////////////////// */
 
-   class slz_AssertionTally {
-        constructor(passes, fails){
-            this.run = slz_TestLogger._testRuns
-            this.pass = passes;
-            this.fail = fails;
-        }
+class slz_AssertionTally {
+    constructor() {
+        this.title = "";
+        this.pass = 0;
+        this.fail = 0;
+    }
 
-        total(){
-            return this.pass + this.fail
-        }
+    total() {
+        return this.pass + this.fail
+    }
 
-        passPercentage(){
-            return this.pass / this.total()
-        }
+    passPercentage() {
+        return Math.round(this.pass / this.total() * 100);
+    }
 
-        failPercentage(){
-            return this.fail / this.total()
-        }
-
-
-   }
-
+    failPercentage() {
+        return Math.round(this.fail / this.total() * 100);
+    }
+}
 
 /* ///////////////////////////////////////////////////////////////////////////
         Error Classes
@@ -577,7 +631,7 @@ class iTestLanguage extends iTestModule {
         this._isValid.push(this.isValidTestLanguage());
     }
 
-    isValidTestLanguage(){
+    isValidTestLanguage() {
         let hasTitle = typeof this.title == 'string'
         let hasTestRunner = typeof this.testRunner == 'function'
         let hasLoadTestData = typeof this.loadTestData == 'function'
@@ -587,6 +641,41 @@ class iTestLanguage extends iTestModule {
 
     loadTestRunner() {
         this.testRunner(this.loadTestData());
+    }
+}
+
+class iReport extends iTestModule {
+    constructor(){
+        super()
+        this.assertionTally = slz_Harness.logger.getLastAssertionTally();
+    }
+
+    validate(){
+        let title = this.assertionTally.title;
+        let validTitle = title && typeof title == 'string'
+        let validAssertionTally = this.assertionTally && this.assertionTally instanceof slz_AssertionTally
+        let validPrintFunction = this.print && typeof this.print == 'function'
+
+        this._isValid.push(validTitle && validAssertionTally && validPrintFunction)
+    }
+
+    print(){
+        let tally = this.assertionTally;
+        let passFail = tally.fail > 0 ? this.getFailString() : this.getPassString();
+        return `==================================================================================
+${tally.title} ${passFail}
+
+    In total ${tally.total()} Tests:
+    Passed: ${tally.pass} (${tally.passPercentage()}%)\tFailed: ${tally.fail} (${tally.failPercentage()}%)
+==================================================================================`;
+    }
+
+    getPassString() {
+        return '\tPASSED!\u2713';
+    }
+
+    getFailString(current) {
+        return '\tFAILED! \u274c';
     }
 }
 
