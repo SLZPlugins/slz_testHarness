@@ -146,14 +146,14 @@ slz_Harness.addTest = function (data) {
 
 slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
     console.log(testIndex)
-    let tests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
+    this._selectedTests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
+    
     if (this._hasError) {
         console.log(this.errorMessage());
         return;
     }
 
     this.logger.indexLogsForNewTest()
-    this._selectedTests = tests; //<-- should be replaced or this should be default value
     this.runTestHooks(this._beforeExecuteHooks)
     this.runAllTests()
     this.runTestHooks(this._afterExecuteHooks)
