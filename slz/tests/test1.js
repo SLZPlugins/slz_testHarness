@@ -1,5 +1,3 @@
-// requireLanguage('sinot')
-// requirePlugins('sp_Core')
 sinot.createTest("Test A", () => {
     
     //can scope varibles to entire test instace
@@ -118,6 +116,9 @@ sinot.createTest("Test A", () => {
 
         sinot.scenario("Testing Subtract from Storage", () => {
             return [
+                sinot.testCase("$gameMessage.hasText", () => {
+                    rmAssert.assertFalse($gameMessage.hasText());
+                }),
                 sinot.testCase("Should remove successfully when contents exist", () => {
                     rmAssert.assertNotEquals(10, 10)
                 }),

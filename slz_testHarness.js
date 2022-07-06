@@ -146,14 +146,14 @@ slz_Harness.addTest = function (data) {
 
 slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
     console.log(testIndex)
-    let tests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
+    this._selectedTests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
+    
     if (this._hasError) {
         console.log(this.errorMessage());
         return;
     }
 
     this.logger.indexLogsForNewTest()
-    this._selectedTests = tests; //<-- should be replaced or this should be default value
     this.runTestHooks(this._beforeExecuteHooks)
     this.runAllTests()
     this.runTestHooks(this._afterExecuteHooks)
@@ -165,9 +165,10 @@ slz_Harness.runAllTests = function () {
         this.runTest(test)
     })
     this.runTestHooks(this._afterAllTestHooks)
-    this.logger.createAssertionTally()
+    this.logger.createAssertionTally(`Test Run ${this.logger._testRuns}`)
     this.reporter.setTestTitle(`Test Run ${this.logger._testRuns}`)
-    this.reporter.createStandardReport()
+    this.reporter.createStandardReport();
+    this.reporter.print();
 }
 
 slz_Harness.runTest = function (test) {
@@ -346,13 +347,12 @@ slz_TestLogger.initialize = function () {
 slz_TestLogger.createStandardProps = function () {
     this.allLogs = [];
     this.logIndexes = [];
-    this.assertionTallies = [];
+    this.assertionTally = null;
     this._testRuns = 0;
 }
 
 slz_TestLogger.addLog = function (type, message) {
     let record = new slz_LogRecord(type, message)
-
     this.allLogs.push(record)
 
     return record
@@ -386,32 +386,35 @@ slz_TestLogger.indexLogsForNewTest = function () {
 
 slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
     let indexes = this.logIndexes
-    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0
+    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
     let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
-    let slicedLogs = this.allLogs.slice(start, end)
+    let slicedLogs = this.allLogs.slice(start, end);
 
     if (includeLogMessages) {
         return slicedLogs
     } else {
-        console.log(slicedLogs)
         return slicedLogs.filter(record => {
             return record.level != 'LOG'
         })
     }
 }
 
-slz_TestLogger.createAssertionTally = function () {
-    let logs = this.getLastTestRunLogs()
-    let assertions = logs.filter(log => log instanceof slz_AssertionRecord)
-    let length = assertions.length;
-    let passes = assertions.filter(assertion => assertion.isPassing).length
-    let fails = length - passes
+slz_TestLogger.createAssertionTally = function (testTitle) {
+    let logs = this.getLastTestRunLogs();
+    let assertionTally = new slz_AssertionTally(); 
+    let assertions = logs.filter(log => log instanceof slz_AssertionRecord);
+    let passes = assertions.filter(log => log.isPassing).length;
+    let fails = assertions.length - passes;
 
-    this.assertionTallies.push(new slz_AssertionTally(passes, fails))
+    assertionTally.title = testTitle;
+    assertionTally.pass = passes;
+    assertionTally.fail = fails;
+
+    this.assertionTally = assertionTally;
 }
 
 slz_TestLogger.getLastAssertionTally = function () {
-    return this.assertionTallies[this.assertionTallies.length - 1]
+    return this.assertionTally;
 }
 
 /* ///////////////////////////////////////////////////////////////////////////
@@ -561,10 +564,10 @@ class slz_AssertionRecord extends slz_TestRecord {
    /////////////////////////////////////////////////////////////////////////// */
 
 class slz_AssertionTally {
-    constructor(passes, fails) {
-        this.run = slz_TestLogger._testRuns
-        this.pass = passes;
-        this.fail = fails;
+    constructor() {
+        this.title = "";
+        this.pass = 0;
+        this.fail = 0;
     }
 
     total() {
@@ -572,16 +575,13 @@ class slz_AssertionTally {
     }
 
     passPercentage() {
-        return this.pass / this.total()
+        return Math.round(this.pass / this.total() * 100);
     }
 
     failPercentage() {
-        return this.fail / this.total()
+        return Math.round(this.fail / this.total() * 100);
     }
-
-
 }
-
 
 /* ///////////////////////////////////////////////////////////////////////////
         Error Classes
@@ -647,12 +647,12 @@ class iTestLanguage extends iTestModule {
 class iReport extends iTestModule {
     constructor(){
         super()
-        this.title = slz_Harness.reporter.testTitle();
         this.assertionTally = slz_Harness.logger.getLastAssertionTally();
     }
 
     validate(){
-        let validTitle = this.title && typeof this.title == 'string'
+        let title = this.assertionTally.title;
+        let validTitle = title && typeof title == 'string'
         let validAssertionTally = this.assertionTally && this.assertionTally instanceof slz_AssertionTally
         let validPrintFunction = this.print && typeof this.print == 'function'
 
@@ -661,7 +661,21 @@ class iReport extends iTestModule {
 
     print(){
         let tally = this.assertionTally;
-        return `${this.title}\nPass: ${tally.pass}\tFail: ${tally.fail}`
+        let passFail = tally.fail > 0 ? this.getFailString() : this.getPassString();
+        return `==================================================================================
+${tally.title} ${passFail}
+
+    In total ${tally.total()} Tests:
+    Passed: ${tally.pass} (${tally.passPercentage()}%)\tFailed: ${tally.fail} (${tally.failPercentage()}%)
+==================================================================================`;
+    }
+
+    getPassString() {
+        return '\tPASSED!\u2713';
+    }
+
+    getFailString(current) {
+        return '\tFAILED! \u274c';
     }
 }
 
