@@ -153,7 +153,7 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
         return;
     }
 
-    this.logger.indexLogsForNewTest()
+    this.logger.indexLogsForNewTest();
     this.runTestHooks(this._beforeExecuteHooks)
     this.runAllTests()
     this.runTestHooks(this._afterExecuteHooks)
@@ -165,10 +165,7 @@ slz_Harness.runAllTests = function () {
         this.runTest(test)
     })
     this.runTestHooks(this._afterAllTestHooks)
-    this.logger.createAssertionTally(`Test Run ${this.logger._testRuns}`)
-    this.reporter.setTestTitle(`Test Run ${this.logger._testRuns}`)
-    this.reporter.createStandardReport();
-    this.reporter.print();
+    this.reporter.printStandardReport(this.logger.createAssertionTally())
 }
 
 slz_Harness.runTest = function (test) {
@@ -399,21 +396,22 @@ slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
     }
 }
 
-slz_TestLogger.createAssertionTally = function (testTitle) {
+slz_TestLogger.createAssertionTally = function () {
     let logs = this.getLastTestRunLogs();
     let assertionTally = new slz_AssertionTally(); 
     let assertions = logs.filter(log => log instanceof slz_AssertionRecord);
     let passes = assertions.filter(log => log.isPassing).length;
     let fails = assertions.length - passes;
 
-    assertionTally.title = testTitle;
+    assertionTally.title = `Test Run ${this._testRuns}`;
     assertionTally.pass = passes;
     assertionTally.fail = fails;
 
     this.assertionTally = assertionTally;
+    return this.assertionTally;
 }
 
-slz_TestLogger.getLastAssertionTally = function () {
+slz_TestLogger.getCurrentAssertionTally = function () {
     return this.assertionTally;
 }
 
@@ -431,6 +429,12 @@ slz_HarnessReporter.initialize = function(){
     this.createStandardProps()
 
     return this
+}
+
+slz_HarnessReporter.printStandardReport = function(assertionTally) {
+    this.setTestTitle(assertionTally.title);
+    this.createStandardReport(assertionTally);
+    this.print();
 }
 
 slz_HarnessReporter.createStandardProps = function(){
@@ -452,8 +456,8 @@ slz_HarnessReporter.addReport = function(report){
     }
 }
 
-slz_HarnessReporter.createStandardReport = function(){
-    this._reports.push(new iReport())
+slz_HarnessReporter.createStandardReport = function(assertionTally){
+    this._reports.push(new iReport(assertionTally));
 }
 
 slz_HarnessReporter.isValidReport = function(report){
@@ -645,9 +649,9 @@ class iTestLanguage extends iTestModule {
 }
 
 class iReport extends iTestModule {
-    constructor(){
+    constructor(assertionTally){
         super()
-        this.assertionTally = slz_Harness.logger.getLastAssertionTally();
+        this.assertionTally = assertionTally;
     }
 
     validate(){
