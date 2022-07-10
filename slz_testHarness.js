@@ -388,10 +388,7 @@ slz_TestLogger.indexLogsForNewTest = function () {
 }
 
 slz_TestLogger.getLastTestFileLogs = function (includeLogMessages) {
-    let indexes = this.logIndexes
-    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
-    let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
-    let slicedLogs = this.allLogs.slice(start, end);
+    let slicedLogs = this.getAllTestFileLogsFromLastExecute();
     let testFileLogs = slicedLogs.filter(log => log.level == "Test File");
     let lastTestFileLog = testFileLogs[testFileLogs.length - 1];
     let lastTestFileLogIndex = slicedLogs.indexOf(lastTestFileLog);
@@ -401,6 +398,21 @@ slz_TestLogger.getLastTestFileLogs = function (includeLogMessages) {
         return lastCompleteTestFileLogs
     } else {
         return lastCompleteTestFileLogs.filter(record => {
+            return record.level != 'LOG'
+        })
+    }
+}
+
+slz_TestLogger.getAllTestFileLogsFromLastExecute = function (includeLogMessages) {
+    let indexes = this.logIndexes
+    let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
+    let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
+    let slicedLogs = this.allLogs.slice(start, end);
+
+    if (includeLogMessages) {
+        return slicedLogs
+    } else {
+        return slicedLogs.filter(record => {
             return record.level != 'LOG'
         })
     }
