@@ -162,10 +162,17 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
 slz_Harness.runAllTests = function () {
     this.runTestHooks(this._beforeAllTestHooks);
     this._selectedTests.forEach(test => {
-        this.runTest(test)
+        this.logTestFile(test);
+        this.runTest(test);
+        this.reporter.printStandardReport(this.logger.createAssertionTally());
     })
-    this.runTestHooks(this._afterAllTestHooks)
-    this.reporter.printStandardReport(this.logger.createAssertionTally())
+    this.runTestHooks(this._afterAllTestHooks);
+}
+
+slz_Harness.logTestFile = function(test) {
+    this.logger.info(test.constructor.name, `\nTest File: ${test.title}\n`)
+    .setLevel('Test File')
+    .setDepth(0)
 }
 
 slz_Harness.runTest = function (test) {
@@ -381,29 +388,33 @@ slz_TestLogger.indexLogsForNewTest = function () {
     this.logIndexes.push(this.allLogs.length);
 }
 
-slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
+slz_TestLogger.getLastTestFileLogs = function (includeLogMessages) {
     let indexes = this.logIndexes
     let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
     let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
     let slicedLogs = this.allLogs.slice(start, end);
+    let testFileLogs = slicedLogs.filter(log => log.level == "Test File");
+    let lastTestFileLog = testFileLogs[testFileLogs.length - 1];
+    let lastTestFileLogIndex = slicedLogs.indexOf(lastTestFileLog);
+    let lastCompleteTestFileLogs = slicedLogs.slice(lastTestFileLogIndex);
 
     if (includeLogMessages) {
-        return slicedLogs
+        return lastCompleteTestFileLogs
     } else {
-        return slicedLogs.filter(record => {
+        return lastCompleteTestFileLogs.filter(record => {
             return record.level != 'LOG'
         })
     }
 }
 
 slz_TestLogger.createAssertionTally = function () {
-    let logs = this.getLastTestRunLogs();
+    let logs = this.getLastTestFileLogs();
     let assertionTally = new slz_AssertionTally(); 
     let assertions = logs.filter(log => log instanceof slz_AssertionRecord);
     let passes = assertions.filter(log => log.isPassing).length;
     let fails = assertions.length - passes;
 
-    assertionTally.title = `Test Run ${this._testRuns}`;
+    assertionTally.title = `Test Run ${this._testRuns}: ${logs[0].text}`;
     assertionTally.pass = passes;
     assertionTally.fail = fails;
 

@@ -21,7 +21,7 @@ TellonReporter.setStandardProps = function() {
 }
 
 TellonReporter.createReport = function() {
-    this._reports.push(new TellonReport(slz_Harness.logger.getLastTestRunLogs()))
+    this._reports.push(new TellonReport(slz_Harness.logger.getLastTestFileLogs()))
     this.printLastReport()
 }
 

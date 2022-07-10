@@ -62,10 +62,6 @@ sinot.runTest = function(list) { //list is test file using Sinot.js
     let length = list.length;
     let logger = slz_Harness.logger
     
-    logger.info('sinot', `\nTest File: ${this.title}\n`)
-            .setLevel('Test File')
-            .setDepth(0)
-
     //list is array of Scenarios for individual test file
     for (let i = 0; i < length; i++) {
         let scenario = list[i] 
