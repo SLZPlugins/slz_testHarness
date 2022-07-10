@@ -145,7 +145,6 @@ slz_Harness.addTest = function (data) {
 }
 
 slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
-    console.log(testIndex)
     this._selectedTests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
     
     if (this._hasError) {
@@ -445,7 +444,7 @@ slz_HarnessReporter.initialize = function(){
 slz_HarnessReporter.printStandardReport = function(assertionTally) {
     this.setTestTitle(assertionTally.title);
     this.createStandardReport(assertionTally);
-    this.print();
+    this.printLastReport();
 }
 
 slz_HarnessReporter.createStandardProps = function(){
@@ -480,7 +479,11 @@ slz_HarnessReporter.isValidReport = function(report){
     return false
 }
 
-slz_HarnessReporter.print = function(){
+slz_HarnessReporter.printLastReport = function(){
+    console.log(this._reports[this._reports.length - 1].print());
+}
+
+slz_HarnessReporter.printAllReports = function(){
     this._reports.forEach(report => console.log(report.print()))
 }
 
