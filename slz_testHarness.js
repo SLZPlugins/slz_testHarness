@@ -145,7 +145,6 @@ slz_Harness.addTest = function (data) {
 }
 
 slz_Harness.execute = function (testIndex) {   //<-- should/could accept test running params
-    console.log(testIndex)
     this._selectedTests = typeof testIndex == 'undefined' ? this._loadedTests : [this._loadedTests[testIndex]]
     
     if (this._hasError) {
@@ -153,7 +152,7 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
         return;
     }
 
-    this.logger.indexLogsForNewTest()
+    this.logger.indexLogsForNewTest();
     this.runTestHooks(this._beforeExecuteHooks)
     this.runAllTests()
     this.runTestHooks(this._afterExecuteHooks)
@@ -162,13 +161,17 @@ slz_Harness.execute = function (testIndex) {   //<-- should/could accept test ru
 slz_Harness.runAllTests = function () {
     this.runTestHooks(this._beforeAllTestHooks);
     this._selectedTests.forEach(test => {
-        this.runTest(test)
+        this.logTestFile(test);
+        this.runTest(test);
+        this.reporter.printStandardReport(this.logger.createAssertionTally());
     })
-    this.runTestHooks(this._afterAllTestHooks)
-    this.logger.createAssertionTally(`Test Run ${this.logger._testRuns}`)
-    this.reporter.setTestTitle(`Test Run ${this.logger._testRuns}`)
-    this.reporter.createStandardReport();
-    this.reporter.print();
+    this.runTestHooks(this._afterAllTestHooks);
+}
+
+slz_Harness.logTestFile = function(test) {
+    this.logger.info(test.constructor.name, `\nTest File: ${test.title}\n`)
+    .setLevel('Test File')
+    .setDepth(0)
 }
 
 slz_Harness.runTest = function (test) {
@@ -384,7 +387,23 @@ slz_TestLogger.indexLogsForNewTest = function () {
     this.logIndexes.push(this.allLogs.length);
 }
 
-slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
+slz_TestLogger.getLastTestFileLogs = function (includeLogMessages) {
+    let slicedLogs = this.getAllTestFileLogsFromLastExecute();
+    let testFileLogs = slicedLogs.filter(log => log.level == "Test File");
+    let lastTestFileLog = testFileLogs[testFileLogs.length - 1];
+    let lastTestFileLogIndex = slicedLogs.indexOf(lastTestFileLog);
+    let lastCompleteTestFileLogs = slicedLogs.slice(lastTestFileLogIndex);
+
+    if (includeLogMessages) {
+        return lastCompleteTestFileLogs
+    } else {
+        return lastCompleteTestFileLogs.filter(record => {
+            return record.level != 'LOG'
+        })
+    }
+}
+
+slz_TestLogger.getAllTestFileLogsFromLastExecute = function (includeLogMessages) {
     let indexes = this.logIndexes
     let start = this._testRuns > 1 ? indexes[this._testRuns - 1] : 0;
     let end = this._testRuns > 1 ? indexes[this._testRuns] : this.allLogs.length;
@@ -399,21 +418,22 @@ slz_TestLogger.getLastTestRunLogs = function (includeLogMessages) {
     }
 }
 
-slz_TestLogger.createAssertionTally = function (testTitle) {
-    let logs = this.getLastTestRunLogs();
+slz_TestLogger.createAssertionTally = function () {
+    let logs = this.getLastTestFileLogs();
     let assertionTally = new slz_AssertionTally(); 
     let assertions = logs.filter(log => log instanceof slz_AssertionRecord);
     let passes = assertions.filter(log => log.isPassing).length;
     let fails = assertions.length - passes;
 
-    assertionTally.title = testTitle;
+    assertionTally.title = `Test Run ${this._testRuns}: ${logs[0].text}`;
     assertionTally.pass = passes;
     assertionTally.fail = fails;
 
     this.assertionTally = assertionTally;
+    return this.assertionTally;
 }
 
-slz_TestLogger.getLastAssertionTally = function () {
+slz_TestLogger.getCurrentAssertionTally = function () {
     return this.assertionTally;
 }
 
@@ -431,6 +451,12 @@ slz_HarnessReporter.initialize = function(){
     this.createStandardProps()
 
     return this
+}
+
+slz_HarnessReporter.printStandardReport = function(assertionTally) {
+    this.setTestTitle(assertionTally.title);
+    this.createStandardReport(assertionTally);
+    this.printLastReport();
 }
 
 slz_HarnessReporter.createStandardProps = function(){
@@ -452,8 +478,8 @@ slz_HarnessReporter.addReport = function(report){
     }
 }
 
-slz_HarnessReporter.createStandardReport = function(){
-    this._reports.push(new iReport())
+slz_HarnessReporter.createStandardReport = function(assertionTally){
+    this._reports.push(new iReport(assertionTally));
 }
 
 slz_HarnessReporter.isValidReport = function(report){
@@ -465,7 +491,11 @@ slz_HarnessReporter.isValidReport = function(report){
     return false
 }
 
-slz_HarnessReporter.print = function(){
+slz_HarnessReporter.printLastReport = function(){
+    console.log(this._reports[this._reports.length - 1].print());
+}
+
+slz_HarnessReporter.printAllReports = function(){
     this._reports.forEach(report => console.log(report.print()))
 }
 
@@ -645,9 +675,9 @@ class iTestLanguage extends iTestModule {
 }
 
 class iReport extends iTestModule {
-    constructor(){
+    constructor(assertionTally){
         super()
-        this.assertionTally = slz_Harness.logger.getLastAssertionTally();
+        this.assertionTally = assertionTally;
     }
 
     validate(){
